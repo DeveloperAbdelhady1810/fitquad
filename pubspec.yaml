@@ -37,6 +37,8 @@ dependencies:
   sleek_circular_slider: ^2.1.0
   pdf: ^3.10.8
   printing: ^5.13.0
+  sign_in_with_apple: ^6.1.2
+  google_sign_in: ^6.2.2
 dev_dependencies:
   flutter_test:
     sdk: flutter

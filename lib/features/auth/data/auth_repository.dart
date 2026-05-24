@@ -41,6 +41,28 @@ class AuthRepository {
     return data;
   }
 
+  static Future<Map<String, dynamic>> socialLogin({
+    required String provider,
+    required String providerId,
+    String? email,
+    String? name,
+  }) async {
+    final response = await ApiClient.post(
+      '/auth/social',
+      {
+        'provider': provider,
+        'provider_id': providerId,
+        if (email != null) 'email': email,
+        if (name != null) 'name': name,
+      },
+      auth: false,
+    );
+    final data = response['data'] as Map<String, dynamic>;
+    await ApiClient.saveToken(data['token'] as String);
+    await ApiClient.saveRole(data['user']?['role'] as String? ?? 'member');
+    return data;
+  }
+
   static Future<void> logout() async {
     try {
       await ApiClient.post('/auth/logout', {});
