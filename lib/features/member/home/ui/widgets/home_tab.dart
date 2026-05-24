@@ -4,12 +4,15 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:gym_app/features/member/home/ui/widgets/plan_dilog.dart';
 import 'package:intl/intl.dart';
+import 'package:printing/printing.dart';
 
 import 'package:gym_app/core/widgets/custom_button.dart';
 import 'package:gym_app/features/member/home/ui/widgets/water_dialog.dart';
 import 'package:gym_app/features/member/home/ui/widgets/workout_dialog.dart';
 import '../../../../../core/cubit/health/health_cubit.dart';
+import '../../../../../core/services/health_pdf_service.dart';
 import '../../../../../core/services/health_service.dart';
+import '../../../../../features/member/data/repositories/member_repository.dart';
 import '../../../../../core/helpers/app_decoration.dart';
 import '../../../../../core/helpers/spacing.dart';
 import '../../../../../core/theme/app_colors.dart';
@@ -289,19 +292,102 @@ class _WatchStatsRow extends StatelessWidget {
   final HealthSnapshot snapshot;
   const _WatchStatsRow({required this.snapshot});
 
+  Future<void> _exportPdf(BuildContext context, String memberName) async {
+    try {
+      final bytes = await HealthPdfService.generateReport(
+        snapshot: snapshot,
+        memberName: memberName,
+      );
+      await Printing.sharePdf(
+        bytes: bytes,
+        filename: 'fitquad-health-${DateFormat('yyyy-MM-dd').format(DateTime.now())}.pdf',
+      );
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not export PDF: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _sendToCoach(BuildContext context, String memberName) async {
+    final body = _buildSummaryText(memberName);
+    try {
+      await MemberRepository.sendMessageToCoach(body);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Health summary sent to your coach!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not send: $e')),
+        );
+      }
+    }
+  }
+
+  String _buildSummaryText(String memberName) {
+    final date = DateFormat('MMMM d, yyyy').format(DateTime.now());
+    return '''📊 Health Summary — $date
+Member: $memberName
+
+👟 Steps: ${snapshot.steps}
+❤️ Heart Rate: ${snapshot.heartRateBpm > 0 ? '${snapshot.heartRateBpm} bpm' : 'No data'}
+🌙 Sleep: ${snapshot.sleepHrs > 0 ? '${snapshot.sleepHrs.toStringAsFixed(1)} hours' : 'No data'}
+🔥 Active Calories: ${snapshot.caloriesBurned} kcal
+
+Sent via FitQuad app.''';
+  }
+
   @override
   Widget build(BuildContext context) {
+    final memberName =
+        (context.read<MemberCubit>().state is MemberLoaded)
+            ? ((context.read<MemberCubit>().state as MemberLoaded).member.name ?? 'Member')
+            : 'Member';
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Header row
         Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Icon(Icons.watch, color: AppColors.grey, size: 16),
-            hGap(6),
-            Text('Smart Watch', style: AppTextStyles.font14GreyRegular),
+            Row(
+              children: [
+                Icon(Icons.watch, color: AppColors.grey, size: 16.sp),
+                hGap(6),
+                Text('Smart Watch', style: AppTextStyles.font14GreyRegular),
+              ],
+            ),
+            // Action buttons
+            Row(
+              children: [
+                _ActionChip(
+                  icon: Icons.picture_as_pdf,
+                  label: 'Export PDF',
+                  color: AppColors.red,
+                  onTap: () => _exportPdf(context, memberName),
+                ),
+                hGap(8),
+                _ActionChip(
+                  icon: Icons.send,
+                  label: 'Send to Coach',
+                  color: AppColors.teal,
+                  onTap: () => _sendToCoach(context, memberName),
+                ),
+              ],
+            ),
           ],
         ),
-        vGap(8),
+        vGap(10),
+        // Stat cards
         Row(
           children: [
             _WatchStat(
@@ -314,15 +400,17 @@ class _WatchStatsRow extends StatelessWidget {
             _WatchStat(
               icon: Icons.favorite,
               value: snapshot.heartRateBpm > 0
-                  ? '${snapshot.heartRateBpm} bpm'
+                  ? '${snapshot.heartRateBpm}'
                   : '—',
+              unit: 'bpm',
               label: 'HEART RATE',
               color: AppColors.red,
             ),
             hGap(5),
             _WatchStat(
               icon: Icons.local_fire_department,
-              value: '${snapshot.caloriesBurned} kcal',
+              value: '${snapshot.caloriesBurned}',
+              unit: 'kcal',
               label: 'ACTIVE CAL',
               color: AppColors.emerald,
             ),
@@ -330,8 +418,9 @@ class _WatchStatsRow extends StatelessWidget {
             _WatchStat(
               icon: Icons.bedtime,
               value: snapshot.sleepHrs > 0
-                  ? '${snapshot.sleepHrs.toStringAsFixed(1)}h'
+                  ? snapshot.sleepHrs.toStringAsFixed(1)
                   : '—',
+              unit: snapshot.sleepHrs > 0 ? 'hrs' : '',
               label: 'SLEEP',
               color: AppColors.blue,
             ),
@@ -342,14 +431,58 @@ class _WatchStatsRow extends StatelessWidget {
   }
 }
 
+class _ActionChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+  const _ActionChip({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(20.r),
+          border: Border.all(color: color.withValues(alpha: 0.3)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: color, size: 13.sp),
+            SizedBox(width: 4.w),
+            Text(
+              label,
+              style: AppTextStyles.font14GreyRegular.copyWith(
+                color: color,
+                fontSize: 11.sp,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _WatchStat extends StatelessWidget {
   final IconData icon;
   final String value;
+  final String unit;
   final String label;
   final Color color;
   const _WatchStat({
     required this.icon,
     required this.value,
+    this.unit = '',
     required this.label,
     required this.color,
   });
@@ -359,23 +492,31 @@ class _WatchStat extends StatelessWidget {
     return Expanded(
       child: Container(
         decoration: AppDecorations.containerDecoration,
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
+        padding: EdgeInsets.symmetric(vertical: 10.h, horizontal: 4.w),
         child: Column(
           children: [
-            Icon(icon, color: color, size: 20),
+            Icon(icon, color: color, size: 18.sp),
             vGap(4),
-            Text(
-              value,
-              style: AppTextStyles.font14GreyRegular.copyWith(color: color),
-              textAlign: TextAlign.center,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                unit.isEmpty ? value : '$value $unit',
+                style: AppTextStyles.font14GreyRegular.copyWith(
+                  color: color,
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 1,
+              ),
             ),
             vGap(2),
             Text(
               label,
-              style: AppTextStyles.font14GreyRegular.copyWith(fontSize: 9),
+              style: AppTextStyles.font14GreyRegular.copyWith(fontSize: 8.sp),
               textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),
@@ -391,15 +532,16 @@ class _WatchPermissionBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: AppDecorations.containerDecoration,
-      padding: const EdgeInsets.all(12),
+      padding: EdgeInsets.all(12.r),
       child: Row(
         children: [
-          Icon(Icons.watch_off, color: AppColors.grey, size: 20),
+          Icon(Icons.watch_off, color: AppColors.grey, size: 20.sp),
           hGap(10),
           Expanded(
             child: Text(
               'Connect a smartwatch in Health settings to see live stats here.',
               style: AppTextStyles.font14GreyRegular,
+              softWrap: true,
             ),
           ),
         ],

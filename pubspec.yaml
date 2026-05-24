@@ -35,6 +35,8 @@ dependencies:
   http: ^1.6.0
   easy_stepper: ^1.0.1
   sleek_circular_slider: ^2.1.0
+  pdf: ^3.10.8
+  printing: ^5.13.0
 dev_dependencies:
   flutter_test:
     sdk: flutter

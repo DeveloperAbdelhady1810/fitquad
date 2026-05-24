@@ -144,4 +144,14 @@ class MemberRepository {
     final res = await ApiClient.get('/member/notifications');
     return (res['data']['data'] ?? res['data']) as List<dynamic>;
   }
+
+  // ── Coach Messaging ──────────────────────────────────────────
+  static Future<void> sendMessageToCoach(String body) async {
+    await ApiClient.post('/member/messages', {'body': body});
+  }
+
+  static Future<List<dynamic>> getCoachThread() async {
+    final res = await ApiClient.get('/member/messages');
+    return res['data']['messages'] as List<dynamic>;
+  }
 }
