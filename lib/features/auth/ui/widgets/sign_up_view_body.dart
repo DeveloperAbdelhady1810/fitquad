@@ -21,63 +21,65 @@ class SignUpViewBody extends StatelessWidget {
       length: 2,
       child: Padding(
         padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Center(
-              child: Container(
-                padding: EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(14.r),
-                  gradient: LinearGradient(
-                    colors: [AppColors.emerald, AppColors.blue],
-                  ),
-                ),
-                child: SvgPicture.asset(
-                  'assets/images/dumbbell.svg',
-                  colorFilter: ColorFilter.mode(
-                    AppColors.white,
-                    BlendMode.srcIn,
-                  ),
-                  width: 50,
-                ),
-              ),
-            ),
-            vGap(15),
-            Text(s.app_name, style: AppTextStyles.font24GreyBold),
-            vGap(10),
-            Text(s.app_tagline, style: AppTextStyles.font20GreyRegular),
-            vGap(15),
-            Container(
-              padding: EdgeInsets.all(16),
-              decoration: AppDecorations.containerDecoration,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Text(s.welcome_back, style: AppTextStyles.font16WhiteRegular),
-                  vGap(5),
-                  Text(s.select_role, style: AppTextStyles.font14GreyRegular),
-                  vGap(10),
-                  CustomTabBar(tabs: [_buildTab(text: s.member, icon: Icons.person_outline),
-                    _buildTab(text: s.coach, icon: Icons.sports_gymnastics),],),
-                  vGap(10),
-
-                  SizedBox(
-                    height: MediaQuery.of(context).size.height * 0.45,
-                    child: TabBarView(
-                      children: [
-
-                        MemberTabBarView(role: LoginRole.member, isSignUp: true,),
-                        MemberTabBarView(role: LoginRole.coach, isSignUp: true),
-                        MemberTabBarView(role: LoginRole.admin, isSignUp: true),
-                      ],
-
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Center(
+                child: Container(
+                  padding: EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(14.r),
+                    gradient: LinearGradient(
+                      colors: [AppColors.emerald, AppColors.blue],
                     ),
                   ),
-                ],
+                  child: SvgPicture.asset(
+                    'assets/images/dumbbell.svg',
+                    colorFilter: ColorFilter.mode(
+                      AppColors.white,
+                      BlendMode.srcIn,
+                    ),
+                    width: 50,
+                  ),
+                ),
               ),
-            ),
-          ],
+              vGap(15),
+              Text(s.app_name, style: AppTextStyles.font24GreyBold),
+              vGap(10),
+              Text(s.app_tagline, style: AppTextStyles.font20GreyRegular),
+              vGap(15),
+              Container(
+                padding: EdgeInsets.all(16),
+                decoration: AppDecorations.containerDecoration,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Text(s.welcome_back, style: AppTextStyles.font16WhiteRegular),
+                    vGap(5),
+                    Text(s.select_role, style: AppTextStyles.font14GreyRegular),
+                    vGap(10),
+                    CustomTabBar(tabs: [_buildTab(text: s.member, icon: Icons.person_outline),
+                      _buildTab(text: s.coach, icon: Icons.sports_gymnastics),],),
+                    vGap(10),
+          
+                    SizedBox(
+                      height: MediaQuery.of(context).size.height * 0.45,
+                      child: TabBarView(
+                        children: [
+          
+                          MemberTabBarView(role: LoginRole.member, isSignUp: true,),
+                          MemberTabBarView(role: LoginRole.coach, isSignUp: true),
+                          MemberTabBarView(role: LoginRole.admin, isSignUp: true),
+                        ],
+          
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
 
