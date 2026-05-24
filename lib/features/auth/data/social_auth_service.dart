@@ -16,7 +16,10 @@ class SocialAuthResult {
 }
 
 class SocialAuthService {
-  static final _google = GoogleSignIn(scopes: ['email', 'profile']);
+  static final _google = GoogleSignIn(
+    clientId: '935205416297-90dbo3u43d3i8t0hm1dpt8936ffk8e72.apps.googleusercontent.com',
+    scopes: ['email', 'profile'],
+  );
 
   static Future<SocialAuthResult> signInWithGoogle() async {
     final account = await _google.signIn();
