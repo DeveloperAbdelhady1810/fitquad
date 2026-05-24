@@ -9,7 +9,7 @@
     <uses-permission android:name="android.permission.CAMERA"/>
 
     <application
-        android:label="gym_app"
+        android:label="FitQuad"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
@@ -43,6 +43,10 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+        <!-- Google Sign In Android client ID -->
+        <meta-data
+            android:name="com.google.android.gms.auth.api.sign_in.client_id"
+            android:value="935205416297-3146p2ul43vtl76cjfaahl9dbve848s7.apps.googleusercontent.com" />
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and
