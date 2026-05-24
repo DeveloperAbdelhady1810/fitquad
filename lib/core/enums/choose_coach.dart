@@ -1,0 +1,4 @@
+enum ChooseCoachSource {
+  train,
+  eat,
+}
