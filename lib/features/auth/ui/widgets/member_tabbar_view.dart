@@ -48,79 +48,81 @@ class _MemberTabBarViewState extends State<MemberTabBarView> {
   @override
   Widget build(BuildContext context) {
     final s = S.of(context);
-    return Column(
-      children: [
-        Align(
-          alignment: AlignmentDirectional.bottomStart,
-          child: Text(s.email_or_phone, style: AppTextStyles.font16WhiteBold),
-        ),
-        vGap(10),
-        CustomTextFormField(
-          controller: _emailController,
-          hintText: 'hello@example.com',
-          textInputType: TextInputType.emailAddress,
-        ),
-        vGap(15),
-        Align(
-          alignment: AlignmentDirectional.bottomStart,
-          child: Text(s.password, style: AppTextStyles.font16WhiteBold),
-        ),
-        vGap(10),
-        CustomTextFormField(
-          controller: _passwordController,
-          textInputType: TextInputType.visiblePassword,
-          hintText: '••••••••',
-        ),
-
-        if (widget.isSignUp) ...[
-          vGap(15),
+    return SingleChildScrollView(
+      child: Column(
+        children: [
           Align(
             alignment: AlignmentDirectional.bottomStart,
-            child: Text(s.phone_optional, style: AppTextStyles.font16WhiteBold),
+            child: Text(s.email_or_phone, style: AppTextStyles.font16WhiteBold),
           ),
           vGap(10),
           CustomTextFormField(
-            controller: _phoneController,
-            textInputType: TextInputType.phone,
-            hintText: '+1 (555) 000-0000',
+            controller: _emailController,
+            hintText: 'hello@example.com',
+            textInputType: TextInputType.emailAddress,
           ),
-        ],
-
-        if (_errorMessage != null) ...[
+          vGap(15),
+          Align(
+            alignment: AlignmentDirectional.bottomStart,
+            child: Text(s.password, style: AppTextStyles.font16WhiteBold),
+          ),
           vGap(10),
-          Text(_errorMessage!, style: const TextStyle(color: Colors.red, fontSize: 13)),
-        ],
-
-        vGap(20),
-        _isLoading
-            ? const CircularProgressIndicator()
-            : CustomButton(
-                text: widget.isSignUp ? s.sign_up : s.login,
-                onPressed: () => _onSubmit(context),
-                iconData: Icons.arrow_forward,
-                color: _buttonColor(),
-              ),
-
-        vGap(15),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              widget.isSignUp ? s.already_have_account : s.no_account,
-              style: AppTextStyles.font14GreyRegular,
+          CustomTextFormField(
+            controller: _passwordController,
+            textInputType: TextInputType.visiblePassword,
+            hintText: '••••••••',
+          ),
+      
+          if (widget.isSignUp) ...[
+            vGap(15),
+            Align(
+              alignment: AlignmentDirectional.bottomStart,
+              child: Text(s.phone_optional, style: AppTextStyles.font16WhiteBold),
             ),
-            TextButton(
-              onPressed: () => widget.isSignUp
-                  ? context.go(LoginView.routeName)
-                  : context.go(SignUpView.routeName),
-              child: Text(
-                widget.isSignUp ? s.login : s.sign_up,
-                style: AppTextStyles.font14GreyRegular,
-              ),
+            vGap(10),
+            CustomTextFormField(
+              controller: _phoneController,
+              textInputType: TextInputType.phone,
+              hintText: '+1 (555) 000-0000',
             ),
           ],
-        ),
-      ],
+      
+          if (_errorMessage != null) ...[
+            vGap(10),
+            Text(_errorMessage!, style: const TextStyle(color: Colors.red, fontSize: 13)),
+          ],
+      
+          vGap(20),
+          _isLoading
+              ? const CircularProgressIndicator()
+              : CustomButton(
+                  text: widget.isSignUp ? s.sign_up : s.login,
+                  onPressed: () => _onSubmit(context),
+                  iconData: Icons.arrow_forward,
+                  color: _buttonColor(),
+                ),
+      
+          vGap(15),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                widget.isSignUp ? s.already_have_account : s.no_account,
+                style: AppTextStyles.font14GreyRegular,
+              ),
+              TextButton(
+                onPressed: () => widget.isSignUp
+                    ? context.go(LoginView.routeName)
+                    : context.go(SignUpView.routeName),
+                child: Text(
+                  widget.isSignUp ? s.login : s.sign_up,
+                  style: AppTextStyles.font14GreyRegular,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 

@@ -5,7 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiClient {
   static const String baseUrl = kDebugMode
-      ? 'http://127.0.0.1:8080/api/v1'       // dev: simulator uses localhost
+      ? 'http://192.168.8.102:8080/api/v1'       // dev: simulator uses localhost
       : 'https://api.fitquad.com/api/v1';     // production
 
   static const String _tokenKey = 'auth_token';
