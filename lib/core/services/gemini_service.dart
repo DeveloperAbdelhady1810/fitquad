@@ -1,4 +1,6 @@
 import 'package:google_generative_ai/google_generative_ai.dart';
+import 'package:gym_app/features/member/inbody/models/inbody_model.dart';
+import 'package:intl/intl.dart';
 
 class GeminiService {
   static const _apiKey = 'AIzaSyDY20jEm0uOCDg5F3PJRUANQeNzm2Bs6vo';
@@ -50,4 +52,27 @@ Guidelines:
   }
 
   static void clearHistory() => _history.clear();
+
+  static Future<String> sendMessageWithInBody(
+      String userMessage, InBodyModel inBody) async {
+    final dateLabel = DateFormat('MMM d, yyyy')
+        .format(inBody.recordedAt ?? DateTime.now());
+    final lines = <String>[
+      '[Member InBody Data — $dateLabel]',
+      if (inBody.weight != null) '• Weight: ${inBody.weight} kg',
+      if (inBody.bodyFatPct != null) '• Body Fat: ${inBody.bodyFatPct}%',
+      if (inBody.muscleMass != null)
+        '• Muscle Mass: ${inBody.muscleMass} kg',
+      if (inBody.bmi != null) '• BMI: ${inBody.bmi}',
+      if (inBody.bmr != null) '• BMR: ${inBody.bmr} kcal',
+      if (inBody.visceralFat != null)
+        '• Visceral Fat: ${inBody.visceralFat}',
+      if (inBody.inbodyScore != null)
+        '• InBody Score: ${inBody.inbodyScore}/100',
+      '',
+      'Use this data to give personalized advice.',
+    ];
+    final context = lines.join('\n');
+    return sendMessage('$context\n\nMember question: $userMessage');
+  }
 }

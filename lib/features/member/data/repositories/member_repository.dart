@@ -89,6 +89,12 @@ class MemberRepository {
     return res['data'] as List<dynamic>;
   }
 
+  static Future<Map<String, dynamic>> saveInBodyRecord(
+      Map<String, dynamic> data) async {
+    final res = await ApiClient.post('/member/inbody-records', data);
+    return res['data'] as Map<String, dynamic>;
+  }
+
   // ── Check-ins ────────────────────────────────────────────────
   static Future<Map<String, dynamic>> checkIn({int? branchId}) async {
     final res = await ApiClient.post('/member/check-ins', {

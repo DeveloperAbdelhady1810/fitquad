@@ -14,6 +14,9 @@ import 'package:gym_app/features/member/home/manager/member_cubit.dart';
 import 'package:gym_app/features/member/home/ui/widgets/choose_coach_screen.dart';
 import 'package:gym_app/features/member/home/ui/widgets/request_sent_screen.dart';
 import 'package:gym_app/features/member/home/ui/widgets/week_summary_screen.dart';
+import 'package:gym_app/features/member/inbody/manager/inbody_cubit.dart';
+import 'package:gym_app/features/member/inbody/ui/inbody_form_screen.dart';
+import 'package:gym_app/features/member/inbody/ui/inbody_screen.dart';
 import 'package:gym_app/features/member/profile/ui/widgets/profile_tab.dart';
 import 'package:gym_app/features/member/train/widgets/design_manually_screen.dart';
 
@@ -168,6 +171,19 @@ class RoutesList {
           meals: meals,
         );
       },
+    ),
+
+    GoRoute(
+      path: InBodyScreen.routeName,
+      builder: (context, state) => const InBodyScreen(),
+    ),
+
+    GoRoute(
+      path: InBodyFormScreen.routeName,
+      builder: (context, state) => BlocProvider(
+        create: (_) => InBodyCubit(),
+        child: const InBodyFormScreen(),
+      ),
     ),
 
   ];
