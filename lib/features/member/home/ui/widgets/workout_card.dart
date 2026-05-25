@@ -67,11 +67,11 @@ class WorkoutCard extends StatelessWidget {
           /// Info Row
           Row(
             children: [
-              _InfoItem(icon: Icons.timer_outlined, text: duration  , color: AppColors.emerald,),
+              Flexible(child: _InfoItem(icon: Icons.timer_outlined, text: duration  , color: AppColors.emerald,)),
               hGap(10),
-              _InfoItem(icon: Icons.local_fire_department, text: calories , color: AppColors.red,),
+              Flexible(child: _InfoItem(icon: Icons.local_fire_department, text: calories , color: AppColors.red,)),
               hGap(10),
-              _InfoItem(icon: Icons.fitness_center, text: exercisesCount, color: AppColors.blue,),
+              Flexible(child: _InfoItem(icon: Icons.fitness_center, text: exercisesCount, color: AppColors.blue,)),
             ],
           ),
 

@@ -8,6 +8,7 @@ import '../../../home/manager/member_cubit.dart';
 import '../../../home/manager/member_state.dart';
 import '../../../ai/ai_tab.dart';
 import '../../../eat/widgets/eat_tap.dart';
+import '../../../home/manager/food_cubit.dart';
 import '../../../shop/ui/widgets/market_tab.dart';
 import '../../../train/widgets/train_tap.dart';
 import '../../manager/bottom_nav_bar_cubit.dart';
@@ -63,8 +64,11 @@ class BottomNavBarViewState extends State<BottomNavBarView> {
       MarketTab(),
     ];
 
-    return BlocProvider(
-      create: (_) => BottomNavBarCubit(),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(create: (_) => BottomNavBarCubit()),
+        BlocProvider(create: (_) => FoodCubit()..loadFoods()),
+      ],
       child: SafeArea(
         child: GestureDetector(
           onTap: () => FocusScope.of(context).unfocus(),

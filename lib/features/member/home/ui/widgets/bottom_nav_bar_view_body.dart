@@ -32,7 +32,7 @@ class BottomNavBarViewBody extends StatelessWidget {
             BottomNavigationBarItem(icon: Icon(Icons.sports_gymnastics), label: s.train),
             BottomNavigationBarItem(icon: Icon(Icons.smart_toy_outlined), label: s.ai_coach),
             BottomNavigationBarItem(icon: Icon(Icons.restaurant), label:s.eat),
-            BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: s.me),
+            BottomNavigationBarItem(icon: Icon(Icons.storefront_outlined), label: 'Market'),
           ],
         );
       },

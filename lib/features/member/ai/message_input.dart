@@ -18,7 +18,9 @@ class MessageInput extends StatelessWidget {
             child: TextField(
               cursorColor: AppColors.emerald,
               controller: controller,
+              style: const TextStyle(color: Colors.white),
               decoration:  InputDecoration(
+                hintStyle: TextStyle(color: Colors.grey),
                 hintText: "Type a message",
                 focusedBorder: OutlineInputBorder(
                   borderSide: BorderSide(color: AppColors.emerald),

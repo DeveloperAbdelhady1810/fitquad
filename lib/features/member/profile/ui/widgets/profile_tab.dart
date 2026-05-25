@@ -9,6 +9,7 @@ import 'package:gym_app/core/theme/app_text_styles.dart';
 import 'package:gym_app/features/member/home/manager/member_cubit.dart';
 import 'package:gym_app/features/member/home/manager/member_state.dart';
 import 'package:gym_app/features/member/inbody/ui/inbody_screen.dart';
+import 'package:gym_app/features/member/qr/qr_screen.dart';
 
 import '../../../../../generated/l10n.dart';
 
@@ -29,7 +30,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final s = S.of(context);
     return Scaffold(
       backgroundColor: AppColors.primary,
-      body: BlocBuilder<MemberCubit, MemberState>(
+      body: SafeArea(
+        child: BlocBuilder<MemberCubit, MemberState>(
         builder: (context, state) {
           final name = state is MemberLoaded
               ? (state.member.name ?? 'Member')
@@ -40,11 +42,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
           final isActive = state is MemberLoaded &&
               state.member.status?.name == 'active';
 
-          return Column(
+          return SingleChildScrollView(
+            child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
+              // Back button row
+              Align(
+                alignment: Alignment.centerLeft,
+                child: IconButton(
+                  onPressed: () => context.pop(),
+                  icon: Icon(Icons.arrow_back_ios, color: AppColors.grey, size: 20.r),
+                ),
+              ),
               Center(
-                child: Stack(
+                child: GestureDetector(
+                  onTap: () => showQrSheet(context),
+                  child: Stack(
                   children: [
                     CircleAvatar(
                       radius: 44.r,
@@ -80,6 +93,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                     ),
                   ],
+                ),
                 ),
               ),
               vGap(15),
@@ -122,6 +136,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         Icons.arrow_forward_ios_outlined,
                         color: AppColors.grey,
                       ),
+                      onTap: () => _showPersonalDetails(context, state),
                     ),
                     const Divider(),
                     ListTile(
@@ -137,6 +152,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         Icons.arrow_forward_ios_outlined,
                         color: AppColors.grey,
                       ),
+                      onTap: () => _showMembershipInfo(context, state),
                     ),
                     const Divider(),
                     ListTile(
@@ -149,6 +165,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         Icons.arrow_forward_ios_outlined,
                         color: AppColors.grey,
                       ),
+                      onTap: () => _showVisitHistory(context),
                     ),
                     const Divider(),
                     ListTile(
@@ -210,9 +227,115 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ],
                 ),
               ),
+              vGap(20),
             ],
-          );
+          ),
+        );
         },
+      ),
+      ),
+    );
+  }
+
+  void _showPersonalDetails(BuildContext context, MemberState state) {
+    final name = state is MemberLoaded ? (state.member.name ?? '') : '';
+    final weight = state is MemberLoaded ? (state.member.weight?.toString() ?? '') : '';
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.secondary,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (_) => Padding(
+        padding: EdgeInsets.fromLTRB(24, 24, 24, MediaQuery.of(context).viewInsets.bottom + 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Personal Details', style: AppTextStyles.font16WhiteBold),
+            vGap(20),
+            _DetailRow(label: 'Name', value: name.isNotEmpty ? name : '—'),
+            _DetailRow(label: 'Weight', value: weight.isNotEmpty ? '$weight kg' : '—'),
+            _DetailRow(
+              label: 'Goal',
+              value: state is MemberLoaded ? (state.member.type?.name ?? '—') : '—',
+            ),
+            vGap(16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showMembershipInfo(BuildContext context, MemberState state) {
+    final status = state is MemberLoaded ? (state.member.status?.name ?? 'Unknown') : 'Unknown';
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.secondary,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (_) => Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Membership & Billing', style: AppTextStyles.font16WhiteBold),
+            vGap(20),
+            _DetailRow(label: 'Status', value: status.toUpperCase()),
+            _DetailRow(label: 'Plan', value: 'Pro Member'),
+            _DetailRow(label: 'Renewal', value: 'Contact gym reception'),
+            vGap(16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showVisitHistory(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.secondary,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (_) => Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Visit History', style: AppTextStyles.font16WhiteBold),
+            vGap(20),
+            Text(
+              'Your recent gym visits will appear here once check-in data is available.',
+              style: AppTextStyles.font14GreyRegular,
+            ),
+            vGap(16),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DetailRow extends StatelessWidget {
+  final String label;
+  final String value;
+  const _DetailRow({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: AppTextStyles.font14GreyRegular),
+          Text(value, style: AppTextStyles.font14WhiteRegular),
+        ],
       ),
     );
   }

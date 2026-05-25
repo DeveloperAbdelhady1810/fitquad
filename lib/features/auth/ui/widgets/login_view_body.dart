@@ -13,6 +13,7 @@ import 'package:gym_app/core/theme/app_text_styles.dart';
 import 'package:gym_app/core/widgets/custom_tab_bar.dart';
 
 import '../../../../generated/l10n.dart';
+import '../../../member/home/ui/views/bottom_nav_bar_view.dart';
 import '../../data/auth_repository.dart';
 import '../../data/social_auth_service.dart';
 import '../../ui/views/survey_view.dart';
@@ -38,7 +39,7 @@ class _LoginViewBodyState extends State<LoginViewBody> {
 
     try {
       final result = await getCredential();
-      await AuthRepository.socialLogin(
+      final data = await AuthRepository.socialLogin(
         provider: result.provider,
         providerId: result.providerId,
         email: result.email,
@@ -46,7 +47,8 @@ class _LoginViewBodyState extends State<LoginViewBody> {
       );
 
       if (!mounted) return;
-      context.go(OnboardingView.routeName);
+      final isOnboarded = data['is_onboarded'] == true;
+      context.go(isOnboarded ? BottomNavBarView.routeName : OnboardingView.routeName);
     } catch (e) {
       if (!mounted) return;
       setState(() => _socialError = e.toString().replaceFirst('Exception: ', ''));

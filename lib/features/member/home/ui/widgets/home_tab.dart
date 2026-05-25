@@ -4,6 +4,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:gym_app/features/member/gym/models/gym_model.dart';
 import 'package:gym_app/features/member/home/ui/widgets/plan_dilog.dart';
+import 'package:gym_app/features/member/notifications/notifications_screen.dart';
+import 'package:gym_app/features/member/qr/qr_screen.dart';
 import 'package:intl/intl.dart';
 import 'package:printing/printing.dart';
 
@@ -107,19 +109,19 @@ class _HomeTabState extends State<HomeTab> {
                     style: AppTextStyles.font14GreyRegular,
                   ),
                   subtitle: Text(
-                    'Hello, ${state is MemberLoaded ? state.member.name : ""}',
+                    'Hello, ${state is MemberLoaded ? (state.member.name ?? 'there') : '...'}',
                     style: AppTextStyles.font16WhiteBold,
                   ),
                 ),
                 actions: [
-                  _iconButton(Icons.qr_code_2, () {}),
+                  _iconButton(Icons.qr_code_2, () => showQrSheet(context)),
                   hGap(10),
                   _iconButton(
                     Icons.person_outline,
                         () => context.push(ProfileScreen.routeName),
                   ),
                   hGap(10),
-                  _iconButton(Icons.notifications_none, () {}),
+                  _iconButton(Icons.notifications_none, () => context.push(NotificationsScreen.routeName)),
                 ],
               ),
               vGap(10),
@@ -389,8 +391,12 @@ class _WatchStatsRow extends StatelessWidget {
       }
     } catch (e) {
       if (context.mounted) {
+        final errStr = e.toString().toLowerCase();
+        final msg = errStr.contains('coach') || errStr.contains('assign')
+            ? "You don't have an assigned coach yet. Go to Personal Training to request one."
+            : 'Could not send the summary. Please try again.';
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not send: $e')),
+          SnackBar(content: Text(msg)),
         );
       }
     }

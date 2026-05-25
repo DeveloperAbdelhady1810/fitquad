@@ -29,58 +29,106 @@ Future<void> showWorkoutDialog(
           child: BlocBuilder<MemberCubit, MemberState>(
             builder: (context, state) {
               final s = S.of(context);
+              final cubit = context.read<MemberCubit>();
+              final plan = cubit.workoutPlan;
+
+              String title = 'Today\'s Workout';
+              String muscleGroup = 'Full Body';
+              List<Map<String, dynamic>> exercises = [];
+
+              if (plan != null) {
+                try {
+                  final now = DateTime.now();
+                  final dayIndex = now.weekday - 1;
+                  final days = plan['days'] as List?;
+                  if (days != null && dayIndex < days.length) {
+                    final today = days[dayIndex] as Map<String, dynamic>;
+                    title = today['title'] as String? ??
+                        today['muscle_group'] as String? ??
+                        title;
+                    muscleGroup = today['muscle_group'] as String? ?? muscleGroup;
+                    final exList = today['exercises'] as List?;
+                    if (exList != null) {
+                      exercises = exList
+                          .take(4)
+                          .map((e) => e as Map<String, dynamic>)
+                          .toList();
+                    }
+                  }
+                } catch (_) {}
+              }
 
               return Container(
-                padding: const EdgeInsets.all(16),
-                height: MediaQuery.of(context).size.height * 0.5,
+                padding: const EdgeInsets.all(20),
                 decoration: AppDecorations.containerDecoration.copyWith(
                   color: AppColors.primary,
                 ),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    CircleAvatar(
-                      backgroundColor: AppColors.emerald.withValues(alpha: 0.3),
-                      radius: 40.r,
-                      child: Icon(
-                        Icons.fitness_center,
-                        color: AppColors.emerald,
-                        size: 30.sp,
-                      ),
-                    ),
-                    vGap(10),
-                    Text('Upper Body Workout', style: AppTextStyles.font16WhiteBold,),
-
-
-                     Text('8 Exercises • 45 Minutes • 320 kcal', style: AppTextStyles.font14GreyRegular,),
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Expanded(
-                          child: Container(decoration: AppDecorations.containerDecoration, padding: EdgeInsets.all(10),child: Center(
-                            child: ListTile(title: Text('data'), subtitle: Text('data'),),
-                          ),),
+                        Container(
+                          width: 48.r,
+                          height: 48.r,
+                          decoration: BoxDecoration(
+                            color: AppColors.emerald.withValues(alpha: 0.15),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(Icons.fitness_center,
+                              color: AppColors.emerald, size: 24.r),
                         ),
-                        hGap(5),
+                        hGap(14),
                         Expanded(
-                          child: Container(decoration: AppDecorations.containerDecoration, padding: EdgeInsets.all(10),child: Center(
-                            child: ListTile(title: Text('data'), subtitle: Text('data'),),
-                          ),),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(title, style: AppTextStyles.font16WhiteBold),
+                              Text(muscleGroup,
+                                  style: AppTextStyles.font14GreyRegular
+                                      .copyWith(color: AppColors.emerald)),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => Navigator.pop(context),
+                          icon: Icon(Icons.close, color: AppColors.grey, size: 20.r),
                         ),
                       ],
                     ),
-                    const Spacer(),
-
+                    vGap(16),
                     const Divider(),
-                    vGap(5),
+                    vGap(8),
+                    if (exercises.isNotEmpty) ...[
+                      Text('Exercises', style: AppTextStyles.font14GreyRegular),
+                      vGap(8),
+                      ...exercises.map((ex) => _ExerciseRow(exercise: ex)),
+                      vGap(8),
+                    ] else ...[
+                      Container(
+                        padding: EdgeInsets.symmetric(vertical: 12.h),
+                        child: Row(
+                          children: [
+                            Icon(Icons.timer_outlined,
+                                color: AppColors.teal, size: 16.r),
+                            hGap(6),
+                            Text('45 min  •  8 exercises  •  ~320 kcal',
+                                style: AppTextStyles.font14GreyRegular),
+                          ],
+                        ),
+                      ),
+                      vGap(8),
+                    ],
+                    const Divider(),
+                    vGap(12),
                     CustomButton(
-                      onPressed: () => showWorkoutPageViewDialog(
-                        context,
-
-                      ),
-                      text:
-                        s.start_workout,
-                      ),
+                      onPressed: () {
+                        Navigator.pop(context);
+                        showWorkoutPageViewDialog(context);
+                      },
+                      text: s.start_workout,
+                    ),
                   ],
                 ),
               );
@@ -90,4 +138,41 @@ Future<void> showWorkoutDialog(
       );
     },
   );
+}
+
+class _ExerciseRow extends StatelessWidget {
+  final Map<String, dynamic> exercise;
+  const _ExerciseRow({required this.exercise});
+
+  @override
+  Widget build(BuildContext context) {
+    final name = exercise['name'] as String? ?? 'Exercise';
+    final sets = exercise['sets']?.toString() ?? '3';
+    final reps = exercise['reps']?.toString() ?? '12';
+
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 5.h),
+      child: Row(
+        children: [
+          Container(
+            width: 32.r,
+            height: 32.r,
+            decoration: BoxDecoration(
+              color: AppColors.teal.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(8.r),
+            ),
+            child: Icon(Icons.fitness_center,
+                color: AppColors.teal, size: 16.r),
+          ),
+          hGap(10),
+          Expanded(
+            child: Text(name, style: AppTextStyles.font14WhiteRegular),
+          ),
+          Text('$sets × $reps',
+              style:
+                  AppTextStyles.font14GreyRegular.copyWith(color: AppColors.teal)),
+        ],
+      ),
+    );
+  }
 }
