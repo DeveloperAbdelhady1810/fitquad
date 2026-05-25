@@ -3,7 +3,7 @@ import 'package:gym_app/features/member/inbody/models/inbody_model.dart';
 import 'package:intl/intl.dart';
 
 class GeminiService {
-  static const _apiKey = 'AIzaSyDY20jEm0uOCDg5F3PJRUANQeNzm2Bs6vo';
+  static const _apiKey = 'AIzaSyAvKS0EiJZVHrQYEmvICzXrY6Bxa-aQ2Xo';
 
   static const _systemPrompt = '''
 You are FitQuad AI Coach — a professional fitness and nutrition assistant built into the FitQuad gym app.

@@ -36,11 +36,16 @@ class MemberModel {
   bool get needsGymSelection => trainingMode == null;
 
   factory MemberModel.fromJson(Map<String, dynamic> json) {
-    final member = json['member'] ?? json;
-    final user = json['user'] ?? {};
+    final member = (json['member'] as Map<String, dynamic>?) ?? json;
+    // user is nested inside member (loaded via ->load('user') in backend)
+    final user = (member['user'] as Map<String, dynamic>?) ??
+        (json['user'] as Map<String, dynamic>?) ??
+        <String, dynamic>{};
     return MemberModel(
       id: member['id']?.toString(),
-      name: user['name'] as String? ?? member['name'] as String?,
+      name: (user['name'] as String?)?.isNotEmpty == true
+          ? user['name'] as String
+          : (member['name'] as String?),
       weight: (member['current_weight'] as num?)?.toDouble(),
       sleepHrs: (member['sleep_hours'] as num?)?.toDouble(),
       waterL: (member['water_liters'] as num?)?.toDouble(),

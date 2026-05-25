@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gym_app/core/helpers/app_constants.dart';
+import 'package:intl/intl.dart';
 
 import '../../../../core/helpers/shared_pref_helper.dart';
 import '../../data/models/coach_model.dart';
@@ -13,16 +14,46 @@ class MemberCubit extends Cubit<MemberState> {
 
   Map<String, dynamic>? workoutPlan;
   Map<String, dynamic>? nutritionPlan;
+  String? todayWorkoutStatus; // null | 'done' | 'semi'
+  List<double> weekCheckIns = [0, 0, 0, 0, 0, 0, 0]; // Mon–Sun
+
+  static String get _todayKey =>
+      'workout_status_${DateFormat('yyyy-MM-dd').format(DateTime.now())}';
 
   Future<void> loadAll() async {
     await loadMember();
     final results = await Future.wait([
       MemberRepository.getWorkoutPlan().catchError((_) => null),
       MemberRepository.getNutritionPlan().catchError((_) => null),
+      _loadWeekCheckIns().catchError((_) {}),
     ]);
-    workoutPlan = results[0];
-    nutritionPlan = results[1];
+    workoutPlan = results[0] as Map<String, dynamic>?;
+    nutritionPlan = results[1] as Map<String, dynamic>?;
+    final saved = (await SharedPrefHelper.getString(_todayKey)) as String;
+    todayWorkoutStatus = saved.isNotEmpty ? saved : null;
     if (state is MemberLoaded) emit(MemberLoaded((state as MemberLoaded).member));
+  }
+
+  Future<void> _loadWeekCheckIns() async {
+    final checkIns = await MemberRepository.getCheckIns();
+    final now = DateTime.now();
+    final weekStart = now.subtract(Duration(days: now.weekday - 1));
+    final counts = List<double>.filled(7, 0);
+    for (final ci in checkIns) {
+      final raw = ci['checked_in_at'] as String?;
+      if (raw == null) continue;
+      final date = DateTime.tryParse(raw);
+      if (date == null) continue;
+      final diff = date.difference(weekStart).inDays;
+      if (diff >= 0 && diff < 7) counts[diff]++;
+    }
+    weekCheckIns = counts;
+  }
+
+  Future<void> markWorkoutDone(String status) async {
+    todayWorkoutStatus = status;
+    await SharedPrefHelper.setData(_todayKey, status);
+    emit(MemberUpdated());
   }
 
   Future<void> loadMember() async {

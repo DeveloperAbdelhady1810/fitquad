@@ -6,12 +6,12 @@ final class OnboardingInitial extends OnboardingState {}
 
 final class OnboardingChanged extends OnboardingState {
   final GoalType? goal;
-  final WorkoutDuration? duration;
-  final AvailabilityType? availability;
+  final WorkoutDuration duration;
+  final AvailabilityType availability;
 
   OnboardingChanged({
     this.goal,
-    this.duration,
-    this.availability,
+    this.duration = WorkoutDuration.min45,
+    this.availability = AvailabilityType.fourDays,
   });
 }

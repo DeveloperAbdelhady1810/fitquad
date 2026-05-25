@@ -126,6 +126,15 @@ class MemberRepository {
     return res['data'] as Map<String, dynamic>;
   }
 
+  static Future<List<dynamic>> getCheckIns() async {
+    final res = await ApiClient.get('/member/check-ins');
+    final data = res['data'];
+    // Paginated response has 'data' key inside
+    if (data is Map && data['data'] is List) return data['data'] as List;
+    if (data is List) return data;
+    return [];
+  }
+
   // ── Sessions ─────────────────────────────────────────────────
   static Future<List<dynamic>> getSessions() async {
     final res = await ApiClient.get('/member/sessions');

@@ -8,8 +8,8 @@ class OnboardingCubit extends Cubit<OnboardingState> {
   OnboardingCubit() : super(OnboardingInitial());
 
   GoalType? _goal;
-  WorkoutDuration? _duration;
-  AvailabilityType? _availability;
+  WorkoutDuration _duration = WorkoutDuration.min45;
+  AvailabilityType _availability = AvailabilityType.fourDays;
 
   void setGoal(GoalType value) {
     _goal = value;
@@ -23,7 +23,7 @@ class OnboardingCubit extends Cubit<OnboardingState> {
 
   void setAvailabilityFromSlider(double value) {
     _availability = AvailabilityType.values
-        .firstWhere((e) => e.days == value.round());
+        .firstWhere((e) => e.days == value.round(), orElse: () => AvailabilityType.fourDays);
     _emit();
   }
 
@@ -32,6 +32,8 @@ class OnboardingCubit extends Cubit<OnboardingState> {
     try {
       await ApiClient.post('/auth/profile', {
         'goal': _goalToApiValue(_goal!),
+        'availability_days': _availability.days,
+        'workout_duration_mins': _duration.minutes,
       });
     } catch (_) {}
   }
@@ -52,4 +54,10 @@ class OnboardingCubit extends Cubit<OnboardingState> {
       availability: _availability,
     ));
   }
+
+  OnboardingChanged get currentSummary => OnboardingChanged(
+        goal: _goal,
+        duration: _duration,
+        availability: _availability,
+      );
 }

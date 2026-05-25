@@ -19,9 +19,10 @@ class StepSummary extends StatelessWidget {
       builder: (context, state) {
         final s= S.of(context);
 
-        if (state is! OnboardingChanged) {
-          return const SizedBox();
-        }
+        // Always show the summary — use defaults from cubit if state is initial
+        final onboarding = state is OnboardingChanged
+            ? state
+            : context.read<OnboardingCubit>().currentSummary;
 
         return Padding(
           padding: const EdgeInsets.only(top: 20),
@@ -46,9 +47,9 @@ class StepSummary extends StatelessWidget {
                 padding: EdgeInsets.all(16),
                 child: Column(
                   children: [
-                    _row(title: s.goal, icon: Icons.change_circle_outlined, color: Colors.green, value: state.goal?.label(context)??''),
-                    _row(title: s.frequency, icon: Icons.date_range, color: AppColors.blue, value:'${state.availability?.days.toString()} ${s.days_per_week}'),
-                    _row(title: s.duration, icon: Icons.access_time, color: AppColors.purple, value:'${state.duration?.minutes.toString()} ${s.mins}'),
+                    _row(title: s.goal, icon: Icons.change_circle_outlined, color: Colors.green, value: onboarding.goal?.label(context) ?? '—'),
+                    _row(title: s.frequency, icon: Icons.date_range, color: AppColors.blue, value: '${onboarding.availability.days} ${s.days_per_week}'),
+                    _row(title: s.duration, icon: Icons.access_time, color: AppColors.purple, value: '${onboarding.duration.minutes} ${s.mins}'),
                   ],
                 ),
               )

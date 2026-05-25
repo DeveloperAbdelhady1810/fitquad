@@ -2,10 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:gym_app/core/enums/choose_coach.dart';
 import 'package:gym_app/features/member/gym/models/gym_model.dart';
+import 'package:gym_app/features/member/home/ui/widgets/choose_coach_screen.dart';
 import 'package:gym_app/features/member/home/ui/widgets/plan_dilog.dart';
 import 'package:gym_app/features/member/notifications/notifications_screen.dart';
 import 'package:gym_app/features/member/qr/qr_screen.dart';
+import 'package:gym_app/features/member/home/manager/bottom_nav_bar_cubit.dart';
+import 'package:gym_app/features/member/train/widgets/design_manually_screen.dart';
 import 'package:intl/intl.dart';
 import 'package:printing/printing.dart';
 
@@ -28,7 +32,6 @@ import 'food_dialog.dart';
 import 'nutrition_progress_container.dart';
 import 'sleep_dialog.dart';
 import 'weight_dialog.dart';
-import 'workout_card.dart';
 import '../../../profile/ui/widgets/profile_tab.dart';
 
 class HomeTab extends StatefulWidget {
@@ -172,8 +175,8 @@ class _HomeTabState extends State<HomeTab> {
                 height: 200.h,
                 decoration: AppDecorations.containerDecoration,
                 child: WeeklyColumnChart(
-                  values: [30, 50, 20, 80, 60, 40, 70],
-                  maxY: 100,
+                  values: context.read<MemberCubit>().weekCheckIns,
+                  maxY: context.read<MemberCubit>().weekCheckIns.reduce((a, b) => a > b ? a : b).clamp(1, double.infinity),
                   barColor: AppColors.teal,
                 ),
               ),
@@ -225,43 +228,45 @@ class _HomeTabState extends State<HomeTab> {
     final cubit = context.read<MemberCubit>();
     final plan = cubit.workoutPlan;
 
-    String title = 'Upper Body Power';
-    String subtitle = 'Chest, Shoulders & Triceps';
-
-    if (plan != null) {
-      try {
-        final now = DateTime.now();
-        final dayIndex = now.weekday - 1; // 0=Mon … 6=Sun
-        final days = plan['days'] as List?;
-        if (days != null && dayIndex < days.length) {
-          final today = days[dayIndex] as Map<String, dynamic>;
-          title = today['title'] as String? ??
-              today['muscle_group'] as String? ??
-              today['type'] as String? ??
-              title;
-          final exList = today['exercises'] as List?;
-          if (exList != null && exList.isNotEmpty) {
-            subtitle = exList
-                .take(3)
-                .map((e) => (e['name'] ?? e.toString()).toString())
-                .join(', ');
-          }
-        }
-      } catch (_) {}
+    if (plan == null) {
+      return _NoPlanCard();
     }
 
-    return WorkoutCard(
+    // Find today's workout day by order (1=Mon … 7=Sun)
+    final todayOrder = DateTime.now().weekday; // 1=Mon, 7=Sun
+    Map<String, dynamic>? todayDay;
+    try {
+      final days = plan['days'] as List?;
+      if (days != null) {
+        // Try by order field first, fall back to index
+        todayDay = days.cast<Map<String, dynamic>>().firstWhere(
+              (d) => (d['order'] as num?)?.toInt() == todayOrder,
+              orElse: () => days[(todayOrder - 1).clamp(0, days.length - 1)]
+                  as Map<String, dynamic>,
+            );
+      }
+    } catch (_) {}
+
+    if (todayDay == null) return _NoPlanCard();
+
+    final title = todayDay['day_name'] as String? ?? 'Day ${todayDay['order']}';
+    final exercises = (todayDay['exercises'] as List? ?? [])
+        .cast<Map<String, dynamic>>();
+    final status = cubit.todayWorkoutStatus;
+
+    return _RealWorkoutCard(
       title: title,
-      subtitle: subtitle,
-      duration: '45 min',
-      calories: '320 kcal',
-      exercisesCount: '8 Exercises',
+      planTitle: plan['title'] as String? ?? 'Workout Plan',
+      exercises: exercises,
+      status: status,
       onStart: () async {
         await cubit.restoreWorkout();
         if (pageController != null && context.mounted) {
           showWorkoutDialog(context, pageController: pageController!);
         }
       },
+      onMarkDone: () => cubit.markWorkoutDone('done'),
+      onMarkSemi: () => cubit.markWorkoutDone('semi'),
     );
   }
 
@@ -590,6 +595,260 @@ class _WatchStat extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// ── No Plan Card ─────────────────────────────────────────────────────────────
+
+class _NoPlanCard extends StatelessWidget {
+  const _NoPlanCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.all(20.r),
+      decoration: AppDecorations.containerDecoration,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.fitness_center, color: AppColors.grey, size: 20.r),
+              hGap(8),
+              Text('No Workout Plan Yet', style: AppTextStyles.font16WhiteBold),
+            ],
+          ),
+          vGap(8),
+          Text(
+            'Create a plan to start tracking your workouts.',
+            style: AppTextStyles.font14GreyRegular,
+          ),
+          vGap(16),
+          _PlanOptionButton(
+            icon: Icons.edit_note_outlined,
+            label: 'Design Manually',
+            color: AppColors.blue,
+            onTap: () => context.push(DesignPlanManuallyScreen.routeName),
+          ),
+          vGap(8),
+          _PlanOptionButton(
+            icon: Icons.smart_toy_outlined,
+            label: 'Ask AI Coach',
+            color: AppColors.teal,
+            onTap: () => context.read<BottomNavBarCubit>().changeIndex(2),
+          ),
+          vGap(8),
+          _PlanOptionButton(
+            icon: Icons.sports_gymnastics,
+            label: 'Hire a Coach',
+            color: AppColors.purple,
+            onTap: () => context.push(ChooseCoachScreen.routeName, extra: ChooseCoachSource.train),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PlanOptionButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+  const _PlanOptionButton({required this.icon, required this.label, required this.color, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(10.r),
+          border: Border.all(color: color.withValues(alpha: 0.3)),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: color, size: 18.r),
+            hGap(10),
+            Text(label, style: AppTextStyles.font14WhiteRegular.copyWith(color: color)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Real Workout Card ─────────────────────────────────────────────────────────
+
+class _RealWorkoutCard extends StatelessWidget {
+  final String title;
+  final String planTitle;
+  final List<Map<String, dynamic>> exercises;
+  final String? status;
+  final VoidCallback onStart;
+  final VoidCallback onMarkDone;
+  final VoidCallback onMarkSemi;
+
+  const _RealWorkoutCard({
+    required this.title,
+    required this.planTitle,
+    required this.exercises,
+    required this.status,
+    required this.onStart,
+    required this.onMarkDone,
+    required this.onMarkSemi,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDone = status == 'done';
+    final isSemi = status == 'semi';
+    final statusColor = isDone ? AppColors.emerald : isSemi ? const Color(0xFFFFD700) : null;
+
+    return Container(
+      padding: EdgeInsets.all(16.r),
+      decoration: AppDecorations.containerDecoration.copyWith(
+        border: Border(
+          right: BorderSide(
+            color: statusColor ?? AppColors.emerald,
+            width: 7,
+          ),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, style: AppTextStyles.font16WhiteBold),
+                    vGap(2),
+                    Text(planTitle,
+                        style: AppTextStyles.font14GreyRegular
+                            .copyWith(color: AppColors.emerald, fontSize: 11.sp)),
+                  ],
+                ),
+              ),
+              if (isDone)
+                _StatusChip(label: 'Done', color: AppColors.emerald, icon: Icons.check_circle)
+              else if (isSemi)
+                _StatusChip(label: 'Partial', color: const Color(0xFFFFD700), icon: Icons.remove_circle_outline),
+            ],
+          ),
+          vGap(12),
+          if (exercises.isNotEmpty) ...[
+            ...exercises.take(4).map((ex) {
+              final name = ex['name'] as String? ?? 'Exercise';
+              final pivot = ex['pivot'] as Map<String, dynamic>? ?? {};
+              final sets = pivot['sets']?.toString() ?? '3';
+              final reps = pivot['reps']?.toString() ?? '12';
+              return Padding(
+                padding: EdgeInsets.symmetric(vertical: 3.h),
+                child: Row(
+                  children: [
+                    Icon(Icons.circle, size: 6.r, color: AppColors.teal),
+                    hGap(8),
+                    Expanded(child: Text(name, style: AppTextStyles.font14GreyRegular)),
+                    Text('$sets×$reps',
+                        style: AppTextStyles.font14GreyRegular
+                            .copyWith(color: AppColors.teal, fontSize: 12.sp)),
+                  ],
+                ),
+              );
+            }),
+            if (exercises.length > 4)
+              Padding(
+                padding: EdgeInsets.only(top: 4.h),
+                child: Text('+${exercises.length - 4} more exercises',
+                    style: AppTextStyles.font14GreyRegular.copyWith(fontSize: 11.sp)),
+              ),
+          ] else
+            Text('Rest day or no exercises assigned',
+                style: AppTextStyles.font14GreyRegular),
+          vGap(14),
+          const Divider(),
+          vGap(8),
+          Row(
+            children: [
+              Expanded(
+                flex: 2,
+                child: ElevatedButton.icon(
+                  onPressed: onStart,
+                  icon: Icon(Icons.play_arrow, size: 16.r),
+                  label: Text('Start', style: AppTextStyles.font14WhiteRegular),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.teal,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
+                    padding: EdgeInsets.symmetric(vertical: 8.h),
+                  ),
+                ),
+              ),
+              hGap(6),
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: isDone ? null : onMarkDone,
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: isDone ? Colors.grey : AppColors.emerald),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
+                    padding: EdgeInsets.symmetric(vertical: 8.h),
+                  ),
+                  child: Text('Done',
+                      style: AppTextStyles.font14GreyRegular
+                          .copyWith(color: isDone ? Colors.grey : AppColors.emerald, fontSize: 12.sp)),
+                ),
+              ),
+              hGap(6),
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: isSemi ? null : onMarkSemi,
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: isSemi ? Colors.grey : const Color(0xFFFFD700)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
+                    padding: EdgeInsets.symmetric(vertical: 8.h),
+                  ),
+                  child: Text('Partial',
+                      style: AppTextStyles.font14GreyRegular
+                          .copyWith(color: isSemi ? Colors.grey : const Color(0xFFFFD700), fontSize: 12.sp)),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StatusChip extends StatelessWidget {
+  final String label;
+  final Color color;
+  final IconData icon;
+  const _StatusChip({required this.label, required this.color, required this.icon});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(20.r),
+        border: Border.all(color: color.withValues(alpha: 0.5)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: color, size: 12.r),
+          SizedBox(width: 4.w),
+          Text(label, style: AppTextStyles.font14GreyRegular.copyWith(color: color, fontSize: 11.sp)),
+        ],
       ),
     );
   }
