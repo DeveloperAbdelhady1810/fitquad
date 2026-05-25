@@ -1,14 +1,13 @@
 import 'package:bloc/bloc.dart';
-import 'package:gym_app/core/services/gemini_service.dart';
-
 import 'package:gym_app/features/member/data/models/message_model.dart';
+import 'package:gym_app/features/member/data/repositories/member_repository.dart';
 
 class AiAssistantCubit extends Cubit<List<ChatMessage>> {
   AiAssistantCubit()
       : super([
           ChatMessage(
             text:
-                "Hello! I'm your FitQuad AI Coach powered by Gemini. I can help you build workout plans, plan your nutrition, or answer any fitness question. What would you like to do today?",
+                "Hello! I'm your FitQuad AI Coach. I can help you build workout plans, plan your nutrition, or answer any fitness question. What would you like to do today?",
             isUser: false,
           ),
         ]);
@@ -20,7 +19,7 @@ class AiAssistantCubit extends Cubit<List<ChatMessage>> {
     emit([...state, ChatMessage(text: '', isUser: false, isTyping: true)]);
 
     try {
-      final reply = await GeminiService.sendMessage(text);
+      final reply = await MemberRepository.sendAiMessage(text);
       emit([
         ...state.where((m) => !m.isTyping),
         ChatMessage(text: reply, isUser: false),
@@ -37,11 +36,10 @@ class AiAssistantCubit extends Cubit<List<ChatMessage>> {
   }
 
   void clearChat() {
-    GeminiService.clearHistory();
     emit([
       ChatMessage(
         text:
-            "Hello! I'm your FitQuad AI Coach powered by Gemini. I can help you build workout plans, plan your nutrition, or answer any fitness question. What would you like to do today?",
+            "Hello! I'm your FitQuad AI Coach. I can help you build workout plans, plan your nutrition, or answer any fitness question. What would you like to do today?",
         isUser: false,
       ),
     ]);
