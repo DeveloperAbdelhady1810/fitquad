@@ -1,17 +1,17 @@
 import 'package:bloc/bloc.dart';
+import 'package:gym_app/core/services/gemini_service.dart';
 
-import '../../../member/data/repositories/member_repository.dart';
-import '../../data/models/message_model.dart';
+import 'package:gym_app/features/member/data/models/message_model.dart';
 
 class AiAssistantCubit extends Cubit<List<ChatMessage>> {
   AiAssistantCubit()
-    : super([
-        ChatMessage(
-          text:
-              "Hello! I'm your AI Coach. I can help you customize your training, build meal plans, or adjust your goals. What would you like to do today?",
-          isUser: false,
-        ),
-      ]);
+      : super([
+          ChatMessage(
+            text:
+                "Hello! I'm your FitQuad AI Coach powered by Gemini. I can help you build workout plans, plan your nutrition, or answer any fitness question. What would you like to do today?",
+            isUser: false,
+          ),
+        ]);
 
   Future<void> sendMessage(String text) async {
     if (text.isEmpty) return;
@@ -20,19 +20,30 @@ class AiAssistantCubit extends Cubit<List<ChatMessage>> {
     emit([...state, ChatMessage(text: '', isUser: false, isTyping: true)]);
 
     try {
-      final reply = await MemberRepository.sendAiMessage(text);
+      final reply = await GeminiService.sendMessage(text);
       emit([
         ...state.where((m) => !m.isTyping),
         ChatMessage(text: reply, isUser: false),
       ]);
-    } catch (_) {
+    } catch (e) {
       emit([
         ...state.where((m) => !m.isTyping),
         ChatMessage(
-          text: "Sorry, I couldn't connect to the AI right now. Please try again.",
+          text: "Sorry, I couldn't connect right now. Please check your internet and try again.",
           isUser: false,
         ),
       ]);
     }
+  }
+
+  void clearChat() {
+    GeminiService.clearHistory();
+    emit([
+      ChatMessage(
+        text:
+            "Hello! I'm your FitQuad AI Coach powered by Gemini. I can help you build workout plans, plan your nutrition, or answer any fitness question. What would you like to do today?",
+        isUser: false,
+      ),
+    ]);
   }
 }

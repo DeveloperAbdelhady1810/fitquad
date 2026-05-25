@@ -40,12 +40,12 @@ dependencies:
   sign_in_with_apple: ^6.1.2
   google_sign_in: ^6.2.2
   auto_size_text: ^3.0.0
+  google_generative_ai: ^0.4.6
 dev_dependencies:
   flutter_test:
     sdk: flutter
-
-
   flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.14.1
 
 flutter:
 
@@ -55,6 +55,18 @@ flutter:
     - assets/images/
 
 
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/FitQuad.png"
+  adaptive_icon_background: "#1E0A35"
+  adaptive_icon_foreground: "assets/images/FitQuad.png"
+  web:
+    generate: false
+  macos:
+    generate: true
+    image_path: "assets/images/FitQuad.png"
 
 flutter_native_splash:
   color: "#FFFFFF"
