@@ -11,6 +11,20 @@ import 'member_state.dart';
 class MemberCubit extends Cubit<MemberState> {
   MemberCubit() : super(MemberLoading());
 
+  Map<String, dynamic>? workoutPlan;
+  Map<String, dynamic>? nutritionPlan;
+
+  Future<void> loadAll() async {
+    await loadMember();
+    final results = await Future.wait([
+      MemberRepository.getWorkoutPlan().catchError((_) => null),
+      MemberRepository.getNutritionPlan().catchError((_) => null),
+    ]);
+    workoutPlan = results[0];
+    nutritionPlan = results[1];
+    if (state is MemberLoaded) emit(MemberLoaded((state as MemberLoaded).member));
+  }
+
   Future<void> loadMember() async {
     try {
       emit(MemberLoading());

@@ -126,24 +126,7 @@ class _HomeTabState extends State<HomeTab> {
                 ],
               ),
               vGap(10),
-              WorkoutCard(
-                title: 'Upper Body Power',
-                subtitle: 'Chest, Shoulders & Triceps',
-                duration: '45 min',
-                calories: '320 kcal',
-                exercisesCount: '8 Exercises',
-                onStart: () async {
-                  final cubit = context.read<MemberCubit>();
-                  await cubit.restoreWorkout();
-
-                  if (pageController != null) {
-                    showWorkoutDialog(
-                      context,
-                      pageController: pageController!,
-                    );
-                  }
-                },
-              ),
+              _buildWorkoutCard(context, state),
               vGap(15),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -160,32 +143,7 @@ class _HomeTabState extends State<HomeTab> {
                 ],
               ),
               vGap(10),
-              Row(
-                children: [
-                  Expanded(
-                    child: NutritionProgressContainer(
-                      title: s.calories,
-                      value: 1240,
-                      target: 2400,
-                      icon: Icon(
-                        Icons.local_fire_department_outlined,
-                        color: AppColors.red,
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: NutritionProgressContainer(
-                      title: s.protein,
-                      value: 110,
-                      target: 180,
-                      icon: Icon(
-                        Icons.circle_outlined,
-                        color: AppColors.blue,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+              _buildNutritionRow(context, s),
               vGap(15),
               Text(s.activity,
                   style: AppTextStyles.font16WhiteBold),
@@ -240,6 +198,94 @@ class _HomeTabState extends State<HomeTab> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildWorkoutCard(BuildContext context, MemberState state) {
+    final cubit = context.read<MemberCubit>();
+    final plan = cubit.workoutPlan;
+
+    String title = 'Upper Body Power';
+    String subtitle = 'Chest, Shoulders & Triceps';
+
+    if (plan != null) {
+      try {
+        final now = DateTime.now();
+        final dayIndex = now.weekday - 1; // 0=Mon … 6=Sun
+        final days = plan['days'] as List?;
+        if (days != null && dayIndex < days.length) {
+          final today = days[dayIndex] as Map<String, dynamic>;
+          title = today['title'] as String? ??
+              today['muscle_group'] as String? ??
+              today['type'] as String? ??
+              title;
+          final exList = today['exercises'] as List?;
+          if (exList != null && exList.isNotEmpty) {
+            subtitle = exList
+                .take(3)
+                .map((e) => (e['name'] ?? e.toString()).toString())
+                .join(', ');
+          }
+        }
+      } catch (_) {}
+    }
+
+    return WorkoutCard(
+      title: title,
+      subtitle: subtitle,
+      duration: '45 min',
+      calories: '320 kcal',
+      exercisesCount: '8 Exercises',
+      onStart: () async {
+        await cubit.restoreWorkout();
+        if (pageController != null && context.mounted) {
+          showWorkoutDialog(context, pageController: pageController!);
+        }
+      },
+    );
+  }
+
+  Widget _buildNutritionRow(BuildContext context, dynamic s) {
+    final cubit = context.read<MemberCubit>();
+    final plan = cubit.nutritionPlan;
+
+    double caloriesTarget = 2400;
+    double proteinTarget = 180;
+    // If the nutrition plan has targets, use them
+    if (plan != null) {
+      try {
+        caloriesTarget =
+            (plan['calorie_target'] as num?)?.toDouble() ?? caloriesTarget;
+        proteinTarget =
+            (plan['protein_target'] as num?)?.toDouble() ?? proteinTarget;
+      } catch (_) {}
+    }
+
+    return Row(
+      children: [
+        Expanded(
+          child: NutritionProgressContainer(
+            title: s.calories,
+            value: 0,
+            target: caloriesTarget,
+            icon: Icon(
+              Icons.local_fire_department_outlined,
+              color: AppColors.red,
+            ),
+          ),
+        ),
+        Expanded(
+          child: NutritionProgressContainer(
+            title: s.protein,
+            value: 0.0,
+            target: proteinTarget,
+            icon: Icon(
+              Icons.circle_outlined,
+              color: AppColors.blue,
+            ),
+          ),
+        ),
+      ],
     );
   }
 

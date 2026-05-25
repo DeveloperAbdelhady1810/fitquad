@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../home/manager/member_cubit.dart';
 import '../../../ai/ai_tab.dart';
 import '../../../eat/widgets/eat_tap.dart';
 import '../../../shop/ui/widgets/market_tab.dart';
@@ -25,7 +26,9 @@ class BottomNavBarViewState extends State<BottomNavBarView> {
   @override
   void initState() {
     super.initState();
-
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<MemberCubit>().loadAll();
+    });
 
     weekPlan = [
       {'type': 'Chest', 'selectedExercises': ['Bench Press', 'Incline Press']},
