@@ -14,10 +14,33 @@ class MemberRepository {
   }
 
   // ── Coaches ──────────────────────────────────────────────────
-  static Future<List<dynamic>> getCoaches({String? search}) async {
-    final res = await ApiClient.get('/member/coaches',
-        query: search != null ? {'search': search} : null);
+  static Future<List<dynamic>> getCoaches({String? search, String? source}) async {
+    final query = <String, String>{};
+    if (search != null) query['search'] = search;
+    if (source != null) query['source'] = source;
+    final res = await ApiClient.get('/member/coaches', query: query.isEmpty ? null : query);
     return res['data'] as List<dynamic>;
+  }
+
+  // ── Gym / Branch ─────────────────────────────────────────────
+  static Future<List<dynamic>> getBranches() async {
+    final res = await ApiClient.get('/member/branches');
+    return res['data'] as List<dynamic>;
+  }
+
+  static Future<void> assignBranch({
+    String? branchId,
+    required String trainingMode,
+  }) async {
+    await ApiClient.post('/member/branch', {
+      if (branchId != null) 'branch_id': int.tryParse(branchId),
+      'training_mode': trainingMode,
+    });
+  }
+
+  static Future<Map<String, dynamic>> getBranchCrowding(String branchId) async {
+    final res = await ApiClient.get('/member/branches/$branchId/crowding');
+    return res['data'] as Map<String, dynamic>;
   }
 
   static Future<Map<String, dynamic>> requestCoach({

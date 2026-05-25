@@ -14,6 +14,8 @@ class MemberModel {
   final String? plan;
   final MemberStatus? status;
   final String? lastCheckIn;
+  final String? branchId;
+  final String? trainingMode;
 
   MemberModel({
     this.id,
@@ -27,7 +29,11 @@ class MemberModel {
     this.plan,
     this.status,
     this.lastCheckIn,
+    this.branchId,
+    this.trainingMode,
   });
+
+  bool get needsGymSelection => trainingMode == null;
 
   factory MemberModel.fromJson(Map<String, dynamic> json) {
     final member = json['member'] ?? json;
@@ -40,6 +46,8 @@ class MemberModel {
       waterL: (member['water_liters'] as num?)?.toDouble(),
       type: _goalToType(member['goal'] as String?),
       status: _parseStatus(member['status'] as String?),
+      branchId: member['branch_id']?.toString(),
+      trainingMode: member['training_mode'] as String?,
     );
   }
 
@@ -74,6 +82,8 @@ class MemberModel {
     String? plan,
     MemberStatus? status,
     String? lastCheckIn,
+    String? branchId,
+    String? trainingMode,
   }) {
     return MemberModel(
       id: id ?? this.id,
@@ -87,6 +97,8 @@ class MemberModel {
       plan: plan ?? this.plan,
       status: status ?? this.status,
       lastCheckIn: lastCheckIn ?? this.lastCheckIn,
+      branchId: branchId ?? this.branchId,
+      trainingMode: trainingMode ?? this.trainingMode,
     );
   }
 }

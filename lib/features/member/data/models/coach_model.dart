@@ -9,6 +9,9 @@ class CoachModel {
   final String service;
   final String turnaround;
   final List<String>? sessionIds;
+  final String? coachType;
+  final String? branchId;
+  final String? avatarUrl;
 
   CoachModel({
     required this.id,
@@ -21,21 +24,26 @@ class CoachModel {
     required this.service,
     required this.turnaround,
     this.sessionIds,
+    this.coachType,
+    this.branchId,
+    this.avatarUrl,
   });
 
   factory CoachModel.fromJson(Map<String, dynamic> json) {
-    final coach = json['coach'] ?? json;
-    final user = json['user'] ?? {};
+    // The index endpoint returns a flat map (not nested coach/user)
     return CoachModel(
-      id: coach['id']?.toString() ?? '',
-      name: user['name'] as String? ?? '',
-      jobTitle: coach['specialization'] as String? ?? 'Personal Trainer',
-      price: (coach['price_per_session'] as num?)?.toDouble() ?? 0,
-      rating: (coach['rating'] as num?)?.toDouble() ?? 0,
-      reviewsCount: (coach['reviews_count'] as num?)?.toInt() ?? 0,
-      bio: coach['bio'] as String? ?? '',
-      service: 'Custom Plan',
-      turnaround: coach['turnaround'] as String? ?? '24-48 hrs',
+      id: json['id']?.toString() ?? '',
+      name: json['name'] as String? ?? '',
+      jobTitle: json['job_title'] as String? ?? json['specialization'] as String? ?? 'Personal Trainer',
+      price: (json['price'] as num?)?.toDouble() ?? (json['price_per_session'] as num?)?.toDouble() ?? 0,
+      rating: (json['rating'] as num?)?.toDouble() ?? 0,
+      reviewsCount: (json['reviews_count'] as num?)?.toInt() ?? 0,
+      bio: json['bio'] as String? ?? '',
+      service: json['service'] as String? ?? 'Custom Plan',
+      turnaround: json['turnaround'] as String? ?? '24-48 hrs',
+      coachType: json['coach_type'] as String?,
+      branchId: json['branch_id']?.toString(),
+      avatarUrl: json['avatar_url'] as String?,
     );
   }
 }

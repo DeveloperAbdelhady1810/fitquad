@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../gym/ui/gym_selection_screen.dart';
 import '../../../home/manager/member_cubit.dart';
+import '../../../home/manager/member_state.dart';
 import '../../../ai/ai_tab.dart';
 import '../../../eat/widgets/eat_tap.dart';
 import '../../../shop/ui/widgets/market_tab.dart';
@@ -26,8 +29,13 @@ class BottomNavBarViewState extends State<BottomNavBarView> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<MemberCubit>().loadAll();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await context.read<MemberCubit>().loadAll();
+      if (!mounted) return;
+      final state = context.read<MemberCubit>().state;
+      if (state is MemberLoaded && state.member.needsGymSelection) {
+        context.push(GymSelectionScreen.routeName);
+      }
     });
 
     weekPlan = [

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:gym_app/features/member/gym/models/gym_model.dart';
 import 'package:gym_app/features/member/home/ui/widgets/plan_dilog.dart';
 import 'package:intl/intl.dart';
 import 'package:printing/printing.dart';
@@ -37,6 +38,7 @@ class HomeTab extends StatefulWidget {
 
 class _HomeTabState extends State<HomeTab> {
   PageController? pageController;
+  CrowdingInfo? _crowding;
 
   @override
   void initState() {
@@ -54,6 +56,18 @@ class _HomeTabState extends State<HomeTab> {
     );
 
     if (mounted) setState(() {});
+    _loadCrowding();
+  }
+
+  Future<void> _loadCrowding() async {
+    try {
+      final state = context.read<MemberCubit>().state;
+      if (state is! MemberLoaded) return;
+      final branchId = state.member.branchId;
+      if (branchId == null) return;
+      final raw = await MemberRepository.getBranchCrowding(branchId);
+      if (mounted) setState(() => _crowding = CrowdingInfo.fromJson(raw));
+    } catch (_) {}
   }
 
   @override
@@ -127,6 +141,10 @@ class _HomeTabState extends State<HomeTab> {
               ),
               vGap(10),
               _buildWorkoutCard(context, state),
+              if (_crowding != null) ...[
+                vGap(10),
+                _CrowdingBanner(info: _crowding!),
+              ],
               vGap(15),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -566,6 +584,42 @@ class _WatchStat extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _CrowdingBanner extends StatelessWidget {
+  final CrowdingInfo info;
+  const _CrowdingBanner({required this.info});
+
+  @override
+  Widget build(BuildContext context) {
+    final isCrowded = info.level == 'crowded';
+    final isModerate = info.level == 'moderate';
+    final color = isCrowded ? AppColors.red : isModerate ? const Color(0xFFFFD700) : AppColors.emerald;
+    final icon = isCrowded ? Icons.warning_amber_rounded : Icons.check_circle_outline;
+    final msg = isCrowded
+        ? '${info.branchName} is busy — ~${info.checkIns} people training now'
+        : isModerate
+            ? '${info.branchName} is moderately busy (~${info.checkIns} people)'
+            : 'Good time to train — only ~${info.checkIns} people at ${info.branchName}';
+
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
+      decoration: AppDecorations.containerDecoration.copyWith(
+        border: Border.all(color: color.withValues(alpha: 0.5)),
+        color: color.withValues(alpha: 0.08),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: color, size: 18.r),
+          hGap(10),
+          Expanded(
+            child: Text(msg,
+                style: AppTextStyles.font14GreyRegular.copyWith(color: color, fontSize: 12.sp)),
+          ),
+        ],
       ),
     );
   }

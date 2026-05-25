@@ -7,9 +7,11 @@ import 'package:gym_app/core/helpers/spacing.dart';
 import 'package:gym_app/core/theme/app_colors.dart';
 import 'package:gym_app/core/theme/app_text_styles.dart';
 import 'package:gym_app/core/widgets/custom_button.dart';
+import 'package:gym_app/features/member/data/models/coach_model.dart';
 import 'package:gym_app/features/member/home/manager/member_cubit.dart';
 import 'package:gym_app/features/member/home/manager/member_state.dart';
-import 'package:gym_app/features/member/home/ui/widgets/request_sent_screen.dart';
+import 'package:gym_app/features/member/payment/data/payment_repository.dart';
+import 'package:gym_app/features/member/payment/ui/payment_webview_screen.dart';
 
 import '../../../../../generated/l10n.dart';
 
@@ -168,8 +170,22 @@ class ChooseCoachScreen extends StatelessWidget {
                                             ),
                                             const Divider(),
                                             ListTile(
-                                              title: Text(s.total, style: AppTextStyles.font14GreyRegular,),
-                                              trailing:Text(coach.price.toString(), style: AppTextStyles.font16WhiteBold,) ,
+                                              leading: const Icon(Icons.percent, color: AppColors.grey),
+                                              title: Text('Platform fee (5%)', style: AppTextStyles.font14GreyRegular),
+                                              trailing: Text('${(coach.price * 0.05).toStringAsFixed(0)} EGP', style: AppTextStyles.font14GreyRegular),
+                                            ),
+                                            ListTile(
+                                              leading: const Icon(Icons.credit_card_outlined, color: AppColors.grey),
+                                              title: Text('Processing fee', style: AppTextStyles.font14GreyRegular),
+                                              trailing: Text('5 EGP', style: AppTextStyles.font14GreyRegular),
+                                            ),
+                                            const Divider(),
+                                            ListTile(
+                                              title: Text(s.total, style: AppTextStyles.font14GreyRegular),
+                                              trailing: Text(
+                                                '${(coach.price * 1.05 + 5).toStringAsFixed(0)} EGP',
+                                                style: AppTextStyles.font16WhiteBold.copyWith(color: AppColors.emerald),
+                                              ),
                                             ),
                                           ],
                                         ),
@@ -179,7 +195,7 @@ class ChooseCoachScreen extends StatelessWidget {
                                         children: [
                                           Expanded(child: CustomButton(text: s.cancel, onPressed: () => context.pop(),color:AppColors.grey ,)),
                                           hGap(5),
-                                          Expanded(child: CustomButton(text: s.confirm_and_pay, onPressed: ()=> context.pushReplacement(RequestSentScreen.routeName),)),
+                                          Expanded(child: CustomButton(text: s.confirm_and_pay, onPressed: () => _initiatePayment(context, coach),)),
                                         ],
                                       )
                                     ],
@@ -202,6 +218,26 @@ class ChooseCoachScreen extends StatelessWidget {
         },
       ),
     );
+  }
+
+  Future<void> _initiatePayment(BuildContext context, CoachModel coach) async {
+    Navigator.pop(context); // close confirm dialog
+    try {
+      final result = await PaymentRepository.initiateCoachPayment(coachId: coach.id);
+      if (!context.mounted) return;
+      context.push(PaymentWebviewScreen.routeName, extra: {
+        'payment_url': result['payment_url'] as String,
+        'coach_name': result['coach_name'] as String? ?? coach.name,
+        'total_amount': result['total_amount'],
+      });
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Could not initiate payment: ${e.toString()}'),
+        backgroundColor: AppColors.red,
+        behavior: SnackBarBehavior.floating,
+      ));
+    }
   }
 
   String getInitials(String fullName) {

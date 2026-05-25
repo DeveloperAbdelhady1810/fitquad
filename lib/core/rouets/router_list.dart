@@ -14,7 +14,9 @@ import 'package:gym_app/features/member/home/manager/member_cubit.dart';
 import 'package:gym_app/features/member/home/ui/widgets/choose_coach_screen.dart';
 import 'package:gym_app/features/member/home/ui/widgets/request_sent_screen.dart';
 import 'package:gym_app/features/member/home/ui/widgets/week_summary_screen.dart';
+import 'package:gym_app/features/member/gym/ui/gym_selection_screen.dart';
 import 'package:gym_app/features/member/inbody/manager/inbody_cubit.dart';
+import 'package:gym_app/features/member/payment/ui/payment_webview_screen.dart';
 import 'package:gym_app/features/member/inbody/ui/inbody_form_screen.dart';
 import 'package:gym_app/features/member/inbody/ui/inbody_screen.dart';
 import 'package:gym_app/features/member/profile/ui/widgets/profile_tab.dart';
@@ -71,11 +73,14 @@ class RoutesList {
     GoRoute(
       path: ChooseCoachScreen.routeName,
       builder: (context, state) {
-
+        final source = state.extra is ChooseCoachSource
+            ? (state.extra as ChooseCoachSource) == ChooseCoachSource.train
+                ? 'train'
+                : 'eat'
+            : null;
         return BlocProvider(
-          create: (context) => MemberCubit()..loadCoaches(),
-          child: ChooseCoachScreen(
-          ),
+          create: (context) => MemberCubit()..loadCoaches(source: source),
+          child: const ChooseCoachScreen(),
         );
       },
     ),
@@ -184,6 +189,23 @@ class RoutesList {
         create: (_) => InBodyCubit(),
         child: const InBodyFormScreen(),
       ),
+    ),
+
+    GoRoute(
+      path: GymSelectionScreen.routeName,
+      builder: (context, state) => const GymSelectionScreen(),
+    ),
+
+    GoRoute(
+      path: PaymentWebviewScreen.routeName,
+      builder: (context, state) {
+        final args = state.extra as Map<String, dynamic>;
+        return PaymentWebviewScreen(
+          paymentUrl: args['payment_url'] as String,
+          coachName: args['coach_name'] as String,
+          totalAmount: (args['total_amount'] as num).toDouble(),
+        );
+      },
     ),
 
   ];
