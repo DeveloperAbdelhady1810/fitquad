@@ -15,6 +15,7 @@ import '../../manager/bottom_nav_bar_cubit.dart';
 import '../widgets/bottom_nav_bar_view_body.dart';
 import '../widgets/home_tab.dart';
 import '../widgets/week_summary_screen.dart';
+import '../../../announcements/announcement_overlay.dart';
 
 class BottomNavBarView extends StatefulWidget {
   const BottomNavBarView({super.key});
@@ -69,7 +70,8 @@ class BottomNavBarViewState extends State<BottomNavBarView> {
         BlocProvider(create: (_) => BottomNavBarCubit()),
         BlocProvider(create: (_) => FoodCubit()..loadFoods()),
       ],
-      child: SafeArea(
+      child: AnnouncementOverlay(
+        child: SafeArea(
         child: GestureDetector(
           onTap: () => FocusScope.of(context).unfocus(),
           child: Scaffold(
@@ -87,6 +89,7 @@ class BottomNavBarViewState extends State<BottomNavBarView> {
             bottomNavigationBar: BottomNavBarViewBody(),
           ),
         ),
+      ),
       ),
     );
   }
