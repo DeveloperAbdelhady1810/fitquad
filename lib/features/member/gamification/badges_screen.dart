@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:go_router/go_router.dart';
+import 'package:gym_app/features/member/community/leaderboard_screen.dart';
 
 import '../../../core/helpers/app_decoration.dart';
 import '../../../core/helpers/spacing.dart';
@@ -57,6 +59,13 @@ class _BadgesScreenState extends State<BadgesScreen> {
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
         title: Text('Achievements', style: AppTextStyles.font16WhiteBold),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.leaderboard_outlined, color: AppColors.teal),
+            tooltip: 'Leaderboard',
+            onPressed: () => context.push(LeaderboardScreen.routeName),
+          ),
+        ],
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator(color: AppColors.teal))

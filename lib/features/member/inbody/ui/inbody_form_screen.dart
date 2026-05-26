@@ -7,6 +7,7 @@ import 'package:gym_app/core/helpers/app_decoration.dart';
 import 'package:gym_app/core/helpers/spacing.dart';
 import 'package:gym_app/core/theme/app_colors.dart';
 import 'package:gym_app/core/theme/app_text_styles.dart';
+import 'package:gym_app/core/services/gemini_service.dart';
 import 'package:gym_app/features/member/inbody/manager/inbody_cubit.dart';
 import 'package:gym_app/features/member/inbody/models/inbody_model.dart';
 import 'package:intl/intl.dart';
@@ -129,18 +130,65 @@ class _InBodyFormScreenState extends State<InBodyFormScreen> {
 
     await context.read<InBodyCubit>().save(model);
 
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('InBody results saved!'),
-          backgroundColor: AppColors.emerald,
-          behavior: SnackBarBehavior.floating,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
-        ),
+    if (!mounted) return;
+
+    // Show success and immediately fetch AI insight in background
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('InBody results saved! Getting AI insight...'),
+        backgroundColor: AppColors.emerald,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 2),
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
+      ),
+    );
+
+    try {
+      final insight = await GeminiService.sendMessageWithInBody(
+        'Give me a brief 2-sentence analysis of my InBody results and one specific recommendation.',
+        model,
       );
-      context.pop();
+      if (mounted) _showAiInsightDialog(insight);
+    } catch (_) {
+      if (mounted) context.pop();
     }
+  }
+
+  void _showAiInsightDialog(String insight) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => AlertDialog(
+        backgroundColor: AppColors.secondary,
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16.r)),
+        title: Row(
+          children: [
+            Icon(Icons.psychology_outlined,
+                color: AppColors.teal, size: 22.sp),
+            hGap(8),
+            Text('AI Insight', style: AppTextStyles.font16WhiteBold),
+          ],
+        ),
+        content: Text(insight,
+            style: AppTextStyles.font14GreyRegular.copyWith(height: 1.5)),
+        actions: [
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.teal,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8.r)),
+            ),
+            onPressed: () {
+              Navigator.pop(context);
+              context.pop();
+            },
+            child: Text('Got it!', style: AppTextStyles.font14WhiteRegular),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
