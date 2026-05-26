@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gym_app/core/widgets/custom_tab_bar.dart';
+import 'package:gym_app/features/coach/chat/widgets/chat_thread_screen.dart';
 
 import '../../../../core/enums/messages_tab.dart';
 import '../../home/ui/widgets/message_tile.dart';
@@ -44,8 +45,16 @@ class CoachChatTab extends StatelessWidget {
                         item: item,
                         onTap: () {
                           if (item.type == MessageType.system) return;
-
-                       //   context.push('/chat', extra: item);
+                          if (item.senderId == null) return;
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => CoachChatThreadScreen(
+                                memberId: item.senderId!,
+                                memberName: item.name,
+                              ),
+                            ),
+                          );
                         },
                       );
                     },

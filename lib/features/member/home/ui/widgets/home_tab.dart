@@ -28,6 +28,7 @@ import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_text_styles.dart';
 import '../../../../../generated/l10n.dart';
 import 'package:gym_app/features/member/data/models/member_model.dart';
+import 'package:gym_app/features/member/home/ui/widgets/member_chat_screen.dart';
 import '../../manager/member_cubit.dart';
 import '../../manager/member_state.dart';
 import 'column_chart.dart';
@@ -121,6 +122,17 @@ class _HomeTabState extends State<HomeTab> {
                 ),
                 actions: [
                   _iconButton(Icons.qr_code_2, () => showQrSheet(context)),
+                  hGap(10),
+                  _iconButton(
+                    Icons.chat_bubble_outline,
+                    () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) =>
+                            const MemberChatScreen(coachName: 'Your Coach'),
+                      ),
+                    ),
+                  ),
                   hGap(10),
                   _iconButton(
                     Icons.person_outline,
