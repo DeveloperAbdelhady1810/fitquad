@@ -10,6 +10,7 @@ import 'package:gym_app/core/theme/app_text_styles.dart';
 import 'package:gym_app/features/member/home/manager/member_cubit.dart';
 import 'package:gym_app/features/member/home/manager/member_state.dart';
 import 'package:gym_app/features/member/inbody/ui/inbody_screen.dart';
+import 'package:gym_app/features/member/notifications/notification_preferences_screen.dart';
 import 'package:gym_app/features/member/qr/qr_screen.dart';
 
 import '../../../../../generated/l10n.dart';
@@ -199,12 +200,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         s.notifications,
                         style: AppTextStyles.font16WhiteRegular,
                       ),
-                      trailing: Switch(
-                        activeThumbColor: AppColors.emerald,
-                        value: isNotificationsOn,
-                        onChanged: (value) {
-                          setState(() => isNotificationsOn = value);
-                        },
+                      trailing: const Icon(Icons.chevron_right, color: Colors.white38),
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              const NotificationPreferencesScreen(),
+                        ),
                       ),
                     ),
                     const Divider(),

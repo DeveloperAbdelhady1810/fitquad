@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gym_app/core/cubit/health/health_cubit.dart';
+import 'package:gym_app/core/services/reminder_service.dart';
 import 'package:gym_app/features/member/home/manager/food_cubit.dart';
 import 'package:gym_app/features/member/home/manager/member_cubit.dart';
 import 'core/cubit/language/language_cubit.dart';
@@ -12,8 +13,9 @@ import 'features/member/shop/manager/cart_cubit.dart';
 import 'features/member/shop/manager/market_cubit.dart';
 import 'generated/l10n.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await ReminderService.init();
   runApp(const MyApp());
 }
 

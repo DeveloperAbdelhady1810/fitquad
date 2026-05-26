@@ -46,6 +46,8 @@ dependencies:
   confetti: ^0.7.0
   image_picker: ^1.1.2
   mobile_scanner: ^6.0.4
+  flutter_local_notifications: ^18.0.1
+  timezone: ^0.9.4
 dev_dependencies:
   flutter_test:
     sdk: flutter
