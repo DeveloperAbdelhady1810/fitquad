@@ -11,6 +11,7 @@ import 'package:gym_app/features/member/data/repositories/member_repository.dart
 import 'package:gym_app/features/member/inbody/manager/inbody_cubit.dart';
 import 'package:gym_app/features/member/inbody/models/inbody_model.dart';
 import 'package:gym_app/features/member/inbody/ui/inbody_form_screen.dart';
+import 'package:gym_app/features/member/inbody/ui/progress_photos_tab.dart';
 import 'package:intl/intl.dart';
 
 class InBodyScreen extends StatelessWidget {
@@ -32,53 +33,85 @@ class _InBodyView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.primary,
-      appBar: AppBar(
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
         backgroundColor: AppColors.primary,
-        foregroundColor: AppColors.white,
-        title: Text('InBody Results', style: AppTextStyles.font16WhiteBold),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add, color: AppColors.teal),
-            onPressed: () {
-              context.push(InBodyFormScreen.routeName).then((_) {
-                if (context.mounted) {
-                  context.read<InBodyCubit>().load();
-                }
-              });
-            },
+        appBar: AppBar(
+          backgroundColor: AppColors.primary,
+          foregroundColor: AppColors.white,
+          title: Text('InBody & Progress', style: AppTextStyles.font16WhiteBold),
+          actions: [
+            Builder(builder: (ctx) {
+              final tabCtrl = DefaultTabController.of(ctx);
+              return AnimatedBuilder(
+                animation: tabCtrl,
+                builder: (_, __) => tabCtrl.index == 0
+                    ? IconButton(
+                        icon: const Icon(Icons.add, color: AppColors.teal),
+                        onPressed: () {
+                          context.push(InBodyFormScreen.routeName).then((_) {
+                            if (context.mounted) {
+                              context.read<InBodyCubit>().load();
+                            }
+                          });
+                        },
+                      )
+                    : const SizedBox.shrink(),
+              );
+            }),
+          ],
+          bottom: TabBar(
+            indicatorColor: AppColors.teal,
+            labelColor: AppColors.teal,
+            unselectedLabelColor: AppColors.grey,
+            labelStyle: AppTextStyles.font14GreyRegular
+                .copyWith(fontWeight: FontWeight.w600),
+            tabs: const [
+              Tab(text: 'Records'),
+              Tab(text: 'Progress Photos'),
+            ],
           ),
-        ],
+        ),
+        body: TabBarView(
+          children: [
+            _RecordsTab(),
+            const ProgressPhotosTab(),
+          ],
+        ),
       ),
-      body: BlocBuilder<InBodyCubit, InBodyState>(
-        builder: (context, state) {
-          if (state is InBodyLoading || state is InBodyInitial) {
-            return const Center(
-                child: CircularProgressIndicator(color: AppColors.teal));
-          }
-          if (state is InBodyError) {
-            return Center(
-              child: Text(state.message,
-                  style: AppTextStyles.font14GreyRegular,
-                  textAlign: TextAlign.center),
-            );
-          }
-          if (state is InBodyLoaded) {
-            if (state.records.isEmpty) {
-              return _EmptyState();
-            }
-            return ListView.separated(
-              padding: EdgeInsets.all(16.w),
-              itemCount: state.records.length,
-              separatorBuilder: (_, __) => vGap(12),
-              itemBuilder: (context, i) =>
-                  _InBodyCard(record: state.records[i]),
-            );
-          }
-          return const SizedBox.shrink();
-        },
-      ),
+    );
+  }
+}
+
+class _RecordsTab extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<InBodyCubit, InBodyState>(
+      builder: (context, state) {
+        if (state is InBodyLoading || state is InBodyInitial) {
+          return const Center(
+              child: CircularProgressIndicator(color: AppColors.teal));
+        }
+        if (state is InBodyError) {
+          return Center(
+            child: Text(state.message,
+                style: AppTextStyles.font14GreyRegular,
+                textAlign: TextAlign.center),
+          );
+        }
+        if (state is InBodyLoaded) {
+          if (state.records.isEmpty) return _EmptyState();
+          return ListView.separated(
+            padding: EdgeInsets.all(16.w),
+            itemCount: state.records.length,
+            separatorBuilder: (_, __) => vGap(12),
+            itemBuilder: (context, i) =>
+                _InBodyCard(record: state.records[i]),
+          );
+        }
+        return const SizedBox.shrink();
+      },
     );
   }
 }

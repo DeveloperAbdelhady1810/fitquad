@@ -16,6 +16,10 @@ class MemberModel {
   final String? lastCheckIn;
   final String? branchId;
   final String? trainingMode;
+  final int streakDays;
+  final int xpPoints;
+  final int level;
+  final String? referralCode;
 
   MemberModel({
     this.id,
@@ -31,6 +35,10 @@ class MemberModel {
     this.lastCheckIn,
     this.branchId,
     this.trainingMode,
+    this.streakDays = 0,
+    this.xpPoints = 0,
+    this.level = 1,
+    this.referralCode,
   });
 
   bool get needsGymSelection => trainingMode == null;
@@ -53,6 +61,10 @@ class MemberModel {
       status: _parseStatus(member['status'] as String?),
       branchId: member['branch_id']?.toString(),
       trainingMode: member['training_mode'] as String?,
+      streakDays: (member['streak_days'] as num?)?.toInt() ?? 0,
+      xpPoints: (member['xp_points'] as num?)?.toInt() ?? 0,
+      level: (member['level'] as num?)?.toInt() ?? 1,
+      referralCode: member['referral_code'] as String?,
     );
   }
 
@@ -89,6 +101,10 @@ class MemberModel {
     String? lastCheckIn,
     String? branchId,
     String? trainingMode,
+    int? streakDays,
+    int? xpPoints,
+    int? level,
+    String? referralCode,
   }) {
     return MemberModel(
       id: id ?? this.id,
@@ -104,6 +120,10 @@ class MemberModel {
       lastCheckIn: lastCheckIn ?? this.lastCheckIn,
       branchId: branchId ?? this.branchId,
       trainingMode: trainingMode ?? this.trainingMode,
+      streakDays: streakDays ?? this.streakDays,
+      xpPoints: xpPoints ?? this.xpPoints,
+      level: level ?? this.level,
+      referralCode: referralCode ?? this.referralCode,
     );
   }
 }

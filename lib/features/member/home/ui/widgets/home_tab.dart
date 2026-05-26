@@ -6,6 +6,7 @@ import 'package:gym_app/core/enums/choose_coach.dart';
 import 'package:gym_app/features/member/gym/models/gym_model.dart';
 import 'package:gym_app/features/member/home/ui/widgets/choose_coach_screen.dart';
 import 'package:gym_app/features/member/home/ui/widgets/plan_dilog.dart';
+import 'package:gym_app/features/member/gamification/streak_card.dart';
 import 'package:gym_app/features/member/notifications/notifications_screen.dart';
 import 'package:gym_app/features/member/qr/qr_screen.dart';
 import 'package:gym_app/features/member/home/manager/bottom_nav_bar_cubit.dart';
@@ -15,7 +16,7 @@ import 'package:printing/printing.dart';
 
 import 'package:gym_app/core/widgets/custom_button.dart';
 import 'package:gym_app/features/member/home/ui/widgets/water_dialog.dart';
-import 'package:gym_app/features/member/home/ui/widgets/workout_dialog.dart';
+import 'package:gym_app/features/member/home/ui/views/workout_active_screen.dart';
 import '../../../../../core/cubit/health/health_cubit.dart';
 import '../../../../../core/services/health_pdf_service.dart';
 import '../../../../../core/services/health_service.dart';
@@ -25,6 +26,7 @@ import '../../../../../core/helpers/spacing.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_text_styles.dart';
 import '../../../../../generated/l10n.dart';
+import 'package:gym_app/features/member/data/models/member_model.dart';
 import '../../manager/member_cubit.dart';
 import '../../manager/member_state.dart';
 import 'column_chart.dart';
@@ -128,6 +130,13 @@ class _HomeTabState extends State<HomeTab> {
                 ],
               ),
               vGap(10),
+              const StreakCard(),
+              vGap(12),
+              if (state is MemberLoaded &&
+                  state.member.status == MemberStatus.expiring) ...[
+                _ExpiryBanner(),
+                vGap(10),
+              ],
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -259,11 +268,15 @@ class _HomeTabState extends State<HomeTab> {
       planTitle: plan['title'] as String? ?? 'Workout Plan',
       exercises: exercises,
       status: status,
-      onStart: () async {
-        await cubit.restoreWorkout();
-        if (pageController != null && context.mounted) {
-          showWorkoutDialog(context, pageController: pageController!);
-        }
+      onStart: () {
+        final title = plan['title'] as String? ?? 'Workout Plan';
+        context.push(
+          WorkoutActiveScreen.routeName,
+          extra: {
+            'exercises': exercises,
+            'plan_title': title,
+          },
+        );
       },
       onMarkDone: () => cubit.markWorkoutDone('done'),
       onMarkSemi: () => cubit.markWorkoutDone('semi'),
@@ -883,6 +896,60 @@ class _CrowdingBanner extends StatelessWidget {
           Expanded(
             child: Text(msg,
                 style: AppTextStyles.font14GreyRegular.copyWith(color: color, fontSize: 12.sp)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ExpiryBanner extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+      decoration: BoxDecoration(
+        color: Colors.orange.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: Colors.orange.withValues(alpha: 0.4)),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.access_time_outlined, color: Colors.orange, size: 20.r),
+          hGap(10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Membership expiring soon',
+                  style: AppTextStyles.font14WhiteRegular.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: Colors.orange,
+                  ),
+                ),
+                Text(
+                  'Renew now to keep your streak and benefits alive!',
+                  style: AppTextStyles.font14GreyRegular
+                      .copyWith(fontSize: 11.sp),
+                ),
+              ],
+            ),
+          ),
+          hGap(8),
+          GestureDetector(
+            onTap: () {/* navigate to renewal */},
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+              decoration: BoxDecoration(
+                color: Colors.orange,
+                borderRadius: BorderRadius.circular(8.r),
+              ),
+              child: Text('Renew',
+                  style: AppTextStyles.font14GreyRegular.copyWith(
+                      color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11.sp)),
+            ),
           ),
         ],
       ),

@@ -16,6 +16,9 @@ class MemberCubit extends Cubit<MemberState> {
   Map<String, dynamic>? nutritionPlan;
   String? todayWorkoutStatus; // null | 'done' | 'semi'
   List<double> weekCheckIns = [0, 0, 0, 0, 0, 0, 0]; // Mon–Sun
+  Map<String, dynamic>? progressData; // streak, xp, level, badges
+  bool showMilestoneCelebration = false;
+  int? celebrationStreak;
 
   static String get _todayKey =>
       'workout_status_${DateFormat('yyyy-MM-dd').format(DateTime.now())}';
@@ -26,12 +29,47 @@ class MemberCubit extends Cubit<MemberState> {
       MemberRepository.getWorkoutPlan().catchError((_) => null),
       MemberRepository.getNutritionPlan().catchError((_) => null),
       _loadWeekCheckIns().catchError((_) {}),
+      MemberRepository.getProgress().catchError((_) => <String, dynamic>{}),
     ]);
-    workoutPlan = results[0] as Map<String, dynamic>?;
+    workoutPlan   = results[0] as Map<String, dynamic>?;
     nutritionPlan = results[1] as Map<String, dynamic>?;
+    progressData  = results[3] as Map<String, dynamic>?;
+
+    // Detect streak milestone to celebrate
+    if (progressData != null) {
+      final streak = (progressData!['streak_days'] as num?)?.toInt() ?? 0;
+      final lastSeenKey = 'last_seen_streak';
+      final lastSeen = (await SharedPrefHelper.getInt(lastSeenKey)) ?? 0;
+      const milestones = [3, 7, 14, 30, 100];
+      for (final m in milestones) {
+        if (streak >= m && lastSeen < m) {
+          showMilestoneCelebration = true;
+          celebrationStreak = streak;
+          break;
+        }
+      }
+      await SharedPrefHelper.setData(lastSeenKey, streak);
+
+      // Sync streak/xp/level into MemberModel if loaded
+      if (state is MemberLoaded) {
+        final current = (state as MemberLoaded).member;
+        emit(MemberLoaded(current.copyWith(
+          streakDays: streak,
+          xpPoints: (progressData!['xp_points'] as num?)?.toInt() ?? current.xpPoints,
+          level: (progressData!['level'] as num?)?.toInt() ?? current.level,
+        )));
+      }
+    }
+
     final saved = (await SharedPrefHelper.getString(_todayKey)) as String;
     todayWorkoutStatus = saved.isNotEmpty ? saved : null;
     if (state is MemberLoaded) emit(MemberLoaded((state as MemberLoaded).member));
+  }
+
+  void clearMilestoneCelebration() {
+    showMilestoneCelebration = false;
+    celebrationStreak = null;
+    emit(MemberUpdated());
   }
 
   Future<void> _loadWeekCheckIns() async {

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
@@ -228,6 +229,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
               vGap(20),
+
+              // ── Referral Card ──────────────────────────────────────
+              if (state is MemberLoaded) ...[
+                _ReferralCard(
+                  code: state.member.referralCode,
+                  memberName: state.member.name ?? 'You',
+                ),
+                vGap(20),
+              ],
             ],
           ),
         );
@@ -335,6 +345,125 @@ class _DetailRow extends StatelessWidget {
         children: [
           Text(label, style: AppTextStyles.font14GreyRegular),
           Text(value, style: AppTextStyles.font14WhiteRegular),
+        ],
+      ),
+    );
+  }
+}
+
+class _ReferralCard extends StatelessWidget {
+  final String? code;
+  final String memberName;
+
+  const _ReferralCard({required this.code, required this.memberName});
+
+  @override
+  Widget build(BuildContext context) {
+    final displayCode = code ?? 'LOADING';
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(20.r),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF1B3A6B), Color(0xFF0D2545)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(color: AppColors.blue.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.card_giftcard_outlined,
+                  color: AppColors.blue, size: 22.r),
+              hGap(8),
+              Text('Invite Friends & Earn',
+                  style: AppTextStyles.font16WhiteBold),
+            ],
+          ),
+          vGap(8),
+          Text(
+            'Share your code. When a friend subscribes, you both get 1 free month!',
+            style: AppTextStyles.font14GreyRegular
+                .copyWith(fontSize: 12.sp, height: 1.4),
+          ),
+          vGap(14),
+          // Code chip
+          Row(
+            children: [
+              Expanded(
+                child: Container(
+                  padding: EdgeInsets.symmetric(
+                      horizontal: 16.w, vertical: 10.h),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    borderRadius: BorderRadius.circular(10.r),
+                    border: Border.all(
+                        color: AppColors.blue.withValues(alpha: 0.4)),
+                  ),
+                  child: Text(
+                    code != null ? displayCode : '...',
+                    style: AppTextStyles.font16WhiteBold.copyWith(
+                      letterSpacing: 3,
+                      color: AppColors.blue,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+              hGap(10),
+              GestureDetector(
+                onTap: () {
+                  if (code == null) return;
+                  Clipboard.setData(ClipboardData(text: code!));
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: const Text('Code copied!'),
+                    backgroundColor: AppColors.blue,
+                    behavior: SnackBarBehavior.floating,
+                    duration: const Duration(seconds: 1),
+                  ));
+                },
+                child: Container(
+                  padding: EdgeInsets.all(10.r),
+                  decoration: BoxDecoration(
+                    color: AppColors.blue.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(10.r),
+                  ),
+                  child: Icon(Icons.copy_outlined,
+                      color: AppColors.blue, size: 20.r),
+                ),
+              ),
+            ],
+          ),
+          vGap(12),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.blue,
+                padding: EdgeInsets.symmetric(vertical: 12.h),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10.r)),
+              ),
+              onPressed: () {
+                if (code == null) return;
+                final shareText =
+                    'Join me on FitQuad! Use my code $code to get 1 free month when you subscribe. 💪';
+                Clipboard.setData(ClipboardData(text: shareText));
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                  content: const Text('Share message copied to clipboard!'),
+                  backgroundColor: AppColors.blue,
+                  behavior: SnackBarBehavior.floating,
+                ));
+              },
+              icon: Icon(Icons.share_outlined, size: 18.r),
+              label: Text('Share Invite Link',
+                  style: AppTextStyles.font14WhiteRegular),
+            ),
+          ),
         ],
       ),
     );

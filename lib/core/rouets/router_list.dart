@@ -16,6 +16,8 @@ import 'package:gym_app/features/member/home/ui/widgets/request_sent_screen.dart
 import 'package:gym_app/features/member/home/ui/widgets/week_summary_screen.dart';
 import 'package:gym_app/features/member/gym/ui/gym_selection_screen.dart';
 import 'package:gym_app/features/member/inbody/manager/inbody_cubit.dart';
+import 'package:gym_app/features/member/gamification/badges_screen.dart';
+import 'package:gym_app/features/member/home/ui/views/workout_active_screen.dart';
 import 'package:gym_app/features/member/notifications/notifications_screen.dart';
 import 'package:gym_app/features/member/payment/ui/payment_webview_screen.dart';
 import 'package:gym_app/features/member/inbody/ui/inbody_form_screen.dart';
@@ -210,6 +212,23 @@ class RoutesList {
           paymentUrl: args['payment_url'] as String,
           coachName: args['coach_name'] as String,
           totalAmount: (args['total_amount'] as num).toDouble(),
+        );
+      },
+    ),
+
+    GoRoute(
+      path: BadgesScreen.routeName,
+      builder: (context, state) => const BadgesScreen(),
+    ),
+
+    GoRoute(
+      path: WorkoutActiveScreen.routeName,
+      builder: (context, state) {
+        final args = state.extra as Map<String, dynamic>;
+        return WorkoutActiveScreen(
+          exercises: List<Map<String, dynamic>>.from(
+              args['exercises'] as List),
+          planTitle: args['plan_title'] as String,
         );
       },
     ),

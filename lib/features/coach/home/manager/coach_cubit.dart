@@ -17,8 +17,15 @@ class CoachCubit extends Cubit<CoachState> {
   Future<void> getCoachSessions(String coachId) async {
     emit(CoachLoading());
     try {
-      final sessionsData = await CoachRepository.getSessions();
-      final membersData = await CoachRepository.getMembers();
+      final results = await Future.wait([
+        CoachRepository.getSessions(),
+        CoachRepository.getMembers(),
+        CoachRepository.getDashboard(),
+      ]);
+
+      final sessionsData = results[0] as List<dynamic>;
+      final membersData = results[1] as List<dynamic>;
+      final dashboard = results[2] as Map<String, dynamic>;
 
       _sessions = sessionsData
           .map((j) => SessionModel.fromJson(j as Map<String, dynamic>))
@@ -29,10 +36,22 @@ class CoachCubit extends Cubit<CoachState> {
         return MemberModel.fromJson(map);
       }).toList();
 
+      final alerts = (dashboard['client_alerts'] as List? ?? [])
+          .map((a) => Map<String, dynamic>.from(a as Map))
+          .toList();
+
       emit(CoachesLoaded(
         sessions: _sessions,
         allMembers: _allMembers,
         filteredMembers: _allMembers,
+        todaySessions: (dashboard['today_sessions'] as num?)?.toInt() ?? 0,
+        activeMembers: (dashboard['active_members'] as num?)?.toInt() ??
+            _allMembers.length,
+        monthlyEarnings:
+            (dashboard['monthly_earnings'] as num?)?.toDouble() ?? 0,
+        totalEarnings: (dashboard['total_earnings'] as num?)?.toDouble() ?? 0,
+        rating: (dashboard['rating'] as num?)?.toDouble() ?? 0,
+        clientAlerts: alerts,
       ));
     } catch (_) {
       emit(CoachesLoaded(
