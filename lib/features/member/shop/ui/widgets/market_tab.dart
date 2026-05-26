@@ -13,6 +13,7 @@ import '../../manager/cart_state.dart';
 import '../../manager/market_cubit.dart';
 import '../views/cart_view.dart';
 import 'market_tabs.dart';
+import 'flash_sale_banner.dart';
 import 'market_grid_view.dart';
 
 class MarketTab extends StatelessWidget {
@@ -96,6 +97,7 @@ class MarketTab extends StatelessWidget {
         vGap(15),
         const MarketTabs(),
         vGap(15),
+        const FlashSaleBanner(),
         const Expanded(child: MarketGridView()),
       ],
     );
