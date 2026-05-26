@@ -6,6 +6,7 @@ import 'package:gym_app/core/enums/choose_coach.dart';
 import 'package:gym_app/features/member/gym/models/gym_model.dart';
 import 'package:gym_app/features/member/home/ui/widgets/choose_coach_screen.dart';
 import 'package:gym_app/features/member/home/ui/widgets/plan_dilog.dart';
+import 'package:gym_app/features/member/community/community_feed_screen.dart';
 import 'package:gym_app/features/member/gamification/streak_card.dart';
 import 'package:gym_app/features/member/notifications/notifications_screen.dart';
 import 'package:gym_app/features/member/qr/qr_screen.dart';
@@ -226,6 +227,9 @@ class _HomeTabState extends State<HomeTab> {
                   return const SizedBox.shrink();
                 },
               ),
+              // Community shortcut
+              vGap(15),
+              _CommunityBanner(),
             ],
           ),
         );
@@ -898,6 +902,50 @@ class _CrowdingBanner extends StatelessWidget {
                 style: AppTextStyles.font14GreyRegular.copyWith(color: color, fontSize: 12.sp)),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _CommunityBanner extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => context.push(CommunityFeedScreen.routeName),
+      child: Container(
+        width: double.infinity,
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF1B2A6B), Color(0xFF2E3D99)],
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+          ),
+          borderRadius: BorderRadius.circular(14.r),
+          border: Border.all(
+              color: AppColors.blue.withValues(alpha: 0.3)),
+        ),
+        child: Row(
+          children: [
+            Text('👥', style: TextStyle(fontSize: 24.sp)),
+            hGap(12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Community Feed',
+                      style: AppTextStyles.font14WhiteRegular
+                          .copyWith(fontWeight: FontWeight.w600)),
+                  Text('Share wins & motivate others',
+                      style: AppTextStyles.font14GreyRegular
+                          .copyWith(fontSize: 11.sp)),
+                ],
+              ),
+            ),
+            Icon(Icons.arrow_forward_ios,
+                size: 16.r, color: AppColors.grey),
+          ],
+        ),
       ),
     );
   }

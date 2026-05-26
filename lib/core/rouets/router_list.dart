@@ -17,6 +17,7 @@ import 'package:gym_app/features/member/home/ui/widgets/week_summary_screen.dart
 import 'package:gym_app/features/member/gym/ui/gym_selection_screen.dart';
 import 'package:gym_app/features/member/inbody/manager/inbody_cubit.dart';
 import 'package:gym_app/features/member/gamification/badges_screen.dart';
+import 'package:gym_app/features/member/community/community_feed_screen.dart';
 import 'package:gym_app/features/member/home/ui/views/workout_active_screen.dart';
 import 'package:gym_app/features/member/train/widgets/workout_history_screen.dart';
 import 'package:gym_app/features/member/notifications/notifications_screen.dart';
@@ -237,6 +238,11 @@ class RoutesList {
     GoRoute(
       path: WorkoutHistoryScreen.routeName,
       builder: (context, state) => const WorkoutHistoryScreen(),
+    ),
+
+    GoRoute(
+      path: CommunityFeedScreen.routeName,
+      builder: (context, state) => const CommunityFeedScreen(),
     ),
 
   ];
