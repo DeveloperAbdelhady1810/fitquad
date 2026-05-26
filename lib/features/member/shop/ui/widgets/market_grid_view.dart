@@ -8,6 +8,7 @@ import '../../../../../generated/l10n.dart';
 import '../../manager/cart_cubit.dart';
 import '../../manager/market_cubit.dart';
 import '../../manager/market_state.dart';
+import '../views/product_detail_screen.dart';
 import 'product_card.dart';
 
 class MarketGridView extends StatelessWidget {
@@ -38,10 +39,22 @@ class MarketGridView extends StatelessWidget {
             ),
             itemCount: state.products.length,
             itemBuilder: (context, index) {
-              return ProductCard(
-                product: state.products[index],
-                onAdd: () =>
-                    context.read<CartCubit>().addToCart(state.products[index]),
+              final product = state.products[index];
+              return GestureDetector(
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => BlocProvider.value(
+                      value: context.read<CartCubit>(),
+                      child: ProductDetailScreen(product: product),
+                    ),
+                  ),
+                ),
+                child: ProductCard(
+                  product: product,
+                  onAdd: () =>
+                      context.read<CartCubit>().addToCart(product),
+                ),
               );
             },
           );

@@ -18,6 +18,7 @@ import 'package:gym_app/features/member/gym/ui/gym_selection_screen.dart';
 import 'package:gym_app/features/member/inbody/manager/inbody_cubit.dart';
 import 'package:gym_app/features/member/gamification/badges_screen.dart';
 import 'package:gym_app/features/member/home/ui/views/workout_active_screen.dart';
+import 'package:gym_app/features/member/train/widgets/workout_history_screen.dart';
 import 'package:gym_app/features/member/notifications/notifications_screen.dart';
 import 'package:gym_app/features/member/payment/ui/payment_webview_screen.dart';
 import 'package:gym_app/features/member/inbody/ui/inbody_form_screen.dart';
@@ -231,6 +232,11 @@ class RoutesList {
           planTitle: args['plan_title'] as String,
         );
       },
+    ),
+
+    GoRoute(
+      path: WorkoutHistoryScreen.routeName,
+      builder: (context, state) => const WorkoutHistoryScreen(),
     ),
 
   ];

@@ -7,6 +7,9 @@ class ProductModel {
   final String? image;
   final double? price;
   final double? rating;
+  final String? description;
+  final int? stock;
+  final double? salePrice;
 
   const ProductModel({
     this.id,
@@ -15,7 +18,13 @@ class ProductModel {
     this.image,
     this.price,
     this.rating,
+    this.description,
+    this.stock,
+    this.salePrice,
   });
+
+  double get effectivePrice => salePrice ?? price ?? 0;
+  bool get isOnSale => salePrice != null && salePrice! < (price ?? double.infinity);
 
   factory ProductModel.fromJson(Map<String, dynamic> json) {
     return ProductModel(
@@ -24,7 +33,10 @@ class ProductModel {
       category: _parseCategory(json['category'] as String?),
       image: json['image_url'] as String?,
       price: (json['price'] as num?)?.toDouble(),
-      rating: null,
+      rating: (json['rating'] as num?)?.toDouble(),
+      description: json['description'] as String?,
+      stock: (json['stock'] as num?)?.toInt(),
+      salePrice: (json['sale_price'] as num?)?.toDouble(),
     );
   }
 

@@ -89,6 +89,15 @@ class MemberRepository {
     return res['data'] as List<dynamic>;
   }
 
+  static Future<Map<String, dynamic>?> getFoodItemByBarcode(
+      String barcode) async {
+    final res = await ApiClient.get('/member/food-items/barcode',
+        query: {'barcode': barcode});
+    final data = res['data'];
+    if (data == null) return null;
+    return data as Map<String, dynamic>;
+  }
+
   static Future<Map<String, dynamic>> logMeal({
     required int foodItemId,
     required double quantity,
