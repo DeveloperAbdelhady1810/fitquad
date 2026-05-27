@@ -227,12 +227,35 @@ Uses `MobileScannerController`. Animated scan line. Torch toggle. Returns food m
 ### AI Tab (`/nav` index 2)
 File: `lib/features/member/ai/ai_tab.dart`
 
-Chat interface powered by **Gemini** (`google_generative_ai`). Includes:
-- `ChatBubble` for messages
-- `TypingIndicator` while awaiting response
-- `SuggestedPrompts` on empty state
-- Message history persisted via `GET /member/ai/history`
-- `AiCubit` manages state
+Personalised AI coach chat powered by **Gemini** via the backend (`POST /member/ai/chat`).
+
+**State:** `AiAssistantCubit` emits `AiChatState { messages, inBodyAttached }`.
+
+**Personalisation system:**
+- `AiMemberContext` (`lib/features/member/ai/models/ai_member_context.dart`) builds a structured `[FITQUAD_MEMBER_CONTEXT]` prefix injected before every message sent to the backend. It includes: member name, goal, weight, age, streak/level/XP, weekly check-ins, workout plan name, nutrition plan kcal, and optionally the full InBody scan.
+- Greeting message is goal-specific (`MemberType.loss / fit / low / neww`).
+- Suggested prompt chips are also goal-driven (4 chips, differ per goal).
+
+**InBody attachment:**
+- `AiTab` loads the latest InBody record on init via `MemberRepository.getInBodyRecords()`.
+- "Attach InBody" chip appears in `MessageInput` only if a record exists.
+- Toggle is **persistent** (stays attached until tapped again).
+- When attached, `inBodyAttached: true` is set in `AiChatState`; the next send includes all InBody metrics in the context prefix.
+- Sent messages with InBody show a small "InBody attached" label below the bubble.
+
+**Cubit key methods:**
+- `updateContext(AiMemberContext)` — called every build; sets personalized greeting once member data loads (flag `_greetingSet`)
+- `sendMessage(String)` — builds enriched prompt from stored context, sends to API
+- `toggleInBody()` — flips `inBodyAttached` in state
+- `clearChat()` — resets to personalized greeting
+
+**Message rendering:**
+- `ChatBubble` uses `flutter_markdown` (`MarkdownBody`) for AI responses — renders bold, headings, bullet lists, numbered lists, code blocks, blockquotes in dark-theme style.
+- User messages render as plain `Text`.
+- Typing indicator: animated bouncing 3-dot row (`_TypingDots`) with staggered `AnimationController`s.
+
+**ChatMessage model** (`lib/features/member/data/models/message_model.dart`):
+`{ text, isUser, isTyping, inBodyAttached }` — `inBodyAttached` flag drives the "InBody attached" label.
 
 **Known issue:** Requires valid Gemini API key in `GeminiService`. If chat shows error, check `lib/core/services/gemini_service.dart`.
 
@@ -572,6 +595,22 @@ Reads Apple Health / Google Fit data via the `health` package. Requires permissi
 
 ---
 
+## Dependencies (non-obvious)
+
+| Package | Version | Use |
+|---------|---------|-----|
+| `flutter_markdown` | ^0.7.7 | Renders Gemini markdown responses in AI chat |
+| `mobile_scanner` | ^7.2.0 | Barcode scanning in food search |
+| `flutter_local_notifications` | ^18.0.1 | Water + sleep reminders |
+| `timezone` | ^0.9.4 | Required by flutter_local_notifications for zonedSchedule |
+| `confetti` | ^0.7.0 | Milestone celebrations (streak, workout complete) |
+| `image_picker` | ^1.1.2 | Progress photo upload |
+| `qr_flutter` | ^4.1.0 | Member QR code at reception |
+| `webview_flutter` | ^4.10.0 | Paymob payment iframe |
+| `google_generative_ai` | ^0.4.6 | Gemini AI (also used directly in GeminiService) |
+
+---
+
 ## Routing (`lib/core/rouets/router_list.dart`)
 
 All routes registered with GoRouter. Extra data passed via `state.extra`:
@@ -677,6 +716,18 @@ Run `dart analyze lib/` to check for new issues before committing.
 - [ ] Rest timer counts down
 - [ ] Completion screen shows duration + kcal + supplement upsell card
 - [ ] History tab shows real check-ins
+
+### Member AI Coach
+- [ ] Greeting shows member's first name and is goal-specific (different for loss / fit / low / new)
+- [ ] Suggested prompt chips match the member's registered goal
+- [ ] "Attach InBody" chip appears only when a record exists; hidden otherwise
+- [ ] InBody chip toggles on/off (persistent until tapped again)
+- [ ] Sending a message with InBody attached includes InBody data in the Gemini context (verify AI response references body composition)
+- [ ] Sent message with InBody attached shows "InBody attached" label below the bubble
+- [ ] AI response renders markdown: bold, bullets, numbered lists all styled correctly
+- [ ] Typing indicator shows animated bouncing dots (not plain "...")
+- [ ] Refresh icon clears chat and resets to personalized greeting
+- [ ] Sending with no internet → shows friendly error message
 
 ### Member Eat
 - [ ] Food search returns results
