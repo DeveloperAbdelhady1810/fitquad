@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -94,6 +95,24 @@ class ApiClient {
       headers: await _headers(auth: auth),
       body: jsonEncode(body),
     );
+    return _handle(response);
+  }
+
+  static Future<Map<String, dynamic>> uploadMultipart(
+    String path,
+    File file, {
+    String fileField = 'photo',
+    Map<String, String>? fields,
+  }) async {
+    final token = await getToken();
+    final uri = Uri.parse('$baseUrl$path');
+    final req = http.MultipartRequest('POST', uri)
+      ..headers['Accept'] = 'application/json'
+      ..headers['Authorization'] = 'Bearer ${token ?? ''}';
+    if (fields != null) req.fields.addAll(fields);
+    req.files.add(await http.MultipartFile.fromPath(fileField, file.path));
+    final streamed = await req.send();
+    final response = await http.Response.fromStream(streamed);
     return _handle(response);
   }
 

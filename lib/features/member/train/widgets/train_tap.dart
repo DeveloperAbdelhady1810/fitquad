@@ -7,6 +7,7 @@ import 'package:gym_app/core/theme/app_colors.dart';
 import 'package:gym_app/core/theme/app_text_styles.dart';
 import 'package:gym_app/features/member/home/ui/widgets/choose_coach_screen.dart';
 import 'package:gym_app/features/member/train/widgets/design_manually_screen.dart';
+import 'package:gym_app/features/member/train/widgets/workout_history_screen.dart';
 
 import '../../../../core/enums/choose_coach.dart';
 import '../../../../generated/l10n.dart';
@@ -85,13 +86,26 @@ class TrainTab extends StatelessWidget {
           ),
 
           vGap(24),
-          Text(
-            'How do you want to train?',
-            style: AppTextStyles.font14GreyRegular.copyWith(
-              color: Colors.grey.shade500,
-              fontSize: 12.sp,
-              letterSpacing: 1.1,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'How do you want to train?',
+                style: AppTextStyles.font14GreyRegular.copyWith(
+                  color: Colors.grey.shade500,
+                  fontSize: 12.sp,
+                  letterSpacing: 1.1,
+                ),
+              ),
+              TextButton.icon(
+                onPressed: () => context.push(WorkoutHistoryScreen.routeName),
+                style: TextButton.styleFrom(padding: EdgeInsets.zero),
+                icon: Icon(Icons.history, size: 16.r, color: AppColors.teal),
+                label: Text('History',
+                    style: AppTextStyles.font14GreyRegular
+                        .copyWith(color: AppColors.teal, fontSize: 12.sp)),
+              ),
+            ],
           ),
           vGap(12),
 

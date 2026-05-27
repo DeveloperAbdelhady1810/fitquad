@@ -11,6 +11,7 @@ import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_text_styles.dart';
 import '../../../../../generated/l10n.dart';
 import '../../manager/food_cubit.dart';
+import 'barcode_scanner_screen.dart';
 
 Future<void> showSearchFoodDialog(BuildContext context) async {
   if (!context.mounted) return;
@@ -58,9 +59,40 @@ Future<void> showSearchFoodDialog(BuildContext context) async {
                             s.log_food,
                             style: AppTextStyles.font16WhiteBold,
                           ),
-                          trailing: IconButton(
-                            onPressed: () => context.pop(),
-                            icon: Icon(Icons.close, color: AppColors.grey),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // Barcode scan button
+                              IconButton(
+                                tooltip: 'Scan barcode',
+                                onPressed: () async {
+                                  final food = await Navigator.push<Map<String, dynamic>?>(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => const BarcodeScannerScreen(),
+                                    ),
+                                  );
+                                  if (food != null && context.mounted) {
+                                    // Log the scanned food directly
+                                    final cubit = context.read<FoodCubit>();
+                                    final id = food['id']?.toString();
+                                    if (id != null) {
+                                      cubit.logFood(id);
+                                      if (context.mounted) {
+                                        context.pop();
+                                        context.pop();
+                                      }
+                                    }
+                                  }
+                                },
+                                icon: Icon(Icons.qr_code_scanner,
+                                    color: AppColors.teal),
+                              ),
+                              IconButton(
+                                onPressed: () => context.pop(),
+                                icon: Icon(Icons.close, color: AppColors.grey),
+                              ),
+                            ],
                           ),
                         ),
 

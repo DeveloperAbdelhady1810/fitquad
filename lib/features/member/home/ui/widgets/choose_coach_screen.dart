@@ -9,6 +9,7 @@ import 'package:gym_app/core/theme/app_text_styles.dart';
 import 'package:gym_app/features/member/data/models/coach_model.dart';
 import 'package:gym_app/features/member/home/manager/member_cubit.dart';
 import 'package:gym_app/features/member/home/manager/member_state.dart';
+import 'package:gym_app/features/member/home/ui/widgets/coach_profile_screen.dart';
 import 'package:gym_app/features/member/payment/data/payment_repository.dart';
 import 'package:gym_app/features/member/payment/ui/payment_webview_screen.dart';
 
@@ -103,7 +104,12 @@ class _CoachCard extends StatelessWidget {
     // Capture scaffold context here — before any dialog opens
     final scaffoldCtx = context;
 
-    return Container(
+    return GestureDetector(
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => CoachProfileScreen(coach: coach)),
+      ),
+      child: Container(
       decoration: AppDecorations.containerDecoration.copyWith(
         borderRadius: BorderRadius.circular(16.r),
       ),
@@ -252,6 +258,7 @@ class _CoachCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
       ),
     );
   }

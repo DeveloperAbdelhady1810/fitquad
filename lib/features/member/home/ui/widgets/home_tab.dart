@@ -6,6 +6,8 @@ import 'package:gym_app/core/enums/choose_coach.dart';
 import 'package:gym_app/features/member/gym/models/gym_model.dart';
 import 'package:gym_app/features/member/home/ui/widgets/choose_coach_screen.dart';
 import 'package:gym_app/features/member/home/ui/widgets/plan_dilog.dart';
+import 'package:gym_app/features/member/community/community_feed_screen.dart';
+import 'package:gym_app/features/member/gamification/streak_card.dart';
 import 'package:gym_app/features/member/notifications/notifications_screen.dart';
 import 'package:gym_app/features/member/qr/qr_screen.dart';
 import 'package:gym_app/features/member/home/manager/bottom_nav_bar_cubit.dart';
@@ -15,7 +17,7 @@ import 'package:printing/printing.dart';
 
 import 'package:gym_app/core/widgets/custom_button.dart';
 import 'package:gym_app/features/member/home/ui/widgets/water_dialog.dart';
-import 'package:gym_app/features/member/home/ui/widgets/workout_dialog.dart';
+import 'package:gym_app/features/member/home/ui/views/workout_active_screen.dart';
 import '../../../../../core/cubit/health/health_cubit.dart';
 import '../../../../../core/services/health_pdf_service.dart';
 import '../../../../../core/services/health_service.dart';
@@ -25,6 +27,8 @@ import '../../../../../core/helpers/spacing.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_text_styles.dart';
 import '../../../../../generated/l10n.dart';
+import 'package:gym_app/features/member/data/models/member_model.dart';
+import 'package:gym_app/features/member/home/ui/widgets/member_chat_screen.dart';
 import '../../manager/member_cubit.dart';
 import '../../manager/member_state.dart';
 import 'column_chart.dart';
@@ -120,6 +124,17 @@ class _HomeTabState extends State<HomeTab> {
                   _iconButton(Icons.qr_code_2, () => showQrSheet(context)),
                   hGap(10),
                   _iconButton(
+                    Icons.chat_bubble_outline,
+                    () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) =>
+                            const MemberChatScreen(coachName: 'Your Coach'),
+                      ),
+                    ),
+                  ),
+                  hGap(10),
+                  _iconButton(
                     Icons.person_outline,
                         () => context.push(ProfileScreen.routeName),
                   ),
@@ -128,6 +143,19 @@ class _HomeTabState extends State<HomeTab> {
                 ],
               ),
               vGap(10),
+              const StreakCard(),
+              vGap(12),
+              if (state is MemberLoaded &&
+                  state.member.status == MemberStatus.expiring) ...[
+                _ExpiryBanner(),
+                vGap(10),
+              ],
+              if (state is MemberLoaded &&
+                  state.member.streakDays >= 10 &&
+                  state.member.type == null) ...[
+                _CoachUpsellBanner(),
+                vGap(10),
+              ],
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -217,6 +245,9 @@ class _HomeTabState extends State<HomeTab> {
                   return const SizedBox.shrink();
                 },
               ),
+              // Community shortcut
+              vGap(15),
+              _CommunityBanner(),
             ],
           ),
         );
@@ -259,11 +290,15 @@ class _HomeTabState extends State<HomeTab> {
       planTitle: plan['title'] as String? ?? 'Workout Plan',
       exercises: exercises,
       status: status,
-      onStart: () async {
-        await cubit.restoreWorkout();
-        if (pageController != null && context.mounted) {
-          showWorkoutDialog(context, pageController: pageController!);
-        }
+      onStart: () {
+        final title = plan['title'] as String? ?? 'Workout Plan';
+        context.push(
+          WorkoutActiveScreen.routeName,
+          extra: {
+            'exercises': exercises,
+            'plan_title': title,
+          },
+        );
       },
       onMarkDone: () => cubit.markWorkoutDone('done'),
       onMarkSemi: () => cubit.markWorkoutDone('semi'),
@@ -885,6 +920,157 @@ class _CrowdingBanner extends StatelessWidget {
                 style: AppTextStyles.font14GreyRegular.copyWith(color: color, fontSize: 12.sp)),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _CommunityBanner extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => context.push(CommunityFeedScreen.routeName),
+      child: Container(
+        width: double.infinity,
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF1B2A6B), Color(0xFF2E3D99)],
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+          ),
+          borderRadius: BorderRadius.circular(14.r),
+          border: Border.all(
+              color: AppColors.blue.withValues(alpha: 0.3)),
+        ),
+        child: Row(
+          children: [
+            Text('👥', style: TextStyle(fontSize: 24.sp)),
+            hGap(12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Community Feed',
+                      style: AppTextStyles.font14WhiteRegular
+                          .copyWith(fontWeight: FontWeight.w600)),
+                  Text('Share wins & motivate others',
+                      style: AppTextStyles.font14GreyRegular
+                          .copyWith(fontSize: 11.sp)),
+                ],
+              ),
+            ),
+            Icon(Icons.arrow_forward_ios,
+                size: 16.r, color: AppColors.grey),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ExpiryBanner extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+      decoration: BoxDecoration(
+        color: Colors.orange.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: Colors.orange.withValues(alpha: 0.4)),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.access_time_outlined, color: Colors.orange, size: 20.r),
+          hGap(10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Membership expiring soon',
+                  style: AppTextStyles.font14WhiteRegular.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: Colors.orange,
+                  ),
+                ),
+                Text(
+                  'Renew now to keep your streak and benefits alive!',
+                  style: AppTextStyles.font14GreyRegular
+                      .copyWith(fontSize: 11.sp),
+                ),
+              ],
+            ),
+          ),
+          hGap(8),
+          GestureDetector(
+            onTap: () {/* navigate to renewal */},
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+              decoration: BoxDecoration(
+                color: Colors.orange,
+                borderRadius: BorderRadius.circular(8.r),
+              ),
+              child: Text('Renew',
+                  style: AppTextStyles.font14GreyRegular.copyWith(
+                      color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11.sp)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CoachUpsellBanner extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => context.push(
+        ChooseCoachScreen.routeName,
+        extra: ChooseCoachSource.train,
+      ),
+      child: Container(
+        width: double.infinity,
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              AppColors.purple.withValues(alpha: 0.25),
+              AppColors.primary,
+            ],
+          ),
+          borderRadius: BorderRadius.circular(12.r),
+          border: Border.all(
+              color: AppColors.purple.withValues(alpha: 0.4)),
+        ),
+        child: Row(
+          children: [
+            Text('🏆', style: TextStyle(fontSize: 24.sp)),
+            hGap(10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "You're serious about this!",
+                    style: AppTextStyles.font14WhiteRegular.copyWith(
+                        fontWeight: FontWeight.w600),
+                  ),
+                  vGap(2),
+                  Text(
+                    'Want a coach? First session free — tap to explore',
+                    style: AppTextStyles.font14GreyRegular.copyWith(
+                        fontSize: 11.sp, color: AppColors.purple),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.arrow_forward_ios,
+                size: 14.r, color: AppColors.purple),
+          ],
+        ),
       ),
     );
   }

@@ -26,19 +26,38 @@ class ProductCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Align(
-            alignment: Alignment.topRight,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.star, color: Colors.amber, size: 14),
-                hGap(5),
-                Text(
-                  product.rating.toString(),
-                  style: AppTextStyles.font14WhiteRegular,
-                ),
-              ],
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              if (product.isOnSale)
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFF416C),
+                    borderRadius: BorderRadius.circular(6.r),
+                  ),
+                  child: Text(
+                    'SALE',
+                    style: AppTextStyles.font14GreyRegular.copyWith(
+                        color: Colors.white,
+                        fontSize: 9.sp,
+                        fontWeight: FontWeight.bold),
+                  ),
+                )
+              else
+                const SizedBox.shrink(),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.star, color: Colors.amber, size: 14),
+                  hGap(5),
+                  Text(
+                    product.rating.toString(),
+                    style: AppTextStyles.font14WhiteRegular,
+                  ),
+                ],
+              ),
+            ],
           ),
 
           const Spacer(),
@@ -66,9 +85,28 @@ class ProductCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'EGP ${product.price}',
-                  style: AppTextStyles.font16WhiteBold.copyWith(fontSize: 14.sp)
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (product.isOnSale)
+                    Text(
+                      'EGP ${product.price?.toStringAsFixed(0)}',
+                      style: AppTextStyles.font14GreyRegular.copyWith(
+                        fontSize: 10.sp,
+                        decoration: TextDecoration.lineThrough,
+                        color: Colors.white38,
+                      ),
+                    ),
+                  Text(
+                    'EGP ${product.effectivePrice.toStringAsFixed(0)}',
+                    style: AppTextStyles.font16WhiteBold.copyWith(
+                      fontSize: 14.sp,
+                      color: product.isOnSale
+                          ? const Color(0xFFFF416C)
+                          : Colors.white,
+                    ),
+                  ),
+                ],
               ),
               GestureDetector(
                 onTap: onAdd,

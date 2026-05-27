@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import '../../../../core/services/api_client.dart';
 
 class MemberRepository {
@@ -85,6 +87,15 @@ class MemberRepository {
     if (search != null) query['search'] = search;
     final res = await ApiClient.get('/member/food-items', query: query);
     return res['data'] as List<dynamic>;
+  }
+
+  static Future<Map<String, dynamic>?> getFoodItemByBarcode(
+      String barcode) async {
+    final res = await ApiClient.get('/member/food-items/barcode',
+        query: {'barcode': barcode});
+    final data = res['data'];
+    if (data == null) return null;
+    return data as Map<String, dynamic>;
   }
 
   static Future<Map<String, dynamic>> logMeal({
@@ -175,6 +186,39 @@ class MemberRepository {
   static Future<List<dynamic>> getAiHistory() async {
     final res = await ApiClient.get('/member/ai/history');
     return res['data'] as List<dynamic>;
+  }
+
+  // ── Gamification / Progress ──────────────────────────────────
+  static Future<Map<String, dynamic>> getProgress() async {
+    final res = await ApiClient.get('/member/progress');
+    return res['data'] as Map<String, dynamic>;
+  }
+
+  // ── Progress Photos ──────────────────────────────────────────
+  static Future<List<dynamic>> getProgressPhotos() async {
+    final res = await ApiClient.get('/member/progress-photos');
+    return res['data'] as List<dynamic>;
+  }
+
+  static Future<Map<String, dynamic>> uploadProgressPhoto({
+    required File photo,
+    String? notes,
+    double? weight,
+  }) async {
+    final fields = <String, String>{};
+    if (notes != null) fields['notes'] = notes;
+    if (weight != null) fields['weight_at_time'] = weight.toString();
+    final res = await ApiClient.uploadMultipart(
+      '/member/progress-photos',
+      photo,
+      fileField: 'photo',
+      fields: fields,
+    );
+    return res['data'] as Map<String, dynamic>;
+  }
+
+  static Future<void> deleteProgressPhoto(int id) async {
+    await ApiClient.delete('/member/progress-photos/$id');
   }
 
   // ── Notifications ────────────────────────────────────────────
