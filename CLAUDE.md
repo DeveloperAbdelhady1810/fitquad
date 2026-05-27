@@ -238,7 +238,9 @@ Personalised AI coach chat powered by **Gemini** via the backend (`POST /member/
 
 **InBody attachment:**
 - `AiTab` loads the latest InBody record on init via `MemberRepository.getInBodyRecords()`.
-- "Attach InBody" chip appears in `MessageInput` only if a record exists.
+- "Attach InBody" chip is **always visible** in `MessageInput`.
+  - If records exist (`hasData: true`) → toggle attach/detach normally.
+  - If no records (`hasData: false`) → chip shows greyed "Attach InBody (no scan yet)"; tapping shows a SnackBar telling the user to add one in the InBody tab.
 - Toggle is **persistent** (stays attached until tapped again).
 - When attached, `inBodyAttached: true` is set in `AiChatState`; the next send includes all InBody metrics in the context prefix.
 - Sent messages with InBody show a small "InBody attached" label below the bubble.
@@ -337,6 +339,8 @@ File: `lib/features/member/shop/ui/widgets/market_tab.dart`
 - Category tabs (`MarketTabs`)
 - `FlashSaleBanner` — appears automatically when any product has `sale_price` set; live countdown timer to midnight
 - `MarketGridView` — 2-column grid of `ProductCard`
+
+**Loading:** `MarketCubit` is provided and `loadProducts()` is called in `main.dart` (`BlocProvider(create: (_) => MarketCubit()..loadProducts())`). Products load at startup. If the grid shows empty, the API is returning no data or an error — check `GET /member/shop/products` and the products seeder.
 
 Tap product card → `ProductDetailScreen` (via `Navigator.push` with `BlocProvider.value(CartCubit)`)
 
@@ -761,6 +765,20 @@ Run `dart analyze lib/` to check for new issues before committing.
 - [ ] Dashboard stats load from API
 - [ ] Members list searchable
 - [ ] Announcements post and appear in member app
+
+---
+
+## Common Runtime Errors
+
+| Error message | Cause | Fix |
+|---------------|-------|-----|
+| `SQLSTATE: no such table: inbody_records` | Migration not run | `php artisan migrate` in backend directory |
+| `SQLSTATE: no such table: community_posts` | Migration not run | `php artisan migrate` |
+| `SQLSTATE: no such table: progress_photos` | Migration not run | `php artisan migrate` |
+| Market grid empty, no spinner | `loadProducts()` not called | Confirmed fixed: `main.dart` uses `MarketCubit()..loadProducts()` |
+| Attach InBody button not visible | No InBody records + old code | Fixed: button always visible; greyed when no data |
+| AI says "couldn't connect" | Gemini API key invalid or quota | Check `GeminiService` key |
+| `BlocProvider not found: MarketCubit` | Cubit not in tree | `MarketCubit` must be in `main.dart` `MultiBlocProvider` |
 
 ---
 
