@@ -232,6 +232,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               vGap(20),
 
+              // ── Loyalty Points Card ────────────────────────────────
+              if (state is MemberLoaded) ...[
+                _LoyaltyCard(points: state.member.loyaltyPoints),
+                vGap(14),
+              ],
+
               // ── Referral Card ──────────────────────────────────────
               if (state is MemberLoaded) ...[
                 _ReferralCard(
@@ -347,6 +353,79 @@ class _DetailRow extends StatelessWidget {
         children: [
           Text(label, style: AppTextStyles.font14GreyRegular),
           Text(value, style: AppTextStyles.font14WhiteRegular),
+        ],
+      ),
+    );
+  }
+}
+
+class _LoyaltyCard extends StatelessWidget {
+  final int points;
+  const _LoyaltyCard({required this.points});
+
+  @override
+  Widget build(BuildContext context) {
+    final credit = (points / 10).floor();
+    return Container(
+      padding: EdgeInsets.all(16.r),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF1A6B4A), Color(0xFF0D3D2B)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(color: const Color(0xFF2ECC71).withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 48.r,
+            height: 48.r,
+            decoration: BoxDecoration(
+              color: const Color(0xFF2ECC71).withValues(alpha: 0.15),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(Icons.stars_rounded,
+                color: const Color(0xFF2ECC71), size: 26.r),
+          ),
+          hGap(14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Loyalty Points',
+                  style: AppTextStyles.font14GreyRegular.copyWith(
+                      color: Colors.white70, fontSize: 11.sp),
+                ),
+                vGap(2),
+                Text(
+                  '$points pts',
+                  style: AppTextStyles.font16WhiteBold.copyWith(
+                      color: const Color(0xFF2ECC71), fontSize: 20.sp),
+                ),
+                vGap(2),
+                Text(
+                  '= $credit EGP store credit',
+                  style: AppTextStyles.font14GreyRegular
+                      .copyWith(fontSize: 11.sp),
+                ),
+              ],
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text('1 EGP spent',
+                  style: AppTextStyles.font14GreyRegular
+                      .copyWith(fontSize: 10.sp)),
+              Text('= 1 point',
+                  style: AppTextStyles.font14GreyRegular
+                      .copyWith(fontSize: 10.sp,
+                          color: const Color(0xFF2ECC71))),
+            ],
+          ),
         ],
       ),
     );

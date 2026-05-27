@@ -20,6 +20,7 @@ class MemberModel {
   final int xpPoints;
   final int level;
   final String? referralCode;
+  final int loyaltyPoints;
 
   MemberModel({
     this.id,
@@ -39,6 +40,7 @@ class MemberModel {
     this.xpPoints = 0,
     this.level = 1,
     this.referralCode,
+    this.loyaltyPoints = 0,
   });
 
   bool get needsGymSelection => trainingMode == null;
@@ -65,6 +67,7 @@ class MemberModel {
       xpPoints: (member['xp_points'] as num?)?.toInt() ?? 0,
       level: (member['level'] as num?)?.toInt() ?? 1,
       referralCode: member['referral_code'] as String?,
+      loyaltyPoints: (member['loyalty_points'] as num?)?.toInt() ?? 0,
     );
   }
 
@@ -105,6 +108,7 @@ class MemberModel {
     int? xpPoints,
     int? level,
     String? referralCode,
+    int? loyaltyPoints,
   }) {
     return MemberModel(
       id: id ?? this.id,
@@ -124,6 +128,7 @@ class MemberModel {
       xpPoints: xpPoints ?? this.xpPoints,
       level: level ?? this.level,
       referralCode: referralCode ?? this.referralCode,
+      loyaltyPoints: loyaltyPoints ?? this.loyaltyPoints,
     );
   }
 }
