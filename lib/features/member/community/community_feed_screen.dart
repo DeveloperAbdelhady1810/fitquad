@@ -235,7 +235,8 @@ class _PostCard extends StatelessWidget {
     final createdAt = post['created_at'] as String?;
     final date = createdAt != null ? DateTime.tryParse(createdAt) : null;
     final timeAgo = date != null ? _timeAgo(date) : '';
-    final reactions = (post['reactions'] as Map<String, dynamic>?) ?? {};
+    final rawReactions = post['reactions'];
+    final reactions = (rawReactions is Map<String, dynamic>) ? rawReactions : <String, dynamic>{};
     final type = post['type'] as String? ?? 'post';
     final typeIcon = _typeIcon(type);
 
