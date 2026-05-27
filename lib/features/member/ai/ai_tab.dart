@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-
-import '../../../generated/l10n.dart';
 import '../ai/chat_bubble.dart';
 import '../ai/message_input.dart';
 import '../ai/suggested_prompts.dart';
-import '../data/models/message_model.dart';
+import '../ai/models/ai_member_context.dart';
 import 'ai_abb_bar.dart';
 import 'manager/ai_cubit.dart';
+import '../data/repositories/member_repository.dart';
+import '../home/manager/member_cubit.dart';
+import '../home/manager/member_state.dart';
+import '../inbody/models/inbody_model.dart';
 
 class AiTab extends StatefulWidget {
   const AiTab({super.key});
@@ -19,55 +21,118 @@ class AiTab extends StatefulWidget {
 
 class _AiTabState extends State<AiTab> {
   final TextEditingController _controller = TextEditingController();
-
-
+  final ScrollController _scrollController = ScrollController();
   late AiAssistantCubit _cubit;
+  InBodyModel? _latestInBody;
 
   @override
   void initState() {
     super.initState();
     _cubit = AiAssistantCubit();
+    _loadInBody();
   }
 
-  void _sendMessage(String text) {
-    if (text.isEmpty) return;
+  @override
+  void dispose() {
+    _controller.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadInBody() async {
+    try {
+      final records = await MemberRepository.getInBodyRecords();
+      if (records.isNotEmpty && mounted) {
+        setState(() {
+          _latestInBody =
+              InBodyModel.fromJson(records.first as Map<String, dynamic>);
+        });
+      }
+    } catch (_) {}
+  }
+
+  AiMemberContext _buildContext(MemberCubit memberCubit) {
+    final ms = memberCubit.state;
+    return AiMemberContext(
+      member: ms is MemberLoaded ? ms.member : null,
+      latestInBody: _latestInBody,
+      workoutPlan: memberCubit.workoutPlan,
+      nutritionPlan: memberCubit.nutritionPlan,
+      weekCheckIns: memberCubit.weekCheckIns,
+    );
+  }
+
+  void _send(String text) {
+    if (text.trim().isEmpty) return;
     _controller.clear();
     _cubit.sendMessage(text);
+    _scrollToBottom();
   }
+
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    final s =S.of(context);
-    final List<String> prompts = [
-      s.create_new_training_plan,
-      s.adjust_my_workout_day,
-      s.i_want_to_lose_fat,
-      s.make_nutrition_plan
-    ];
+    final memberCubit = context.watch<MemberCubit>();
+    final aiContext = _buildContext(memberCubit);
+
+    // Update cubit context every build (member may have just loaded)
+    _cubit.updateContext(aiContext);
+
     return BlocProvider.value(
       value: _cubit,
       child: Column(
         children: [
-          AiAbbBar(),
+          const AiAbbBar(),
           Expanded(
-            child: BlocBuilder<AiAssistantCubit, List<ChatMessage>>(
-              builder: (context, messages) {
+            child: BlocConsumer<AiAssistantCubit, AiChatState>(
+              listener: (context, state) => _scrollToBottom(),
+              builder: (context, chatState) {
                 return ListView.builder(
-                  padding: const EdgeInsets.all(8),
-                  itemCount: messages.length,
-                  itemBuilder: (context, index) {
-                    return ChatBubble(message: messages[index]);
-                  },
+                  controller: _scrollController,
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 8, vertical: 12),
+                  itemCount: chatState.messages.length,
+                  itemBuilder: (_, i) =>
+                      ChatBubble(message: chatState.messages[i]),
                 );
               },
             ),
           ),
-          SuggestedPrompts(
-            prompts: prompts,
-            onTap: _sendMessage,
+          BlocBuilder<AiAssistantCubit, AiChatState>(
+            builder: (context, chatState) {
+              return SuggestedPrompts(
+                prompts: aiContext.suggestedPrompts,
+                onTap: _send,
+              );
+            },
           ),
-          MessageInput(controller: _controller, onSend: () => _sendMessage(_controller.text)),
+          BlocBuilder<AiAssistantCubit, AiChatState>(
+            builder: (context, chatState) {
+              return MessageInput(
+                controller: _controller,
+                onSend: () => _send(_controller.text),
+                hasInBody: _latestInBody != null,
+                inBodyAttached: chatState.inBodyAttached,
+                onToggleInBody: _latestInBody != null
+                    ? () =>
+                        context.read<AiAssistantCubit>().toggleInBody()
+                    : null,
+              );
+            },
+          ),
         ],
-      )
+      ),
     );
   }
 }
