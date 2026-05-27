@@ -531,7 +531,46 @@ class _WorkoutActiveScreenState extends State<WorkoutActiveScreen> {
                           label: 'kcal'),
                     ],
                   ),
-                  vGap(40),
+                  vGap(28),
+                  // Post-workout upsell
+                  Container(
+                    padding: EdgeInsets.all(14.r),
+                    decoration: BoxDecoration(
+                      color: AppColors.secondary,
+                      borderRadius: BorderRadius.circular(14.r),
+                      border: Border.all(
+                          color: AppColors.emerald.withValues(alpha: 0.3)),
+                    ),
+                    child: Row(
+                      children: [
+                        Text('💪', style: TextStyle(fontSize: 28.sp)),
+                        hGap(12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Fuel Your Recovery',
+                                style: AppTextStyles.font14WhiteRegular
+                                    .copyWith(fontWeight: FontWeight.w600),
+                              ),
+                              vGap(2),
+                              Text(
+                                'Whey Protein 20% off today — shop now',
+                                style: AppTextStyles.font14GreyRegular
+                                    .copyWith(
+                                        fontSize: 11.sp,
+                                        color: AppColors.emerald),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Icon(Icons.arrow_forward_ios,
+                            color: AppColors.emerald, size: 14.r),
+                      ],
+                    ),
+                  ),
+                  vGap(20),
                   SizedBox(
                     width: double.infinity,
                     height: 56.h,

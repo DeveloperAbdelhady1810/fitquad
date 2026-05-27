@@ -150,6 +150,12 @@ class _HomeTabState extends State<HomeTab> {
                 _ExpiryBanner(),
                 vGap(10),
               ],
+              if (state is MemberLoaded &&
+                  state.member.streakDays >= 10 &&
+                  state.member.type == null) ...[
+                _CoachUpsellBanner(),
+                vGap(10),
+              ],
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -1012,6 +1018,59 @@ class _ExpiryBanner extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _CoachUpsellBanner extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => context.push(
+        ChooseCoachScreen.routeName,
+        extra: ChooseCoachSource.train,
+      ),
+      child: Container(
+        width: double.infinity,
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              AppColors.purple.withValues(alpha: 0.25),
+              AppColors.primary,
+            ],
+          ),
+          borderRadius: BorderRadius.circular(12.r),
+          border: Border.all(
+              color: AppColors.purple.withValues(alpha: 0.4)),
+        ),
+        child: Row(
+          children: [
+            Text('🏆', style: TextStyle(fontSize: 24.sp)),
+            hGap(10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "You're serious about this!",
+                    style: AppTextStyles.font14WhiteRegular.copyWith(
+                        fontWeight: FontWeight.w600),
+                  ),
+                  vGap(2),
+                  Text(
+                    'Want a coach? First session free — tap to explore',
+                    style: AppTextStyles.font14GreyRegular.copyWith(
+                        fontSize: 11.sp, color: AppColors.purple),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.arrow_forward_ios,
+                size: 14.r, color: AppColors.purple),
+          ],
+        ),
       ),
     );
   }
