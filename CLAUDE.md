@@ -787,6 +787,7 @@ Run `dart analyze lib/` to check for new issues before committing.
 | Error message | Cause | Fix |
 |---------------|-------|-----|
 | `SQLSTATE: no such table: in_body_records` | Model `InBodyRecord` auto-generates `in_body_records` but table is `inbody_records` | **Fixed:** added `protected $table = 'inbody_records'` to `InBodyRecord.php` |
+| Paymob `unmatched_item_prices` | `sum(items[].amount)` must equal the `amount` field exactly; platform fee and processing fee were missing from items array | **Fixed:** fees added as explicit line items; `$amountCents` is the integer sum of all items — no separate rounding |
 | `SQLSTATE: no such table: community_posts` | Migration not run | `php artisan migrate` |
 | `SQLSTATE: no such table: progress_photos` | Migration not run | `php artisan migrate` |
 | Market grid empty, no spinner | `loadProducts()` not called | Confirmed fixed: `main.dart` uses `MarketCubit()..loadProducts()` |
