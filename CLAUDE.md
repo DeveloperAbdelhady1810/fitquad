@@ -344,6 +344,20 @@ File: `lib/features/member/shop/ui/widgets/market_tab.dart`
 
 Tap product card → `ProductDetailScreen` (via `Navigator.push` with `BlocProvider.value(CartCubit)`)
 
+#### CartView → Checkout Flow
+File: `lib/features/member/shop/ui/widgets/cart/cart_view_body.dart`
+
+Fee constants (file-level): `_kPlatformFeePct = 5.0`, `_kProcessingFee = 5.0`
+
+Checkout flow:
+1. **Pay Now** button in `_SummaryFooter` → opens `_OrderSummarySheet` bottom sheet
+2. Sheet shows: item list, subtotal, platform fee (5%), processing fee (5 EGP), total
+3. **Delivery info card**: "Cash on delivery · delivery fees collected upon delivery · order confirmed by phone call from supplier"
+4. "Confirm & Pay" → `_initiatePayment()` → `POST /member/payments/initiate-order` → opens `PaymentWebviewScreen(isOrder: true)`
+5. On payment success → `CartCubit.clearCart()` + order-specific success message
+
+`CartItemModel.totalPrice` uses `productModel.effectivePrice` (sale price takes priority over base price).
+
 #### ProductCard
 File: `lib/features/member/shop/ui/widgets/product_card.dart`
 SALE chip badge when `product.isOnSale`. Shows effective price (sale price in red with strikethrough original).
@@ -772,7 +786,7 @@ Run `dart analyze lib/` to check for new issues before committing.
 
 | Error message | Cause | Fix |
 |---------------|-------|-----|
-| `SQLSTATE: no such table: inbody_records` | Migration not run | `php artisan migrate` in backend directory |
+| `SQLSTATE: no such table: in_body_records` | Model `InBodyRecord` auto-generates `in_body_records` but table is `inbody_records` | **Fixed:** added `protected $table = 'inbody_records'` to `InBodyRecord.php` |
 | `SQLSTATE: no such table: community_posts` | Migration not run | `php artisan migrate` |
 | `SQLSTATE: no such table: progress_photos` | Migration not run | `php artisan migrate` |
 | Market grid empty, no spinner | `loadProducts()` not called | Confirmed fixed: `main.dart` uses `MarketCubit()..loadProducts()` |
