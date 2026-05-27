@@ -26,11 +26,12 @@ class MessageInput extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (hasInBody) _InBodyToggle(
+          _InBodyToggle(
             attached: inBodyAttached,
+            hasData: hasInBody,
             onTap: onToggleInBody,
           ),
-          if (hasInBody) SizedBox(height: 6.h),
+          SizedBox(height: 6.h),
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
@@ -78,13 +79,33 @@ class MessageInput extends StatelessWidget {
 
 class _InBodyToggle extends StatelessWidget {
   final bool attached;
+  final bool hasData;
   final VoidCallback? onTap;
 
-  const _InBodyToggle({required this.attached, this.onTap});
+  const _InBodyToggle({
+    required this.attached,
+    required this.hasData,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final color = attached ? AppColors.teal : Colors.grey.shade600;
+    // Three visual states:
+    // hasData + attached  → teal filled chip
+    // hasData + !attached → dark bordered chip
+    // !hasData            → greyed chip with "add" hint
+    final Color color = attached
+        ? AppColors.teal
+        : hasData
+            ? Colors.grey.shade500
+            : Colors.grey.shade700;
+
+    final String label = attached
+        ? 'InBody attached'
+        : hasData
+            ? 'Attach InBody'
+            : 'Attach InBody (no scan yet)';
+
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
@@ -96,7 +117,11 @@ class _InBodyToggle extends StatelessWidget {
               : AppColors.secondary,
           borderRadius: BorderRadius.circular(20.r),
           border: Border.all(
-            color: attached ? AppColors.teal : Colors.grey.shade700,
+            color: attached
+                ? AppColors.teal
+                : hasData
+                    ? Colors.grey.shade700
+                    : Colors.grey.shade800,
           ),
         ),
         child: Row(
@@ -109,12 +134,11 @@ class _InBodyToggle extends StatelessWidget {
             ),
             SizedBox(width: 6.w),
             Text(
-              attached ? 'InBody attached' : 'Attach InBody',
+              label,
               style: TextStyle(
                 fontSize: 12.sp,
                 color: color,
-                fontWeight:
-                    attached ? FontWeight.w600 : FontWeight.w400,
+                fontWeight: attached ? FontWeight.w600 : FontWeight.w400,
               ),
             ),
             if (attached) ...[

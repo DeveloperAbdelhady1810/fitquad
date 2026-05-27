@@ -30,7 +30,7 @@ class MyApp extends StatelessWidget {
         BlocProvider(create: (_) => BottomNavBarCubit()),
         BlocProvider(create: (_) => CartCubit()),
         BlocProvider(create: (_) => FoodCubit()),
-        BlocProvider(create: (_) => MarketCubit()),
+        BlocProvider(create: (_) => MarketCubit()..loadProducts()),
         BlocProvider(create: (_) => MemberCubit()),
         BlocProvider(create: (_) => HealthCubit()),
       ],

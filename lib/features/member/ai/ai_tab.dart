@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:gym_app/core/theme/app_colors.dart';
 
 import '../ai/chat_bubble.dart';
 import '../ai/message_input.dart';
@@ -124,10 +125,26 @@ class _AiTabState extends State<AiTab> {
                 onSend: () => _send(_controller.text),
                 hasInBody: _latestInBody != null,
                 inBodyAttached: chatState.inBodyAttached,
-                onToggleInBody: _latestInBody != null
-                    ? () =>
-                        context.read<AiAssistantCubit>().toggleInBody()
-                    : null,
+                onToggleInBody: () {
+                  if (_latestInBody != null) {
+                    context.read<AiAssistantCubit>().toggleInBody();
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: const Text(
+                          'No InBody scan yet — add one in the InBody tab first',
+                        ),
+                        backgroundColor: AppColors.secondary,
+                        behavior: SnackBarBehavior.floating,
+                        action: SnackBarAction(
+                          label: 'Got it',
+                          textColor: AppColors.teal,
+                          onPressed: () {},
+                        ),
+                      ),
+                    );
+                  }
+                },
               );
             },
           ),
