@@ -9,7 +9,7 @@ class CartItemModel {
     required this.quantity,
   });
 
-  double get itemPrice => productModel.price??0;
+  double get itemPrice => productModel.effectivePrice;
 
   double get totalPrice => itemPrice * quantity;
 

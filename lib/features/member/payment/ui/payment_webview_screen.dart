@@ -9,14 +9,18 @@ class PaymentWebviewScreen extends StatefulWidget {
   static const routeName = '/payment-webview';
 
   final String paymentUrl;
-  final String coachName;
   final double totalAmount;
+  final String coachName;
+  final bool isOrder;
+  final VoidCallback? onSuccess;
 
   const PaymentWebviewScreen({
     super.key,
     required this.paymentUrl,
-    required this.coachName,
     required this.totalAmount,
+    this.coachName = '',
+    this.isOrder = false,
+    this.onSuccess,
   });
 
   @override
@@ -74,7 +78,9 @@ class _PaymentWebviewScreenState extends State<PaymentWebviewScreen> {
         ),
         content: Text(
           success
-              ? 'Your session with ${widget.coachName} has been booked. They will contact you to confirm the time.'
+              ? widget.isOrder
+                  ? 'Your order is confirmed and payment was received. Our supplier will call you to arrange delivery. Delivery fees will be collected upon delivery.'
+                  : 'Your session with ${widget.coachName} has been booked. They will contact you to confirm the time.'
               : 'The payment could not be processed. Please try again.',
           style: AppTextStyles.font14GreyRegular,
           textAlign: TextAlign.center,
@@ -83,6 +89,7 @@ class _PaymentWebviewScreenState extends State<PaymentWebviewScreen> {
           TextButton(
             onPressed: () {
               Navigator.pop(context);
+              if (success) widget.onSuccess?.call();
               context.pop();
             },
             child: Text(
