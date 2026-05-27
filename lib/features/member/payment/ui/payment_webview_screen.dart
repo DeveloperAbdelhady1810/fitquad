@@ -39,33 +39,27 @@ class _PaymentWebviewScreenState extends State<PaymentWebviewScreen> {
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setNavigationDelegate(NavigationDelegate(
         onPageStarted: (_) => setState(() => _loading = true),
-        onPageFinished: (url) {
-          setState(() => _loading = false);
-          _checkForCompletion(url);
-        },
+        onPageFinished: (_) => setState(() => _loading = false),
         onNavigationRequest: (req) {
-          _checkForCompletion(req.url);
+          if (req.url.startsWith('https://app.fitquad.local/payment-result')) {
+            _handleRedirect(req.url);
+            return NavigationDecision.prevent;
+          }
           return NavigationDecision.navigate;
         },
       ))
       ..loadRequest(Uri.parse(widget.paymentUrl));
   }
 
-  void _checkForCompletion(String url) {
+  void _handleRedirect(String url) {
     if (_resultShown) return;
+    _resultShown = true;
     try {
-      final uri = Uri.parse(url);
-      final success = uri.queryParameters['success'];
-      if (success == 'true') {
-        _resultShown = true;
-        _showResult(success: true);
-      } else if (success == 'false' ||
-          url.contains('failure') ||
-          url.contains('declined')) {
-        _resultShown = true;
-        _showResult(success: false);
-      }
-    } catch (_) {}
+      final success = Uri.parse(url).queryParameters['success'];
+      _showResult(success: success == 'true');
+    } catch (_) {
+      _showResult(success: false);
+    }
   }
 
   void _showResult({required bool success}) {

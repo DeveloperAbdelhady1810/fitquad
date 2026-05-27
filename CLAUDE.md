@@ -334,10 +334,10 @@ Receives `payment_url`, `coach_name`, `total_amount` via `state.extra as Map`. S
 
 Params: `paymentUrl` (required), `totalAmount` (required), `coachName` (optional, default `''`), `isOrder` (default `false`), `onSuccess` (callback — called only on confirmed success, e.g. `CartCubit.clearCart()`).
 
-**Completion detection:** `_checkForCompletion(url)` parses `Uri.queryParameters['success']`:
-- `'true'` → shows success dialog, calls `onSuccess`
-- `'false'` / URL contains `failure` or `declined` → shows failure dialog (cart NOT cleared)
-- `_resultShown` guard prevents duplicate dialogs from multiple navigation events
+**Completion detection:** Paymob is configured with `redirect_url = 'https://app.fitquad.local/payment-result'` in the intention payload (backend). The webview intercepts any navigation to that URL in `onNavigationRequest`, prevents it from loading (it's not a real page), and reads `?success=true/false` from the query params.
+- `success=true` → shows success dialog, calls `onSuccess` (clears cart)
+- `success=false` (or parse error) → shows failure dialog (cart NOT cleared)
+- `_resultShown` guard prevents duplicate dialogs
 
 ### Market Tab (`/nav` index 4)
 File: `lib/features/member/shop/ui/widgets/market_tab.dart`
@@ -799,7 +799,7 @@ Run `dart analyze lib/` to check for new issues before committing.
 | `SQLSTATE: no such table: progress_photos` | Migration not run | `php artisan migrate` |
 | Market grid empty, no spinner | `loadProducts()` not called | Confirmed fixed: `main.dart` uses `MarketCubit()..loadProducts()` |
 | Attach InBody button not visible | No InBody records + old code | Fixed: button always visible; greyed when no data |
-| Payment decline clears cart / shows success popup | `url.contains('success')` matched `?success=false` redirect URL | **Fixed:** `_checkForCompletion` now uses `Uri.parse(url).queryParameters['success'] == 'true'`; `_resultShown` guard prevents duplicate dialogs |
+| Payment decline clears cart / shows success popup | URL-based detection unreliable — Paymob stays on its own domain when no redirect_url is set | **Fixed:** backend payload now includes `redirect_url = 'https://app.fitquad.local/payment-result'`; Flutter intercepts that URL in `onNavigationRequest`, prevents navigation, reads `?success=true/false` |
 | AI says "couldn't connect" | Gemini API key invalid or quota | Check `GeminiService` key |
 | `BlocProvider not found: MarketCubit` | Cubit not in tree | `MarketCubit` must be in `main.dart` `MultiBlocProvider` |
 
