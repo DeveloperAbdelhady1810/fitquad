@@ -332,6 +332,13 @@ Bottom bar: price display + "Hire Coach" button → bottom sheet with fee breakd
 File: `lib/features/member/payment/ui/payment_webview_screen.dart`
 Receives `payment_url`, `coach_name`, `total_amount` via `state.extra as Map`. Shows Paymob payment iframe in `WebViewWidget`.
 
+Params: `paymentUrl` (required), `totalAmount` (required), `coachName` (optional, default `''`), `isOrder` (default `false`), `onSuccess` (callback — called only on confirmed success, e.g. `CartCubit.clearCart()`).
+
+**Completion detection:** `_checkForCompletion(url)` parses `Uri.queryParameters['success']`:
+- `'true'` → shows success dialog, calls `onSuccess`
+- `'false'` / URL contains `failure` or `declined` → shows failure dialog (cart NOT cleared)
+- `_resultShown` guard prevents duplicate dialogs from multiple navigation events
+
 ### Market Tab (`/nav` index 4)
 File: `lib/features/member/shop/ui/widgets/market_tab.dart`
 
@@ -792,6 +799,7 @@ Run `dart analyze lib/` to check for new issues before committing.
 | `SQLSTATE: no such table: progress_photos` | Migration not run | `php artisan migrate` |
 | Market grid empty, no spinner | `loadProducts()` not called | Confirmed fixed: `main.dart` uses `MarketCubit()..loadProducts()` |
 | Attach InBody button not visible | No InBody records + old code | Fixed: button always visible; greyed when no data |
+| Payment decline clears cart / shows success popup | `url.contains('success')` matched `?success=false` redirect URL | **Fixed:** `_checkForCompletion` now uses `Uri.parse(url).queryParameters['success'] == 'true'`; `_resultShown` guard prevents duplicate dialogs |
 | AI says "couldn't connect" | Gemini API key invalid or quota | Check `GeminiService` key |
 | `BlocProvider not found: MarketCubit` | Cubit not in tree | `MarketCubit` must be in `main.dart` `MultiBlocProvider` |
 

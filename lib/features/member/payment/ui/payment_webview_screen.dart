@@ -30,6 +30,7 @@ class PaymentWebviewScreen extends StatefulWidget {
 class _PaymentWebviewScreenState extends State<PaymentWebviewScreen> {
   late final WebViewController _controller;
   bool _loading = true;
+  bool _resultShown = false;
 
   @override
   void initState() {
@@ -51,11 +52,20 @@ class _PaymentWebviewScreenState extends State<PaymentWebviewScreen> {
   }
 
   void _checkForCompletion(String url) {
-    if (url.contains('success') || url.contains('transaction_id')) {
-      _showResult(success: true);
-    } else if (url.contains('failure') || url.contains('declined')) {
-      _showResult(success: false);
-    }
+    if (_resultShown) return;
+    try {
+      final uri = Uri.parse(url);
+      final success = uri.queryParameters['success'];
+      if (success == 'true') {
+        _resultShown = true;
+        _showResult(success: true);
+      } else if (success == 'false' ||
+          url.contains('failure') ||
+          url.contains('declined')) {
+        _resultShown = true;
+        _showResult(success: false);
+      }
+    } catch (_) {}
   }
 
   void _showResult({required bool success}) {
