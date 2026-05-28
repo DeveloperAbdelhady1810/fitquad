@@ -131,7 +131,19 @@ class _MemberChatScreenState extends State<MemberChatScreen> {
     _scrollToBottom();
     try {
       await ApiClient.post('/member/messages', {'body': body});
-    } catch (_) {}
+    } catch (e) {
+      // Remove the optimistic message and show error
+      if (mounted) {
+        setState(() => _messages.removeWhere(
+            (m) => m.body == body && m.isMe));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(
+              'Failed to send: ${e.toString().replaceFirst('Exception: ', '')}'),
+          backgroundColor: AppColors.red,
+          behavior: SnackBarBehavior.floating,
+        ));
+      }
+    }
     if (mounted) setState(() => _sending = false);
   }
 
