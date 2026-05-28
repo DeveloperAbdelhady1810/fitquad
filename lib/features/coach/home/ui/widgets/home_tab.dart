@@ -114,15 +114,30 @@ class HomeTab extends StatelessWidget {
                 ],
               ),
 
-              if (loaded != null && loaded.sessions.isNotEmpty)
-                SizedBox(
+              if (loaded != null)
+                Builder(builder: (context) {
+                  final now = DateTime.now();
+                  final todaySessions = loaded.sessions.where((s) {
+                    final t = s.startTime;
+                    return t != null &&
+                        t.year == now.year &&
+                        t.month == now.month &&
+                        t.day == now.day;
+                  }).toList();
+                  if (todaySessions.isEmpty) {
+                    return _EmptyCard(
+                      icon: Icons.event_available_outlined,
+                      message: 'No sessions scheduled for today',
+                    );
+                  }
+                  return SizedBox(
                   height: 160.h,
                   child: ListView.separated(
                     scrollDirection: Axis.horizontal,
-                    itemCount: loaded.sessions.length.clamp(0, 5),
+                    itemCount: todaySessions.length.clamp(0, 5),
                     separatorBuilder: (_, __) => hGap(10),
                     itemBuilder: (context, index) {
-                      final session = loaded.sessions[index];
+                      final session = todaySessions[index];
                       return Container(
                         width: 180.w,
                         decoration: AppDecorations.containerDecoration,
@@ -182,12 +197,8 @@ class HomeTab extends StatelessWidget {
                       );
                     },
                   ),
-                )
-              else
-                _EmptyCard(
-                  icon: Icons.event_available_outlined,
-                  message: 'No sessions scheduled for today',
-                ),
+                );
+                }),
 
               vGap(20),
 
