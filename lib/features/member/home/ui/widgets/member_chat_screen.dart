@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gym_app/core/helpers/spacing.dart';
@@ -78,8 +80,9 @@ class _MemberChatScreenState extends State<MemberChatScreen> {
   List<_ChatMsg> _messages   = [];
   bool _loading  = true;
   bool _sending  = false;
-  bool _sendingInBody   = false;
+  bool _sendingInBody    = false;
   bool _sendingAnalytics = false;
+  Timer? _pollTimer;
 
   List<_ChatMsg> get _plans =>
       _messages.where((m) => m.type.isPlan && !m.isMe).toList();
@@ -88,10 +91,12 @@ class _MemberChatScreenState extends State<MemberChatScreen> {
   void initState() {
     super.initState();
     _load();
+    _pollTimer = Timer.periodic(const Duration(seconds: 4), (_) => _poll());
   }
 
   @override
   void dispose() {
+    _pollTimer?.cancel();
     _ctrl.dispose();
     _scroll.dispose();
     super.dispose();
@@ -102,6 +107,7 @@ class _MemberChatScreenState extends State<MemberChatScreen> {
       final res  = await ApiClient.get('/member/messages');
       final data = res['data'] as Map<String, dynamic>? ?? {};
       final list = (data['messages'] as List?) ?? [];
+      if (!mounted) return;
       setState(() {
         _messages = list
             .map((m) => _ChatMsg.fromJson(m as Map<String, dynamic>))
@@ -110,8 +116,31 @@ class _MemberChatScreenState extends State<MemberChatScreen> {
       });
       _scrollToBottom();
     } catch (_) {
-      setState(() => _loading = false);
+      if (mounted) setState(() => _loading = false);
     }
+  }
+
+  Future<void> _poll() async {
+    if (!mounted || _sending) return;
+    try {
+      final res  = await ApiClient.get('/member/messages');
+      final data = res['data'] as Map<String, dynamic>? ?? {};
+      final list = (data['messages'] as List?) ?? [];
+      final fetched = list
+          .map((m) => _ChatMsg.fromJson(m as Map<String, dynamic>))
+          .toList();
+      // Only update if something changed (different count or latest id differs)
+      if (!mounted) return;
+      final latestId = fetched.isNotEmpty ? fetched.last.id : -1;
+      final currentId = _messages.isNotEmpty ? _messages.last.id : -1;
+      if (fetched.length != _messages.length || latestId != currentId) {
+        final wasAtBottom = _scroll.hasClients &&
+            _scroll.position.pixels >=
+                _scroll.position.maxScrollExtent - 80;
+        setState(() => _messages = fetched);
+        if (wasAtBottom) _scrollToBottom();
+      }
+    } catch (_) {}
   }
 
   Future<void> _send() async {

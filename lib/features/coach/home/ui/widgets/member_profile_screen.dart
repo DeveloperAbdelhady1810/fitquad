@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gym_app/core/helpers/helpers.dart';
@@ -795,6 +797,7 @@ class _MessagesTabState extends State<_MessagesTab> {
   bool _loading = true;
   bool _sending = false;
   int? _memberUserId;
+  Timer? _pollTimer;
 
   late final int _memberId;
 
@@ -804,10 +807,12 @@ class _MessagesTabState extends State<_MessagesTab> {
     _memberId     = int.tryParse(widget.member.id ?? '0') ?? 0;
     _memberUserId = widget.detail?['user']?['id'] as int?;
     _load();
+    _pollTimer = Timer.periodic(const Duration(seconds: 4), (_) => _poll());
   }
 
   @override
   void dispose() {
+    _pollTimer?.cancel();
     _ctrl.dispose();
     _scroll.dispose();
     super.dispose();
@@ -819,6 +824,7 @@ class _MessagesTabState extends State<_MessagesTab> {
       final data = res['data'] as Map<String, dynamic>? ?? {};
       final list = (data['messages'] as List?) ?? [];
       final contact = data['contact'] as Map<String, dynamic>?;
+      if (!mounted) return;
       setState(() {
         _messages    = list.cast<Map<String, dynamic>>();
         _memberUserId ??= contact?['id'] as int?;
@@ -826,8 +832,28 @@ class _MessagesTabState extends State<_MessagesTab> {
       });
       _scrollToBottom();
     } catch (_) {
-      setState(() => _loading = false);
+      if (mounted) setState(() => _loading = false);
     }
+  }
+
+  Future<void> _poll() async {
+    if (!mounted || _sending) return;
+    try {
+      final res  = await ApiClient.get('/coach/messages/$_memberId');
+      final data = res['data'] as Map<String, dynamic>? ?? {};
+      final list = (data['messages'] as List?) ?? [];
+      final fetched = list.cast<Map<String, dynamic>>();
+      if (!mounted) return;
+      final latestId = fetched.isNotEmpty ? fetched.last['id'] : -1;
+      final currentId = _messages.isNotEmpty ? _messages.last['id'] : -1;
+      if (fetched.length != _messages.length || latestId != currentId) {
+        final wasAtBottom = _scroll.hasClients &&
+            _scroll.position.pixels >=
+                _scroll.position.maxScrollExtent - 80;
+        setState(() => _messages = fetched);
+        if (wasAtBottom) _scrollToBottom();
+      }
+    } catch (_) {}
   }
 
   Future<void> _send([String? text]) async {
