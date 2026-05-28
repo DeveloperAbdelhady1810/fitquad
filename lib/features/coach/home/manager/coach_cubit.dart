@@ -40,11 +40,17 @@ class CoachCubit extends Cubit<CoachState> {
           .map((a) => Map<String, dynamic>.from(a as Map))
           .toList();
 
+      // today_sessions is a list of session objects from backend
+      final todayRaw = dashboard['today_sessions'];
+      final todayCount = todayRaw is List
+          ? todayRaw.length
+          : (todayRaw as num?)?.toInt() ?? 0;
+
       emit(CoachesLoaded(
         sessions: _sessions,
         allMembers: _allMembers,
         filteredMembers: _allMembers,
-        todaySessions: (dashboard['today_sessions'] as num?)?.toInt() ?? 0,
+        todaySessions: todayCount,
         activeMembers: (dashboard['active_members'] as num?)?.toInt() ??
             _allMembers.length,
         monthlyEarnings:

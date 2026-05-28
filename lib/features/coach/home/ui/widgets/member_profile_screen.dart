@@ -6,7 +6,6 @@ import 'package:gym_app/core/services/api_client.dart';
 import 'package:gym_app/core/theme/app_colors.dart';
 import 'package:gym_app/core/theme/app_text_styles.dart';
 import 'package:gym_app/core/widgets/custom_tab_bar.dart';
-import 'package:gym_app/features/coach/chat/widgets/chat_thread_screen.dart';
 import 'package:gym_app/features/coach/chat/widgets/send_plan_sheet.dart';
 import 'package:gym_app/core/enums/member_type.dart';
 import 'package:gym_app/features/member/data/models/member_model.dart';
@@ -778,22 +777,376 @@ class _IbChip extends StatelessWidget {
   }
 }
 
-// ── Messages tab (uses real CoachChatThreadScreen) ────────────────────────────
+// ── Messages tab — embedded chat (no Scaffold wrapper) ───────────────────────
 
-class _MessagesTab extends StatelessWidget {
+class _MessagesTab extends StatefulWidget {
   final MemberModel member;
   final Map<String, dynamic>? detail;
   const _MessagesTab({required this.member, required this.detail});
 
   @override
-  Widget build(BuildContext context) {
-    final memberId     = int.tryParse(member.id ?? '0') ?? 0;
-    final memberUserId = detail?['user']?['id'] as int?;
+  State<_MessagesTab> createState() => _MessagesTabState();
+}
 
-    return CoachChatThreadScreen(
-      memberId: memberId,
-      memberName: member.name ?? 'Member',
-      memberUserId: memberUserId,
+class _MessagesTabState extends State<_MessagesTab> {
+  final _ctrl   = TextEditingController();
+  final _scroll = ScrollController();
+  List<Map<String, dynamic>> _messages = [];
+  bool _loading = true;
+  bool _sending = false;
+  int? _memberUserId;
+
+  late final int _memberId;
+
+  @override
+  void initState() {
+    super.initState();
+    _memberId     = int.tryParse(widget.member.id ?? '0') ?? 0;
+    _memberUserId = widget.detail?['user']?['id'] as int?;
+    _load();
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  Future<void> _load() async {
+    try {
+      final res  = await ApiClient.get('/coach/messages/$_memberId');
+      final data = res['data'] as Map<String, dynamic>? ?? {};
+      final list = (data['messages'] as List?) ?? [];
+      final contact = data['contact'] as Map<String, dynamic>?;
+      setState(() {
+        _messages    = list.cast<Map<String, dynamic>>();
+        _memberUserId ??= contact?['id'] as int?;
+        _loading = false;
+      });
+      _scrollToBottom();
+    } catch (_) {
+      setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _send([String? text]) async {
+    final body = (text ?? _ctrl.text).trim();
+    if (body.isEmpty || _sending) return;
+    _ctrl.clear();
+    setState(() {
+      _sending = true;
+      _messages.add({
+        'id': DateTime.now().millisecondsSinceEpoch,
+        'body': body,
+        'type': 'text',
+        'sender_role': 'coach',
+        'is_me': true,
+        'sent_at': DateTime.now().toIso8601String(),
+      });
+    });
+    _scrollToBottom();
+    try {
+      await ApiClient.post('/coach/messages', {
+        'receiver_id': _memberUserId,
+        'body': body,
+      });
+    } catch (_) {}
+    if (mounted) setState(() => _sending = false);
+  }
+
+  void _showSendPlan() {
+    if (_memberUserId == null) return;
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => Padding(
+        padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom),
+        child: SendPlanSheet(
+          memberUserId: _memberUserId!,
+          memberName: widget.member.name ?? 'Member',
+          onSent: () {
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text('Plan sent to ${widget.member.name}! ✅'),
+              backgroundColor: AppColors.emerald,
+              behavior: SnackBarBehavior.floating,
+            ));
+            _load();
+          },
+        ),
+      ),
+    );
+  }
+
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scroll.hasClients) {
+        _scroll.animateTo(_scroll.position.maxScrollExtent,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut);
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        // Send Plan button
+        Container(
+          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+          color: AppColors.secondary,
+          child: Row(
+            children: [
+              Icon(Icons.note_add_outlined, color: AppColors.emerald, size: 16.r),
+              hGap(6),
+              GestureDetector(
+                onTap: _showSendPlan,
+                child: Text('Send Plan',
+                    style: AppTextStyles.font14GreyRegular.copyWith(
+                        color: AppColors.emerald, fontWeight: FontWeight.w600)),
+              ),
+              const Spacer(),
+              Text('${_messages.length} messages',
+                  style: AppTextStyles.font14GreyRegular
+                      .copyWith(fontSize: 11.sp)),
+            ],
+          ),
+        ),
+        const Divider(height: 1, color: Colors.white10),
+
+        // Message list
+        Expanded(
+          child: _loading
+              ? const Center(
+                  child: CircularProgressIndicator(color: AppColors.teal))
+              : _messages.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.chat_bubble_outline,
+                              color: AppColors.grey, size: 40.r),
+                          vGap(12),
+                          Text('No messages yet',
+                              style: AppTextStyles.font14GreyRegular),
+                          vGap(6),
+                          Text('Start the conversation below',
+                              style: AppTextStyles.font14GreyRegular
+                                  .copyWith(fontSize: 11.sp)),
+                        ],
+                      ),
+                    )
+                  : ListView.builder(
+                      controller: _scroll,
+                      padding: EdgeInsets.symmetric(
+                          horizontal: 12.w, vertical: 8.h),
+                      itemCount: _messages.length,
+                      itemBuilder: (_, i) =>
+                          _EmbeddedMsgBubble(msg: _messages[i]),
+                    ),
+        ),
+
+        // Input bar
+        SafeArea(
+          child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+            color: AppColors.secondary,
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _ctrl,
+                    style: const TextStyle(color: Colors.white),
+                    maxLines: null,
+                    textInputAction: TextInputAction.send,
+                    onSubmitted: (_) => _send(),
+                    decoration: InputDecoration(
+                      hintText: 'Type a message…',
+                      hintStyle: AppTextStyles.font14GreyRegular,
+                      filled: true,
+                      fillColor: AppColors.primary,
+                      contentPadding: EdgeInsets.symmetric(
+                          horizontal: 14.w, vertical: 10.h),
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(24.r),
+                          borderSide: BorderSide.none),
+                    ),
+                  ),
+                ),
+                hGap(8),
+                GestureDetector(
+                  onTap: _sending ? null : () => _send(),
+                  child: Container(
+                    width: 42.r,
+                    height: 42.r,
+                    decoration: BoxDecoration(
+                        color: AppColors.teal, shape: BoxShape.circle),
+                    child: _sending
+                        ? Padding(
+                            padding: EdgeInsets.all(10.r),
+                            child: const CircularProgressIndicator(
+                                strokeWidth: 2, color: Colors.white),
+                          )
+                        : Icon(Icons.send_rounded,
+                            color: Colors.white, size: 18.r),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _EmbeddedMsgBubble extends StatelessWidget {
+  final Map<String, dynamic> msg;
+  const _EmbeddedMsgBubble({required this.msg});
+
+  @override
+  Widget build(BuildContext context) {
+    final isMe   = msg['sender_role'] == 'coach' || msg['is_me'] == true;
+    final body   = msg['body'] as String? ?? '';
+    final type   = msg['type'] as String? ?? 'text';
+    final time   = DateTime.tryParse(msg['sent_at'] as String? ?? '') ?? DateTime.now();
+    final timeStr = '${time.hour.toString().padLeft(2,'0')}:${time.minute.toString().padLeft(2,'0')}';
+
+    // Premium attachment bubble
+    if (type == 'inbody_attachment' || type == 'analytics_attachment') {
+      final color = type == 'inbody_attachment' ? AppColors.teal : AppColors.purple;
+      final icon  = type == 'inbody_attachment'
+          ? Icons.monitor_weight_outlined
+          : Icons.watch_outlined;
+      return Padding(
+        padding: EdgeInsets.only(bottom: 8.h),
+        child: Align(
+          alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+          child: Container(
+            padding: EdgeInsets.all(10.r),
+            constraints: BoxConstraints(maxWidth: 0.7.sw),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(12.r),
+              border: Border.all(color: color.withValues(alpha: 0.4)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, color: color, size: 16.r),
+                hGap(6),
+                Flexible(child: Text(body,
+                    style: AppTextStyles.font14GreyRegular.copyWith(color: color))),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    // Plan bubble
+    if (type == 'workout_plan' || type == 'nutrition_plan') {
+      final color = type == 'workout_plan' ? AppColors.blue : AppColors.emerald;
+      return Padding(
+        padding: EdgeInsets.only(bottom: 8.h),
+        child: Align(
+          alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+          child: Container(
+            padding: EdgeInsets.all(10.r),
+            constraints: BoxConstraints(maxWidth: 0.72.sw),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(12.r),
+              border: Border.all(color: color.withValues(alpha: 0.4)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  type == 'workout_plan'
+                      ? Icons.fitness_center_outlined
+                      : Icons.restaurant_outlined,
+                  color: color,
+                  size: 16.r,
+                ),
+                hGap(6),
+                Flexible(
+                  child: Text(body,
+                      style: AppTextStyles.font14GreyRegular.copyWith(
+                          color: color, fontWeight: FontWeight.w600)),
+                ),
+                hGap(4),
+                Icon(msg['is_applied'] == true
+                    ? Icons.check_circle
+                    : Icons.pending_outlined,
+                    color: msg['is_applied'] == true
+                        ? AppColors.emerald
+                        : AppColors.grey,
+                    size: 14.r),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    // Normal text bubble
+    return Padding(
+      padding: EdgeInsets.only(bottom: 8.h),
+      child: Row(
+        mainAxisAlignment:
+            isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          if (!isMe) ...[
+            CircleAvatar(
+              radius: 12.r,
+              backgroundColor: AppColors.blue.withValues(alpha: 0.2),
+              child: Icon(Icons.person, size: 12.r, color: AppColors.blue),
+            ),
+            hGap(6),
+          ],
+          Flexible(
+            child: Column(
+              crossAxisAlignment:
+                  isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: EdgeInsets.symmetric(
+                      horizontal: 12.w, vertical: 8.h),
+                  decoration: BoxDecoration(
+                    color: isMe
+                        ? AppColors.teal.withValues(alpha: 0.85)
+                        : AppColors.secondary,
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(14.r),
+                      topRight: Radius.circular(14.r),
+                      bottomLeft: isMe
+                          ? Radius.circular(14.r)
+                          : Radius.circular(4.r),
+                      bottomRight: isMe
+                          ? Radius.circular(4.r)
+                          : Radius.circular(14.r),
+                    ),
+                    border: isMe ? null : Border.all(color: Colors.white12),
+                  ),
+                  child: Text(body,
+                      style: AppTextStyles.font14WhiteRegular.copyWith(
+                          height: 1.4, color: Colors.white)),
+                ),
+                vGap(2),
+                Text(timeStr,
+                    style: AppTextStyles.font14GreyRegular
+                        .copyWith(fontSize: 9.sp)),
+              ],
+            ),
+          ),
+          if (isMe) hGap(6),
+        ],
+      ),
     );
   }
 }
