@@ -402,9 +402,20 @@ Sections:
 File: `lib/features/member/qr/qr_screen.dart`
 Full-screen modal showing `QrImageView(data: memberId)`. Triggered from home AppBar QR button.
 
+### My Coaches Screen
+File: `lib/features/member/home/ui/widgets/my_coaches_screen.dart`
+
+Opened from the chat bubble icon in the home AppBar. Loads `GET /member/my-coaches` (returns accepted/completed CoachPlanRequests with coach data).
+
+**Two states:**
+- **Has coaches:** shows a card per coach — name, specialization, coach type chip, plan type chip, rating, Active/Completed badge. "Message" button per card → `MemberChatScreen(coachName: name)`.
+- **No coaches (locked):** padlock icon + explanation + two actions:
+  - "Open AI Coach" → pops back to home (AI tab is always available)
+  - "Find a Coach" → pushes `/choose_coach`
+
 ### Member Chat Screen
 File: `lib/features/member/home/ui/widgets/member_chat_screen.dart`
-Chat thread with coach. Loads `GET /member/messages`. Speech-bubble UI (teal for member, dark for coach). Send via `POST /member/messages`. Opened from chat bubble icon in home AppBar.
+Chat thread with coach. Loads `GET /member/messages`. Speech-bubble UI (teal for member, dark for coach). Send via `POST /member/messages`. Reached via `MyCoachesScreen` → "Message" button (not directly from home AppBar).
 
 ### Gym Selection Screen (`/gym_selection`)
 File: `lib/features/member/gym/ui/gym_selection_screen.dart`
@@ -537,6 +548,7 @@ All protected routes require: `Authorization: Bearer <token>`
 |--------|------|-------------|
 | GET/PUT | `/member/dashboard` | Member profile + stats |
 | GET | `/member/coaches` | Coach list (filtered by gym + ?source=train\|eat) |
+| GET | `/member/my-coaches` | Coaches the member is enrolled with (accepted/completed plan requests) |
 | POST | `/member/coach-requests` | Request a coach plan |
 | GET/POST | `/member/workout-plan` | Workout plan |
 | GET | `/member/exercises` | Exercise library |

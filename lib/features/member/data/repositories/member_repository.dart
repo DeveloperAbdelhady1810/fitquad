@@ -24,6 +24,11 @@ class MemberRepository {
     return res['data'] as List<dynamic>;
   }
 
+  static Future<List<dynamic>> getMyCoaches() async {
+    final res = await ApiClient.get('/member/my-coaches');
+    return res['data'] as List<dynamic>;
+  }
+
   // ── Gym / Branch ─────────────────────────────────────────────
   static Future<List<dynamic>> getBranches() async {
     final res = await ApiClient.get('/member/branches');
