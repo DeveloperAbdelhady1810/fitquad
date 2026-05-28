@@ -8,6 +8,7 @@ import 'package:gym_app/features/auth/ui/views/login_view.dart';
 import 'package:gym_app/features/auth/ui/views/sign_up_view.dart';
 import 'package:gym_app/features/auth/ui/views/survey_view.dart';
 import 'package:gym_app/features/coach/home/ui/views/coach_bottom_nav_bar_view.dart';
+import 'package:gym_app/features/member/home/ui/views/bottom_nav_bar_view.dart';
 
 import '../../../../core/helpers/spacing.dart';
 import '../../../../core/services/api_client.dart';
@@ -152,8 +153,9 @@ class _MemberTabBarViewState extends State<MemberTabBarView> {
     });
 
     try {
+      Map<String, dynamic> data;
       if (widget.isSignUp) {
-        await AuthRepository.register(
+        data = await AuthRepository.register(
           name: email.split('@').first,
           email: email,
           password: password,
@@ -161,16 +163,14 @@ class _MemberTabBarViewState extends State<MemberTabBarView> {
           phone: _phoneController.text.trim().isEmpty ? null : _phoneController.text.trim(),
         );
       } else {
-        await AuthRepository.login(email: email, password: password);
+        data = await AuthRepository.login(email: email, password: password);
       }
 
       if (!context.mounted) return;
 
-      // Determine destination from saved token's role
-      final userData = await AuthRepository.me();
-      final role = userData['role'] as String? ?? 'member';
+      // Role is already saved by AuthRepository.login/register — read it directly from response
+      final role = data['user']?['role'] as String? ?? 'member';
 
-      if (!context.mounted) return;
       switch (role) {
         case 'coach':
           context.go(CoachBottomNavBarView.routeName);
@@ -179,7 +179,8 @@ class _MemberTabBarViewState extends State<MemberTabBarView> {
           context.go(AdminView.routeName);
           break;
         default:
-          context.go(OnboardingView.routeName);
+          final isOnboarded = data['user']?['member']?['goal'] != null;
+          context.go(isOnboarded ? BottomNavBarView.routeName : OnboardingView.routeName);
       }
     } catch (e) {
       final err = e is ApiException ? e.firstError : e.toString();

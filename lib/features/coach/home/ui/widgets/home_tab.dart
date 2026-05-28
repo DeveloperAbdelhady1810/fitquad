@@ -8,24 +8,43 @@ import 'package:gym_app/core/theme/app_colors.dart';
 import 'package:gym_app/features/coach/home/manager/date_time_extensions.dart';
 import 'package:gym_app/features/coach/home/manager/status_ext.dart';
 import 'package:gym_app/features/coach/home/ui/widgets/add_session_dialog.dart';
+import 'package:gym_app/features/coach/chat/widgets/send_plan_sheet.dart';
+import 'package:gym_app/features/member/data/models/member_model.dart';
 import 'package:gym_app/features/member/home/manager/bottom_nav_bar_cubit.dart';
 
 import '../../../../../core/theme/app_text_styles.dart';
 import '../../../../../generated/l10n.dart';
 import '../../manager/coach_cubit.dart';
 import 'broadcast_dialog.dart';
-import 'choose_plan_dialog.dart';
 import 'member_profile_screen.dart';
-import 'nutrition_dialog.dart';
 
 class HomeTab extends StatelessWidget {
   const HomeTab({super.key});
 
+  void _showPlanPicker(BuildContext context, String planType) {
+    final state = context.read<CoachCubit>().state;
+    if (state is! CoachesLoaded || state.allMembers.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('No members found. Add sessions with members first.'),
+        behavior: SnackBarBehavior.floating,
+      ));
+      return;
+    }
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.secondary,
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20.r))),
+      builder: (_) => _MemberPickerSheet(
+        members: state.allMembers,
+        planType: planType,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final s = S.of(context);
-    final dateController = TextEditingController();
-    final timeController = TextEditingController();
 
     return BlocBuilder<CoachCubit, CoachState>(
       builder: (context, state) {
@@ -330,13 +349,13 @@ class HomeTab extends StatelessWidget {
                     icon: Icons.fitness_center,
                     color: AppColors.blue,
                     label: s.create_plan,
-                    onTap: () => showChoosePlanDialog(context),
+                    onTap: () => _showPlanPicker(context, 'workout_plan'),
                   ),
                   _ActionTile(
                     icon: Icons.restaurant_menu_outlined,
                     color: AppColors.emerald,
                     label: s.nutrition,
-                    onTap: () => showNutritionDialog(context),
+                    onTap: () => _showPlanPicker(context, 'nutrition_plan'),
                   ),
                   _ActionTile(
                     icon: Icons.campaign_outlined,
@@ -348,11 +367,7 @@ class HomeTab extends StatelessWidget {
                     icon: Icons.add_circle_outline,
                     color: Colors.orange,
                     label: s.add_session,
-                    onTap: () => showAddSessionDialog(
-                      context,
-                      dateController,
-                      timeController,
-                    ),
+                    onTap: () => showAddSessionDialog(context),
                   ),
                 ],
               ),
@@ -480,6 +495,124 @@ class _EmptyCard extends StatelessWidget {
           Icon(icon, color: AppColors.grey, size: 28.r),
           vGap(8),
           Text(message, style: AppTextStyles.font14GreyRegular),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Member picker → opens SendPlanSheet ───────────────────────────────────────
+
+class _MemberPickerSheet extends StatefulWidget {
+  final List<MemberModel> members;
+  final String planType;
+  const _MemberPickerSheet({required this.members, required this.planType});
+
+  @override
+  State<_MemberPickerSheet> createState() => _MemberPickerSheetState();
+}
+
+class _MemberPickerSheetState extends State<_MemberPickerSheet> {
+  MemberModel? _selected;
+
+  @override
+  Widget build(BuildContext context) {
+    final isWorkout = widget.planType == 'workout_plan';
+    return Padding(
+      padding: EdgeInsets.all(20.r),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                isWorkout
+                    ? Icons.fitness_center_outlined
+                    : Icons.restaurant_outlined,
+                color: isWorkout ? AppColors.blue : AppColors.emerald,
+                size: 20.r,
+              ),
+              hGap(10),
+              Text('Send ${isWorkout ? 'Workout' : 'Nutrition'} Plan',
+                  style: AppTextStyles.font16WhiteBold),
+              const Spacer(),
+              IconButton(
+                icon: Icon(Icons.close, color: AppColors.grey, size: 20.r),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ],
+          ),
+          vGap(14),
+          Text('Select a member',
+              style: AppTextStyles.font14GreyRegular
+                  .copyWith(fontSize: 12.sp)),
+          vGap(8),
+          DropdownButtonFormField<MemberModel>(
+            value: _selected,
+            dropdownColor: AppColors.secondary,
+            style: AppTextStyles.font14WhiteRegular,
+            hint: Text('Choose member',
+                style: AppTextStyles.font14GreyRegular),
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: AppColors.primary,
+              contentPadding:
+                  EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
+              border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10.r),
+                  borderSide: BorderSide.none),
+            ),
+            items: widget.members
+                .map((m) => DropdownMenuItem(
+                    value: m, child: Text(m.name ?? 'Member')))
+                .toList(),
+            onChanged: (m) => setState(() => _selected = m),
+          ),
+          vGap(16),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: _selected == null
+                  ? null
+                  : () {
+                      Navigator.pop(context);
+                      final userId =
+                          int.tryParse(_selected!.id ?? '0') ?? 0;
+                      showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        backgroundColor: Colors.transparent,
+                        builder: (_) => SendPlanSheet(
+                          memberUserId: userId,
+                          memberName: _selected!.name ?? 'Member',
+                          onSent: () {
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                              content: Text(
+                                  'Plan sent to ${_selected!.name}! ✅'),
+                              backgroundColor: AppColors.emerald,
+                              behavior: SnackBarBehavior.floating,
+                            ));
+                          },
+                          initialTab: isWorkout ? 0 : 1,
+                        ),
+                      );
+                    },
+              style: ElevatedButton.styleFrom(
+                backgroundColor:
+                    isWorkout ? AppColors.blue : AppColors.emerald,
+                foregroundColor: Colors.white,
+                disabledBackgroundColor: AppColors.grey.withValues(alpha: 0.3),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12.r)),
+                padding: EdgeInsets.symmetric(vertical: 13.h),
+              ),
+              child: Text('Continue →',
+                  style: AppTextStyles.font14WhiteRegular
+                      .copyWith(fontWeight: FontWeight.w600)),
+            ),
+          ),
+          vGap(8),
         ],
       ),
     );

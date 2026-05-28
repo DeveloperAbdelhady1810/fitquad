@@ -9,12 +9,14 @@ class SendPlanSheet extends StatefulWidget {
   final int memberUserId;
   final String memberName;
   final VoidCallback onSent;
+  final int initialTab;
 
   const SendPlanSheet({
     super.key,
     required this.memberUserId,
     required this.memberName,
     required this.onSent,
+    this.initialTab = 0,
   });
 
   @override
@@ -28,7 +30,8 @@ class _SendPlanSheetState extends State<SendPlanSheet>
   @override
   void initState() {
     super.initState();
-    _tab = TabController(length: 2, vsync: this);
+    _tab = TabController(length: 2, vsync: this,
+        initialIndex: widget.initialTab);
   }
 
   @override
