@@ -62,8 +62,11 @@ class PushNotificationService {
     );
 
     // Save token to the backend whenever it's issued / rotated
-    final token = await _messaging.getToken();
-    if (token != null) await _saveToken(token);
+    // getToken() throws on iOS simulators (no APNs) — ignore that case
+    try {
+      final token = await _messaging.getToken();
+      if (token != null) await _saveToken(token);
+    } catch (_) {}
     _messaging.onTokenRefresh.listen(_saveToken);
 
     // Foreground messages → show a local notification so the user sees it
