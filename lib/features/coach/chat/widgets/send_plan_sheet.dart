@@ -135,9 +135,19 @@ class _WorkoutPlanFormState extends State<_WorkoutPlanForm> {
   final List<Map<String, dynamic>> _days = [];
   bool _sending = false;
 
+  static const _weekdays = [
+    'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'
+  ];
+
   void _addDay() {
+    // Pick the next available weekday name (cycle through Mon-Sun)
+    final usedNames = _days.map((d) => d['day_name'] as String).toSet();
+    final next = _weekdays.firstWhere(
+      (d) => !usedNames.contains(d),
+      orElse: () => _weekdays[_days.length % 7],
+    );
     setState(() => _days.add({
-          'day_name': 'Day ${_days.length + 1}',
+          'day_name': next,
           'exercises': <Map<String, dynamic>>[],
         }));
   }
@@ -274,6 +284,10 @@ class _DayTile extends StatelessWidget {
   final Function(int, String, dynamic) onExerciseChange;
   final VoidCallback onRemove;
 
+  static const _weekdays = [
+    'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'
+  ];
+
   const _DayTile({
     required this.day,
     required this.index,
@@ -286,6 +300,8 @@ class _DayTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final exercises = (day['exercises'] as List).cast<Map>();
+    final currentName = day['day_name'] as String;
+    final dropdownValue = _weekdays.contains(currentName) ? currentName : _weekdays[0];
     return Container(
       margin: EdgeInsets.only(bottom: 10.h),
       decoration: BoxDecoration(
@@ -300,15 +316,17 @@ class _DayTile extends StatelessWidget {
             child: Row(
               children: [
                 Expanded(
-                  child: TextField(
-                    controller: TextEditingController(text: day['day_name'])
-                      ..selection = TextSelection.collapsed(
-                          offset: (day['day_name'] as String).length),
+                  child: DropdownButton<String>(
+                    value: dropdownValue,
+                    dropdownColor: AppColors.secondary,
+                    underline: const SizedBox(),
+                    isExpanded: true,
                     style: AppTextStyles.font14WhiteRegular
                         .copyWith(fontWeight: FontWeight.w600, fontSize: 13.sp),
-                    decoration: const InputDecoration(
-                        border: InputBorder.none, isDense: true),
-                    onChanged: onDayNameChange,
+                    items: _weekdays
+                        .map((d) => DropdownMenuItem(value: d, child: Text(d)))
+                        .toList(),
+                    onChanged: (v) { if (v != null) onDayNameChange(v); },
                   ),
                 ),
                 TextButton(

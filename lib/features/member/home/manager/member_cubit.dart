@@ -19,6 +19,7 @@ class MemberCubit extends Cubit<MemberState> {
   Map<String, dynamic>? progressData; // streak, xp, level, badges
   bool showMilestoneCelebration = false;
   int? celebrationStreak;
+  List<Map<String, dynamic>> myCoaches = []; // accepted/completed coach requests
 
   static String get _todayKey =>
       'workout_status_${DateFormat('yyyy-MM-dd').format(DateTime.now())}';
@@ -30,10 +31,12 @@ class MemberCubit extends Cubit<MemberState> {
       MemberRepository.getNutritionPlan().catchError((_) => null),
       _loadWeekCheckIns().catchError((_) {}),
       MemberRepository.getProgress().catchError((_) => <String, dynamic>{}),
+      MemberRepository.getMyCoaches().catchError((_) => <dynamic>[]),
     ]);
     workoutPlan   = results[0] as Map<String, dynamic>?;
     nutritionPlan = results[1] as Map<String, dynamic>?;
     progressData  = results[3] as Map<String, dynamic>?;
+    myCoaches     = ((results[4] as List?) ?? []).cast<Map<String, dynamic>>();
 
     // Detect streak milestone to celebrate
     if (progressData != null) {

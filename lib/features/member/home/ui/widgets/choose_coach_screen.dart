@@ -217,7 +217,7 @@ class _CoachCard extends StatelessWidget {
 
           const Divider(height: 1),
 
-          // ── Price + Hire ─────────────────────────────────────────
+          // ── Price + Hire / Subscribed ────────────────────────────
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
             child: Row(
@@ -237,23 +237,45 @@ class _CoachCard extends StatelessWidget {
                   ],
                 ),
                 const Spacer(),
-                SizedBox(
-                  height: 44.h,
-                  child: ElevatedButton.icon(
-                    onPressed: () =>
-                        _showHireDialog(scaffoldCtx, coach),
-                    icon: Icon(Icons.sports_gymnastics, size: 16.r),
-                    label: Text(s.hire_coach),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.teal,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12.r)),
-                      textStyle: AppTextStyles.font14WhiteRegular
-                          .copyWith(fontWeight: FontWeight.w600),
-                    ),
-                  ),
-                ),
+                coach.isSubscribed
+                    ? Container(
+                        padding: EdgeInsets.symmetric(
+                            horizontal: 14.w, vertical: 10.h),
+                        decoration: BoxDecoration(
+                          color: AppColors.emerald.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(12.r),
+                          border: Border.all(
+                              color: AppColors.emerald.withValues(alpha: 0.4)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.check_circle,
+                                color: AppColors.emerald, size: 16.r),
+                            hGap(6),
+                            Text('Subscribed',
+                                style: AppTextStyles.font14GreyRegular.copyWith(
+                                    color: AppColors.emerald,
+                                    fontWeight: FontWeight.w600)),
+                          ],
+                        ),
+                      )
+                    : SizedBox(
+                        height: 44.h,
+                        child: ElevatedButton.icon(
+                          onPressed: () => _showHireDialog(scaffoldCtx, coach),
+                          icon: Icon(Icons.sports_gymnastics, size: 16.r),
+                          label: Text(s.hire_coach),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.teal,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12.r)),
+                            textStyle: AppTextStyles.font14WhiteRegular
+                                .copyWith(fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                      ),
               ],
             ),
           ),

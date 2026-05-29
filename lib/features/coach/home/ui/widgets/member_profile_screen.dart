@@ -418,9 +418,10 @@ class _DayCardState extends State<_DayCard> {
             const Divider(color: Colors.white10, height: 1),
             ...exercises.map((ex) {
               final name = ex['name'] as String?
-                  ?? ex['exercise']?['name'] as String? ?? '';
-              final sets = ex['sets'] ?? '?';
-              final reps = ex['reps'] ?? '?';
+                  ?? (ex['exercise'] as Map?)?['name'] as String? ?? '';
+              final pivot = ex['pivot'] as Map? ?? {};
+              final sets = pivot['sets'] ?? ex['sets'] ?? '?';
+              final reps = pivot['reps'] ?? ex['reps'] ?? '?';
               return Padding(
                 padding:
                     EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),

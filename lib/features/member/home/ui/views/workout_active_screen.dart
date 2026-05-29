@@ -2,12 +2,15 @@ import 'dart:async';
 
 import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../../core/helpers/spacing.dart';
+import '../../../../../core/services/api_client.dart';
 import '../../../../../core/services/health_service.dart';
 import '../../../../../core/theme/app_colors.dart';
+import '../../../home/manager/member_cubit.dart';
 import '../../../../../core/theme/app_text_styles.dart';
 
 /// Full-screen active workout session.
@@ -170,6 +173,11 @@ class _WorkoutActiveScreenState extends State<WorkoutActiveScreen> {
       duration: Duration(seconds: _elapsedSeconds),
       start: DateTime.now().subtract(Duration(seconds: _elapsedSeconds)),
     );
+
+    // Log check-in so XP and streak are updated on the backend
+    ApiClient.post('/member/check-ins', {}).then((_) {
+      if (mounted) context.read<MemberCubit>().loadAll();
+    }).catchError((_) {});
   }
 
   @override

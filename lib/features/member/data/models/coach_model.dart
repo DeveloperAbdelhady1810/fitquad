@@ -12,6 +12,7 @@ class CoachModel {
   final String? coachType;
   final String? branchId;
   final String? avatarUrl;
+  final bool isSubscribed;
 
   CoachModel({
     required this.id,
@@ -27,10 +28,10 @@ class CoachModel {
     this.coachType,
     this.branchId,
     this.avatarUrl,
+    this.isSubscribed = false,
   });
 
   factory CoachModel.fromJson(Map<String, dynamic> json) {
-    // The index endpoint returns a flat map (not nested coach/user)
     return CoachModel(
       id: json['id']?.toString() ?? '',
       name: json['name'] as String? ?? '',
@@ -44,6 +45,7 @@ class CoachModel {
       coachType: json['coach_type'] as String?,
       branchId: json['branch_id']?.toString(),
       avatarUrl: json['avatar_url'] as String?,
+      isSubscribed: json['is_subscribed'] as bool? ?? false,
     );
   }
 }
