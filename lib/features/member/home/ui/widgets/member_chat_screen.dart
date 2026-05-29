@@ -155,11 +155,12 @@ class _MemberChatScreenState extends State<MemberChatScreen> {
       final latestId = fetched.isNotEmpty ? fetched.last.id : -1;
       final currentId = _messages.isNotEmpty ? _messages.last.id : -1;
       if (fetched.length != _messages.length || latestId != currentId) {
+        final hasNew = fetched.length > _messages.length;
         final wasAtBottom = _scroll.hasClients &&
             _scroll.position.pixels >=
-                _scroll.position.maxScrollExtent - 80;
+                _scroll.position.maxScrollExtent - 120;
         setState(() => _messages = fetched);
-        if (wasAtBottom) _scrollToBottom();
+        if (wasAtBottom || hasNew) _scrollToBottom();
       }
     } catch (_) {}
   }
@@ -285,6 +286,8 @@ class _MemberChatScreenState extends State<MemberChatScreen> {
       await ApiClient.post('/member/messages/apply-plan/${msg.id}', {});
       setState(() => msg.isApplied = true);
       if (!mounted) return;
+      // Reload member data so Train / Eat tabs reflect the new plan immediately
+      context.read<MemberCubit>().loadAll();
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(
           msg.type == ChatMsgType.workoutPlan

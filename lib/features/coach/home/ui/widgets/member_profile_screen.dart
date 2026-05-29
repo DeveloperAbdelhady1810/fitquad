@@ -967,11 +967,12 @@ class _MessagesTabState extends State<_MessagesTab> {
       final latestId = fetched.isNotEmpty ? fetched.last['id'] : -1;
       final currentId = _messages.isNotEmpty ? _messages.last['id'] : -1;
       if (fetched.length != _messages.length || latestId != currentId) {
+        final hasNew = fetched.length > _messages.length;
         final wasAtBottom = _scroll.hasClients &&
             _scroll.position.pixels >=
-                _scroll.position.maxScrollExtent - 80;
+                _scroll.position.maxScrollExtent - 120;
         setState(() => _messages = fetched);
-        if (wasAtBottom) _scrollToBottom();
+        if (wasAtBottom || hasNew) _scrollToBottom();
       }
     } catch (_) {}
   }
