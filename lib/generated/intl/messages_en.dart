@@ -524,7 +524,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "target_custom": MessageLookupByLibrary.simpleMessage("Target: Custom"),
     "target_goal": MessageLookupByLibrary.simpleMessage("Target Goal"),
+    "this_week": MessageLookupByLibrary.simpleMessage("This Week"),
     "time": MessageLookupByLibrary.simpleMessage("Time"),
+    "today": MessageLookupByLibrary.simpleMessage("Today"),
     "todays_sessions": MessageLookupByLibrary.simpleMessage(
       "Today\'s Sessions",
     ),

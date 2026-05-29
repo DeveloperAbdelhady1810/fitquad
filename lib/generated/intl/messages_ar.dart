@@ -512,7 +512,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "target_custom": MessageLookupByLibrary.simpleMessage("الهدف: مخصص"),
     "target_goal": MessageLookupByLibrary.simpleMessage("الهدف"),
+    "this_week": MessageLookupByLibrary.simpleMessage("هذا الأسبوع"),
     "time": MessageLookupByLibrary.simpleMessage("الوقت"),
+    "today": MessageLookupByLibrary.simpleMessage("اليوم"),
     "todays_sessions": MessageLookupByLibrary.simpleMessage("جلسات اليوم"),
     "todays_workout": MessageLookupByLibrary.simpleMessage("تمرين اليوم"),
     "top_products": MessageLookupByLibrary.simpleMessage(

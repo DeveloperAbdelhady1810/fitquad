@@ -401,5 +401,7 @@
   "per_month": "/ month",
   "no_gyms_available": "No gyms available",
   "gym_detail": "Gym Details",
-  "subscription_plans_available": "Subscription Plans"
+  "subscription_plans_available": "Subscription Plans",
+  "this_week": "This Week",
+  "today": "Today"
 }

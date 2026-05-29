@@ -387,5 +387,7 @@
   "per_month": "/ شهر",
   "no_gyms_available": "لا توجد صالات متاحة",
   "gym_detail": "تفاصيل الصالة",
-  "subscription_plans_available": "خطط الاشتراك المتاحة"
+  "subscription_plans_available": "خطط الاشتراك المتاحة",
+  "this_week": "هذا الأسبوع",
+  "today": "اليوم"
 }

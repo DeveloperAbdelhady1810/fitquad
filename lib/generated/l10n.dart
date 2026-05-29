@@ -2883,6 +2883,16 @@ class S {
       args: [],
     );
   }
+
+  /// `This Week`
+  String get this_week {
+    return Intl.message('This Week', name: 'this_week', desc: '', args: []);
+  }
+
+  /// `Today`
+  String get today {
+    return Intl.message('Today', name: 'today', desc: '', args: []);
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<S> {

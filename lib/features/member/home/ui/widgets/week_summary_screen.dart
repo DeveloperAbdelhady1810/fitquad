@@ -44,13 +44,6 @@ class _WeekSummaryScreenState extends State<WeekSummaryScreen> {
     return exercises.isEmpty;
   }
 
-  String get _dayLabel {
-    final day = fullWeekPlan[selectedDayIndex];
-    final type = day['type'] as String?;
-    if (type != null && type.isNotEmpty) return type;
-    return _isRestDay ? 'Rest Day' : 'Training Day';
-  }
-
   @override
   Widget build(BuildContext context) {
     final s = S.of(context);
