@@ -150,8 +150,11 @@ class _MemberChatScreenState extends State<MemberChatScreen> {
       final fetched = list
           .map((m) => _ChatMsg.fromJson(m as Map<String, dynamic>))
           .toList();
-      // Only update if something changed (different count or latest id differs)
       if (!mounted) return;
+      // Never replace the list with a shorter one — prevents the optimistic
+      // message from briefly disappearing if the poll fires before the server
+      // has finished processing the POST.
+      if (fetched.length < _messages.length) return;
       final latestId = fetched.isNotEmpty ? fetched.last.id : -1;
       final currentId = _messages.isNotEmpty ? _messages.last.id : -1;
       if (fetched.length != _messages.length || latestId != currentId) {
@@ -182,6 +185,11 @@ class _MemberChatScreenState extends State<MemberChatScreen> {
     _scrollToBottom();
     try {
       await ApiClient.post('/member/messages', {'body': body});
+      // Immediately sync so the optimistic message is replaced with the real
+      // server record (real ID). Set _sending = false first so _poll can run.
+      if (mounted) setState(() => _sending = false);
+      _poll();
+      return;
     } catch (e) {
       // Remove the optimistic message and show error
       if (mounted) {

@@ -26,8 +26,6 @@ class BottomNavBarView extends StatefulWidget {
 }
 
 class BottomNavBarViewState extends State<BottomNavBarView> {
-  List<Map<String, dynamic>>? weekPlan;
-
   @override
   void initState() {
     super.initState();
@@ -39,32 +37,38 @@ class BottomNavBarViewState extends State<BottomNavBarView> {
         context.push(GymSelectionScreen.routeName);
       }
     });
+  }
 
-    weekPlan = [
-      {'type': 'Chest', 'selectedExercises': ['Bench Press', 'Incline Press']},
-      {'type': 'Back', 'selectedExercises': ['Pull Up', 'Deadlift']},
-    ];
+  /// Converts the API workout plan (exercises as maps) into the format
+  /// WeekSummaryScreen expects (selectedExercises as strings).
+  List<Map<String, dynamic>>? _buildWeekPlan(MemberCubit cubit) {
+    final plan = cubit.workoutPlan;
+    if (plan == null) return null;
+    final rawDays = plan['days'] as List?;
+    if (rawDays == null || rawDays.isEmpty) return null;
+    final days = rawDays.cast<Map<String, dynamic>>();
+    final converted = days.map<Map<String, dynamic>>((day) {
+      final rawExercises = (day['exercises'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+      final names = rawExercises
+          .map((e) =>
+              e['name'] as String? ??
+              (e['exercise'] as Map?)?['name'] as String? ??
+              '')
+          .where((n) => n.isNotEmpty)
+          .toList();
+      // Also support manually-built plans that store exercise names directly
+      final fallbackNames = (day['selectedExercises'] as List?)?.cast<String>() ?? [];
+      return {
+        'type': day['day_name'] as String? ?? day['type'] as String? ?? '',
+        'selectedExercises': names.isNotEmpty ? names : fallbackNames,
+      };
+    }).toList();
+    final hasAny = converted.any((d) => (d['selectedExercises'] as List).isNotEmpty);
+    return hasAny ? converted : null;
   }
 
   @override
   Widget build(BuildContext context) {
-    final trainWidget = (weekPlan != null &&
-        weekPlan!.any((day) => (day['selectedExercises'] as List).isNotEmpty))
-        ? WeekSummaryScreen(
-      weekPlan: weekPlan!,
-
-
-    )
-        : TrainTab();
-
-    List<Widget> homeBodies = [
-      HomeTab(),
-      trainWidget,
-      AiTab(),
-      EatTab(),
-      MarketTab(),
-    ];
-
     return MultiBlocProvider(
       providers: [
         BlocProvider(create: (_) => BottomNavBarCubit()),
@@ -72,24 +76,40 @@ class BottomNavBarViewState extends State<BottomNavBarView> {
       ],
       child: AnnouncementOverlay(
         child: SafeArea(
-        child: GestureDetector(
-          onTap: () => FocusScope.of(context).unfocus(),
-          child: Scaffold(
-            backgroundColor: AppColors.primary,
-            extendBody: false,
-            body: BlocBuilder<BottomNavBarCubit, BottomNavBarState>(
-              builder: (context, state) {
-                final cubit = context.read<BottomNavBarCubit>();
-                return Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: homeBodies[cubit.currentIndex],
-                );
-              },
+          child: GestureDetector(
+            onTap: () => FocusScope.of(context).unfocus(),
+            child: Scaffold(
+              backgroundColor: AppColors.primary,
+              extendBody: false,
+              body: BlocBuilder<BottomNavBarCubit, BottomNavBarState>(
+                builder: (context, navState) {
+                  final navCubit = context.read<BottomNavBarCubit>();
+                  return BlocBuilder<MemberCubit, MemberState>(
+                    builder: (context, memberState) {
+                      final memberCubit = context.read<MemberCubit>();
+                      final weekPlan = _buildWeekPlan(memberCubit);
+                      final trainWidget = weekPlan != null
+                          ? WeekSummaryScreen(weekPlan: weekPlan)
+                          : const TrainTab();
+                      final bodies = [
+                        HomeTab(),
+                        trainWidget,
+                        AiTab(),
+                        EatTab(),
+                        MarketTab(),
+                      ];
+                      return Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: bodies[navCubit.currentIndex],
+                      );
+                    },
+                  );
+                },
+              ),
+              bottomNavigationBar: BottomNavBarViewBody(),
             ),
-            bottomNavigationBar: BottomNavBarViewBody(),
           ),
         ),
-      ),
       ),
     );
   }

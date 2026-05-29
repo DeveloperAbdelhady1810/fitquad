@@ -279,9 +279,17 @@ class _HomeTabState extends State<HomeTab> {
 
     if (todayDay == null) return _NoPlanCard();
 
-    final title = todayDay['day_name'] as String? ?? 'Day ${todayDay['order']}';
-    final exercises = (todayDay['exercises'] as List? ?? [])
-        .cast<Map<String, dynamic>>();
+    final title = todayDay['day_name'] as String? ??
+        todayDay['type'] as String? ??
+        'Day ${todayDay['order']}';
+    // Primary format: exercises as maps (API / coach-applied plan)
+    final rawExercises = (todayDay['exercises'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+    // Fallback: manually-built plan stores exercise names as strings
+    final List<Map<String, dynamic>> exercises = rawExercises.isNotEmpty
+        ? rawExercises
+        : ((todayDay['selectedExercises'] as List?)?.cast<String>() ?? [])
+            .map((name) => <String, dynamic>{'name': name, 'sets': 3, 'reps': 10})
+            .toList();
     final status = cubit.todayWorkoutStatus;
 
     return _RealWorkoutCard(
