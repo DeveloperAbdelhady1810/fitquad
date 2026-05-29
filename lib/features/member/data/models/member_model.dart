@@ -70,7 +70,11 @@ class MemberModel {
       level: (member['level'] as num?)?.toInt() ?? 1,
       referralCode: member['referral_code'] as String?,
       loyaltyPoints: (member['loyalty_points'] as num?)?.toInt() ?? 0,
-      avatarUrl: user['avatar_url'] as String?,
+      // user['avatar_url'] covers the member's own dashboard (nested user object)
+      // member/json['avatar_url'] covers the flat map from the coach's members list
+      avatarUrl: user['avatar_url'] as String? ??
+          member['avatar_url'] as String? ??
+          json['avatar_url'] as String?,
     );
   }
 
