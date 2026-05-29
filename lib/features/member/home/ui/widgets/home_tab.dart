@@ -785,6 +785,7 @@ class _RealWorkoutCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s     = S.of(context);
     final isDone = status == 'done';
     final isSemi = status == 'semi';
     final statusColor = isDone ? AppColors.emerald : isSemi ? const Color(0xFFFFD700) : null;
@@ -850,7 +851,7 @@ class _RealWorkoutCard extends StatelessWidget {
                     style: AppTextStyles.font14GreyRegular.copyWith(fontSize: 11.sp)),
               ),
           ] else
-            Text('Rest day or no exercises assigned',
+            Text(s.rest_day_no_exercises,
                 style: AppTextStyles.font14GreyRegular),
           vGap(14),
           const Divider(),
@@ -862,7 +863,7 @@ class _RealWorkoutCard extends StatelessWidget {
                 child: ElevatedButton.icon(
                   onPressed: onStart,
                   icon: Icon(Icons.play_arrow, size: 16.r),
-                  label: Text('Start', style: AppTextStyles.font14WhiteRegular),
+                  label: Text(s.start_workout, style: AppTextStyles.font14WhiteRegular),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.teal,
                     foregroundColor: Colors.white,
@@ -880,7 +881,7 @@ class _RealWorkoutCard extends StatelessWidget {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
                     padding: EdgeInsets.symmetric(vertical: 8.h),
                   ),
-                  child: Text('Done',
+                  child: Text(s.workout_done,
                       style: AppTextStyles.font14GreyRegular
                           .copyWith(color: isDone ? Colors.grey : AppColors.emerald, fontSize: 12.sp)),
                 ),
@@ -894,7 +895,7 @@ class _RealWorkoutCard extends StatelessWidget {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
                     padding: EdgeInsets.symmetric(vertical: 8.h),
                   ),
-                  child: Text('Partial',
+                  child: Text(s.workout_partial,
                       style: AppTextStyles.font14GreyRegular
                           .copyWith(color: isSemi ? Colors.grey : const Color(0xFFFFD700), fontSize: 12.sp)),
                 ),
@@ -996,10 +997,10 @@ class _CommunityBanner extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Community Feed',
+                  Text(S.of(context).community_feed,
                       style: AppTextStyles.font14WhiteRegular
                           .copyWith(fontWeight: FontWeight.w600)),
-                  Text('Share wins & motivate others',
+                  Text(S.of(context).share_wins,
                       style: AppTextStyles.font14GreyRegular
                           .copyWith(fontSize: 11.sp)),
                 ],

@@ -624,14 +624,9 @@ class S {
     return Intl.message('Exercises', name: 'exercises', desc: '', args: []);
   }
 
-  /// `Start Workout`
+  /// `Start`
   String get start_workout {
-    return Intl.message(
-      'Start Workout',
-      name: 'start_workout',
-      desc: '',
-      args: [],
-    );
+    return Intl.message('Start', name: 'start_workout', desc: '', args: []);
   }
 
   /// `Nutrition`
@@ -909,9 +904,9 @@ class S {
     );
   }
 
-  /// `Rehab`
+  /// `Rehabilitation`
   String get rehab {
-    return Intl.message('Rehab', name: 'rehab', desc: '', args: []);
+    return Intl.message('Rehabilitation', name: 'rehab', desc: '', args: []);
   }
 
   /// `Availability`
@@ -924,10 +919,10 @@ class S {
     );
   }
 
-  /// `Show as Available for new members`
+  /// `Show me to new members`
   String get show_available_new_members {
     return Intl.message(
-      'Show as Available for new members',
+      'Show me to new members',
       name: 'show_available_new_members',
       desc: '',
       args: [],
@@ -2467,6 +2462,426 @@ class S {
   /// `Actions`
   String get actions {
     return Intl.message('Actions', name: 'actions', desc: '', args: []);
+  }
+
+  /// `Community Feed`
+  String get community_feed {
+    return Intl.message(
+      'Community Feed',
+      name: 'community_feed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Share wins & motivate others`
+  String get share_wins {
+    return Intl.message(
+      'Share wins & motivate others',
+      name: 'share_wins',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Rest day or no exercises assigned`
+  String get rest_day_no_exercises {
+    return Intl.message(
+      'Rest day or no exercises assigned',
+      name: 'rest_day_no_exercises',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Done`
+  String get workout_done {
+    return Intl.message('Done', name: 'workout_done', desc: '', args: []);
+  }
+
+  /// `Partial`
+  String get workout_partial {
+    return Intl.message('Partial', name: 'workout_partial', desc: '', args: []);
+  }
+
+  /// `Renew`
+  String get renew {
+    return Intl.message('Renew', name: 'renew', desc: '', args: []);
+  }
+
+  /// `Sending…`
+  String get sending {
+    return Intl.message('Sending…', name: 'sending', desc: '', args: []);
+  }
+
+  /// `How do you want to train?`
+  String get how_to_train {
+    return Intl.message(
+      'How do you want to train?',
+      name: 'how_to_train',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Full Control`
+  String get full_control {
+    return Intl.message(
+      'Full Control',
+      name: 'full_control',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Instant`
+  String get instant {
+    return Intl.message('Instant', name: 'instant', desc: '', args: []);
+  }
+
+  /// `Professional`
+  String get professional {
+    return Intl.message(
+      'Professional',
+      name: 'professional',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Training Plan`
+  String get training_plan {
+    return Intl.message(
+      'Training Plan',
+      name: 'training_plan',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Weekly Progress`
+  String get weekly_progress {
+    return Intl.message(
+      'Weekly Progress',
+      name: 'weekly_progress',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `days completed`
+  String get days_completed {
+    return Intl.message(
+      'days completed',
+      name: 'days_completed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Take it easy — rest and recover today.`
+  String get rest_day_message {
+    return Intl.message(
+      'Take it easy — rest and recover today.',
+      name: 'rest_day_message',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Rest Day`
+  String get rest_day {
+    return Intl.message('Rest Day', name: 'rest_day', desc: '', args: []);
+  }
+
+  /// `Training Day`
+  String get training_day {
+    return Intl.message(
+      'Training Day',
+      name: 'training_day',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `training days this week`
+  String get training_days_this_week {
+    return Intl.message(
+      'training days this week',
+      name: 'training_days_this_week',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Your Coach`
+  String get your_coach {
+    return Intl.message('Your Coach', name: 'your_coach', desc: '', args: []);
+  }
+
+  /// `No messages yet`
+  String get no_messages_yet {
+    return Intl.message(
+      'No messages yet',
+      name: 'no_messages_yet',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Plans from Coach`
+  String get plans_from_coach {
+    return Intl.message(
+      'Plans from Coach',
+      name: 'plans_from_coach',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `No Plan Yet`
+  String get no_plan_yet {
+    return Intl.message('No Plan Yet', name: 'no_plan_yet', desc: '', args: []);
+  }
+
+  /// `Get started with one of the options below`
+  String get get_started {
+    return Intl.message(
+      'Get started with one of the options below',
+      name: 'get_started',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Partner Gyms`
+  String get gym_partners {
+    return Intl.message(
+      'Partner Gyms',
+      name: 'gym_partners',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Browse Gyms`
+  String get browse_gyms {
+    return Intl.message('Browse Gyms', name: 'browse_gyms', desc: '', args: []);
+  }
+
+  /// `Subscribe`
+  String get subscribe_to_gym {
+    return Intl.message(
+      'Subscribe',
+      name: 'subscribe_to_gym',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `My Gym Memberships`
+  String get my_gym_subscriptions {
+    return Intl.message(
+      'My Gym Memberships',
+      name: 'my_gym_subscriptions',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Freeze`
+  String get freeze_subscription {
+    return Intl.message(
+      'Freeze',
+      name: 'freeze_subscription',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Unfreeze`
+  String get unfreeze_subscription {
+    return Intl.message(
+      'Unfreeze',
+      name: 'unfreeze_subscription',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Expires`
+  String get expires_on {
+    return Intl.message('Expires', name: 'expires_on', desc: '', args: []);
+  }
+
+  /// `days remaining`
+  String get days_remaining {
+    return Intl.message(
+      'days remaining',
+      name: 'days_remaining',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Quiet`
+  String get crowding_quiet {
+    return Intl.message('Quiet', name: 'crowding_quiet', desc: '', args: []);
+  }
+
+  /// `Moderate`
+  String get crowding_moderate {
+    return Intl.message(
+      'Moderate',
+      name: 'crowding_moderate',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Crowded`
+  String get crowding_crowded {
+    return Intl.message(
+      'Crowded',
+      name: 'crowding_crowded',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Gym Coaches`
+  String get gym_coaches {
+    return Intl.message('Gym Coaches', name: 'gym_coaches', desc: '', args: []);
+  }
+
+  /// `Contact Support`
+  String get contact_gym_support {
+    return Intl.message(
+      'Contact Support',
+      name: 'contact_gym_support',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Subscribe to contact this gym's coaches`
+  String get subscribe_to_contact_coaches {
+    return Intl.message(
+      'Subscribe to contact this gym\'s coaches',
+      name: 'subscribe_to_contact_coaches',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Active Membership`
+  String get gym_subscription_active {
+    return Intl.message(
+      'Active Membership',
+      name: 'gym_subscription_active',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Freeze until`
+  String get freeze_until {
+    return Intl.message(
+      'Freeze until',
+      name: 'freeze_until',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Select freeze end date`
+  String get select_freeze_date {
+    return Intl.message(
+      'Select freeze end date',
+      name: 'select_freeze_date',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Currently Frozen`
+  String get currently_frozen {
+    return Intl.message(
+      'Currently Frozen',
+      name: 'currently_frozen',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Frozen until`
+  String get membership_frozen_until {
+    return Intl.message(
+      'Frozen until',
+      name: 'membership_frozen_until',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Amenities`
+  String get amenities {
+    return Intl.message('Amenities', name: 'amenities', desc: '', args: []);
+  }
+
+  /// `Opening Hours`
+  String get opening_hours {
+    return Intl.message(
+      'Opening Hours',
+      name: 'opening_hours',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `members today`
+  String get members_today {
+    return Intl.message(
+      'members today',
+      name: 'members_today',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `From`
+  String get from_price {
+    return Intl.message('From', name: 'from_price', desc: '', args: []);
+  }
+
+  /// `/ month`
+  String get per_month {
+    return Intl.message('/ month', name: 'per_month', desc: '', args: []);
+  }
+
+  /// `No gyms available`
+  String get no_gyms_available {
+    return Intl.message(
+      'No gyms available',
+      name: 'no_gyms_available',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Gym Details`
+  String get gym_detail {
+    return Intl.message('Gym Details', name: 'gym_detail', desc: '', args: []);
+  }
+
+  /// `Subscription Plans`
+  String get subscription_plans_available {
+    return Intl.message(
+      'Subscription Plans',
+      name: 'subscription_plans_available',
+      desc: '',
+      args: [],
+    );
   }
 }
 

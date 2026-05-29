@@ -375,7 +375,7 @@ class _WeekBottomSheetState extends State<_WeekBottomSheet> {
                                 children: [
                                   Text(
                                     selectedItem['title'] as String? ??
-                                        'Training Day',
+                                        S.of(context).training_day,
                                     style:
                                         AppTextStyles.font16WhiteBold,
                                   ),
@@ -424,7 +424,7 @@ class _WeekBottomSheetState extends State<_WeekBottomSheet> {
                         ] else ...[
                           vGap(16),
                           Text(
-                            'Take it easy — rest and recover today.',
+                            S.of(context).rest_day_message,
                             style: AppTextStyles.font14GreyRegular
                                 .copyWith(color: Colors.white70),
                             textAlign: TextAlign.center,

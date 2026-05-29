@@ -48,6 +48,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "already_have_account": MessageLookupByLibrary.simpleMessage(
       "Already have an account?",
     ),
+    "amenities": MessageLookupByLibrary.simpleMessage("Amenities"),
     "analysis_projection": MessageLookupByLibrary.simpleMessage(
       "Analysis and Projection",
     ),
@@ -88,6 +89,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "broadcast_message": MessageLookupByLibrary.simpleMessage(
       "Broadcast Message",
     ),
+    "browse_gyms": MessageLookupByLibrary.simpleMessage("Browse Gyms"),
     "build_muscle": MessageLookupByLibrary.simpleMessage("Build Muscle"),
     "bulky": MessageLookupByLibrary.simpleMessage("Bulky"),
     "calories": MessageLookupByLibrary.simpleMessage("Calories"),
@@ -124,9 +126,13 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "coach_proposal": MessageLookupByLibrary.simpleMessage("Coach\'s Proposal"),
     "coaches": MessageLookupByLibrary.simpleMessage("Coaches"),
+    "community_feed": MessageLookupByLibrary.simpleMessage("Community Feed"),
     "completed": MessageLookupByLibrary.simpleMessage("Completed"),
     "confirm_and_pay": MessageLookupByLibrary.simpleMessage("Confirm and Pay"),
     "confirm_request": MessageLookupByLibrary.simpleMessage("Confirm Request"),
+    "contact_gym_support": MessageLookupByLibrary.simpleMessage(
+      "Contact Support",
+    ),
     "continu": MessageLookupByLibrary.simpleMessage("Continue"),
     "create": MessageLookupByLibrary.simpleMessage("Create"),
     "create_account": MessageLookupByLibrary.simpleMessage("Create account"),
@@ -141,6 +147,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "create_your_plan": MessageLookupByLibrary.simpleMessage(
       "Create Your Plan",
     ),
+    "crowding_crowded": MessageLookupByLibrary.simpleMessage("Crowded"),
+    "crowding_moderate": MessageLookupByLibrary.simpleMessage("Moderate"),
+    "crowding_quiet": MessageLookupByLibrary.simpleMessage("Quiet"),
+    "currently_frozen": MessageLookupByLibrary.simpleMessage(
+      "Currently Frozen",
+    ),
     "custom_plan": MessageLookupByLibrary.simpleMessage("Custom Plan"),
     "custom_workouts_and_nutrition": MessageLookupByLibrary.simpleMessage(
       "Custom Workouts and Nutrition",
@@ -153,7 +165,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "dashboard": MessageLookupByLibrary.simpleMessage("Dashboard"),
     "date": MessageLookupByLibrary.simpleMessage("Date"),
     "day": MessageLookupByLibrary.simpleMessage("Day"),
+    "days_completed": MessageLookupByLibrary.simpleMessage("days completed"),
     "days_per_week": MessageLookupByLibrary.simpleMessage("days/week"),
+    "days_remaining": MessageLookupByLibrary.simpleMessage("days remaining"),
     "design_manually": MessageLookupByLibrary.simpleMessage("Design manually"),
     "design_new_training_program": MessageLookupByLibrary.simpleMessage(
       "Design a new training program for a member.",
@@ -177,6 +191,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "experience_specialization": MessageLookupByLibrary.simpleMessage(
       "Experience & Specialization",
     ),
+    "expires_on": MessageLookupByLibrary.simpleMessage("Expires"),
     "expiring": MessageLookupByLibrary.simpleMessage("Expiring"),
     "express": MessageLookupByLibrary.simpleMessage("Express"),
     "extended": MessageLookupByLibrary.simpleMessage("Extended"),
@@ -191,9 +206,13 @@ class MessageLookup extends MessageLookupByLibrary {
     "flexibility": MessageLookupByLibrary.simpleMessage("Flexibility"),
     "focus": MessageLookupByLibrary.simpleMessage("Focus"),
     "food_search": MessageLookupByLibrary.simpleMessage("Food Search"),
+    "freeze_subscription": MessageLookupByLibrary.simpleMessage("Freeze"),
+    "freeze_until": MessageLookupByLibrary.simpleMessage("Freeze until"),
     "frequency": MessageLookupByLibrary.simpleMessage("Frequency:"),
+    "from_price": MessageLookupByLibrary.simpleMessage("From"),
     "frozen": MessageLookupByLibrary.simpleMessage("Frozen"),
     "fuel_your_body": MessageLookupByLibrary.simpleMessage("Fuel Your Body"),
+    "full_control": MessageLookupByLibrary.simpleMessage("Full Control"),
     "gear": MessageLookupByLibrary.simpleMessage("Gear"),
     "generate_a_meal_plan_instantly": MessageLookupByLibrary.simpleMessage(
       "Generate a meal plan instantly",
@@ -208,8 +227,17 @@ class MessageLookup extends MessageLookupByLibrary {
     "generating_your_plan": MessageLookupByLibrary.simpleMessage(
       "Generating your plan",
     ),
+    "get_started": MessageLookupByLibrary.simpleMessage(
+      "Get started with one of the options below",
+    ),
     "goal": MessageLookupByLibrary.simpleMessage("Goal:"),
     "gym_admin": MessageLookupByLibrary.simpleMessage("Gym Admin"),
+    "gym_coaches": MessageLookupByLibrary.simpleMessage("Gym Coaches"),
+    "gym_detail": MessageLookupByLibrary.simpleMessage("Gym Details"),
+    "gym_partners": MessageLookupByLibrary.simpleMessage("Partner Gyms"),
+    "gym_subscription_active": MessageLookupByLibrary.simpleMessage(
+      "Active Membership",
+    ),
     "hello_ai_coach": MessageLookupByLibrary.simpleMessage(
       "Hello! I\'m your AI Coach. I can help you customize your training, build meal plans, or adjust your goals. What would you like to do today?",
     ),
@@ -218,6 +246,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "hire_coach": MessageLookupByLibrary.simpleMessage("Hire Coach"),
     "history": MessageLookupByLibrary.simpleMessage("History"),
     "home": MessageLookupByLibrary.simpleMessage("Home"),
+    "how_to_train": MessageLookupByLibrary.simpleMessage(
+      "How do you want to train?",
+    ),
     "hrs": MessageLookupByLibrary.simpleMessage("hrs"),
     "hydration": MessageLookupByLibrary.simpleMessage("Hydration"),
     "hydration_daily_goal": MessageLookupByLibrary.simpleMessage(
@@ -237,6 +268,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "input_your_own_macros_and_meals": MessageLookupByLibrary.simpleMessage(
       "Input your own macros and meals",
     ),
+    "instant": MessageLookupByLibrary.simpleMessage("Instant"),
     "instant_personalized_plan": MessageLookupByLibrary.simpleMessage(
       "Instant personalized plan",
     ),
@@ -290,8 +322,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "members_to_follow_up": MessageLookupByLibrary.simpleMessage(
       "Members to Follow Up",
     ),
+    "members_today": MessageLookupByLibrary.simpleMessage("members today"),
     "membership_billing": MessageLookupByLibrary.simpleMessage(
       "Membership & Billing",
+    ),
+    "membership_frozen_until": MessageLookupByLibrary.simpleMessage(
+      "Frozen until",
     ),
     "message": MessageLookupByLibrary.simpleMessage("Message"),
     "messages": MessageLookupByLibrary.simpleMessage("Messages"),
@@ -301,6 +337,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "month": MessageLookupByLibrary.simpleMessage("Month"),
     "my_cart": MessageLookupByLibrary.simpleMessage("My Cart "),
+    "my_gym_subscriptions": MessageLookupByLibrary.simpleMessage(
+      "My Gym Memberships",
+    ),
     "name": MessageLookupByLibrary.simpleMessage("Name"),
     "neww": MessageLookupByLibrary.simpleMessage("New"),
     "next_meals": MessageLookupByLibrary.simpleMessage("Next Meals"),
@@ -310,10 +349,15 @@ class MessageLookup extends MessageLookupByLibrary {
       "Don\'t have an account?",
     ),
     "no_active_plan": MessageLookupByLibrary.simpleMessage("No Active Plan"),
+    "no_gyms_available": MessageLookupByLibrary.simpleMessage(
+      "No gyms available",
+    ),
     "no_meal_plan": MessageLookupByLibrary.simpleMessage("No Meal Plan"),
     "no_members_found": MessageLookupByLibrary.simpleMessage(
       "No members found",
     ),
+    "no_messages_yet": MessageLookupByLibrary.simpleMessage("No messages yet"),
+    "no_plan_yet": MessageLookupByLibrary.simpleMessage("No Plan Yet"),
     "no_products": MessageLookupByLibrary.simpleMessage("No products"),
     "no_training_plan_yet": MessageLookupByLibrary.simpleMessage(
       "You haven\'t generated a personalized training plan yet. Use the AI Coach to get started.",
@@ -326,6 +370,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "ongoing": MessageLookupByLibrary.simpleMessage("Ongoing"),
     "open": MessageLookupByLibrary.simpleMessage("Open"),
+    "opening_hours": MessageLookupByLibrary.simpleMessage("Opening Hours"),
     "optimal": MessageLookupByLibrary.simpleMessage("Optimal"),
     "optimal_recovery_zone": MessageLookupByLibrary.simpleMessage(
       "Optimal Recovery Zone",
@@ -334,6 +379,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "overview": MessageLookupByLibrary.simpleMessage("Overview"),
     "paleo": MessageLookupByLibrary.simpleMessage("Paleo"),
     "password": MessageLookupByLibrary.simpleMessage("Password"),
+    "per_month": MessageLookupByLibrary.simpleMessage("/ month"),
     "personal_details": MessageLookupByLibrary.simpleMessage(
       "Personal Details",
     ),
@@ -345,6 +391,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "We have everything we need to build your personalized training and nutrition plan.",
     ),
     "plans": MessageLookupByLibrary.simpleMessage("Plans"),
+    "plans_from_coach": MessageLookupByLibrary.simpleMessage(
+      "Plans from Coach",
+    ),
     "popular_food": MessageLookupByLibrary.simpleMessage("Popular Food"),
     "preview": MessageLookupByLibrary.simpleMessage("Preview"),
     "previous": MessageLookupByLibrary.simpleMessage("Previous"),
@@ -352,6 +401,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "private_notes": MessageLookupByLibrary.simpleMessage("Private Notes"),
     "pro_member": MessageLookupByLibrary.simpleMessage("Pro Member"),
     "products": MessageLookupByLibrary.simpleMessage("Products"),
+    "professional": MessageLookupByLibrary.simpleMessage("Professional"),
     "profile": MessageLookupByLibrary.simpleMessage("Profile"),
     "promo_codes": MessageLookupByLibrary.simpleMessage("Promo Codes"),
     "protein": MessageLookupByLibrary.simpleMessage("Protein"),
@@ -365,8 +415,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "recommended_days": MessageLookupByLibrary.simpleMessage(
       "Recommended: 3-5 days for consistent results.",
     ),
-    "rehab": MessageLookupByLibrary.simpleMessage("Rehab"),
+    "rehab": MessageLookupByLibrary.simpleMessage("Rehabilitation"),
     "reject_plan": MessageLookupByLibrary.simpleMessage("Reject Plan"),
+    "renew": MessageLookupByLibrary.simpleMessage("Renew"),
     "request_a_plan_from_your_trainer": MessageLookupByLibrary.simpleMessage(
       "Request a plan from your trainer",
     ),
@@ -375,6 +426,13 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "request_sent": MessageLookupByLibrary.simpleMessage("Request Sent"),
     "required_field": MessageLookupByLibrary.simpleMessage("Required field"),
+    "rest_day": MessageLookupByLibrary.simpleMessage("Rest Day"),
+    "rest_day_message": MessageLookupByLibrary.simpleMessage(
+      "Take it easy — rest and recover today.",
+    ),
+    "rest_day_no_exercises": MessageLookupByLibrary.simpleMessage(
+      "Rest day or no exercises assigned",
+    ),
     "review_details_before_accepting": MessageLookupByLibrary.simpleMessage(
       "Review the details before accepting.",
     ),
@@ -400,11 +458,15 @@ class MessageLookup extends MessageLookupByLibrary {
     "select_days_exercises": MessageLookupByLibrary.simpleMessage(
       "Select your days and exercises",
     ),
+    "select_freeze_date": MessageLookupByLibrary.simpleMessage(
+      "Select freeze end date",
+    ),
     "select_member": MessageLookupByLibrary.simpleMessage("Select Member"),
     "select_role": MessageLookupByLibrary.simpleMessage(
       "Select your role to continue",
     ),
     "send": MessageLookupByLibrary.simpleMessage("Send"),
+    "sending": MessageLookupByLibrary.simpleMessage("Sending…"),
     "senior_coach": MessageLookupByLibrary.simpleMessage("Senior Coach"),
     "service": MessageLookupByLibrary.simpleMessage("Service"),
     "session_duration": MessageLookupByLibrary.simpleMessage(
@@ -420,9 +482,12 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "set_manually": MessageLookupByLibrary.simpleMessage("Set manually"),
     "settings": MessageLookupByLibrary.simpleMessage("Settings"),
+    "share_wins": MessageLookupByLibrary.simpleMessage(
+      "Share wins & motivate others",
+    ),
     "shop": MessageLookupByLibrary.simpleMessage("Shop"),
     "show_available_new_members": MessageLookupByLibrary.simpleMessage(
-      "Show as Available for new members",
+      "Show me to new members",
     ),
     "sign_up": MessageLookupByLibrary.simpleMessage("Sign up"),
     "sleep_duration": MessageLookupByLibrary.simpleMessage("Sleep Duration"),
@@ -436,12 +501,19 @@ class MessageLookup extends MessageLookupByLibrary {
     "staff": MessageLookupByLibrary.simpleMessage("Staff"),
     "standard": MessageLookupByLibrary.simpleMessage("Standard"),
     "start_shopping": MessageLookupByLibrary.simpleMessage("Start Shopping"),
-    "start_workout": MessageLookupByLibrary.simpleMessage("Start Workout"),
+    "start_workout": MessageLookupByLibrary.simpleMessage("Start"),
     "status": MessageLookupByLibrary.simpleMessage("Status"),
     "step": MessageLookupByLibrary.simpleMessage("Step"),
     "step_1_basics": MessageLookupByLibrary.simpleMessage("Step 1: Basics"),
     "strength": MessageLookupByLibrary.simpleMessage("Strength"),
     "strong": MessageLookupByLibrary.simpleMessage("Strong"),
+    "subscribe_to_contact_coaches": MessageLookupByLibrary.simpleMessage(
+      "Subscribe to contact this gym\'s coaches",
+    ),
+    "subscribe_to_gym": MessageLookupByLibrary.simpleMessage("Subscribe"),
+    "subscription_plans_available": MessageLookupByLibrary.simpleMessage(
+      "Subscription Plans",
+    ),
     "supplements": MessageLookupByLibrary.simpleMessage("Supplements"),
     "tap_search_egyptian_food": MessageLookupByLibrary.simpleMessage(
       "Tap to search the Egyptian Food Database",
@@ -464,12 +536,17 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "train": MessageLookupByLibrary.simpleMessage("Train"),
     "training": MessageLookupByLibrary.simpleMessage("Training"),
+    "training_day": MessageLookupByLibrary.simpleMessage("Training Day"),
     "training_days_per_week": MessageLookupByLibrary.simpleMessage(
       "Training Days per Week",
+    ),
+    "training_days_this_week": MessageLookupByLibrary.simpleMessage(
+      "training days this week",
     ),
     "training_frequency": MessageLookupByLibrary.simpleMessage(
       "Training Frequency",
     ),
+    "training_plan": MessageLookupByLibrary.simpleMessage("Training Plan"),
     "training_question": MessageLookupByLibrary.simpleMessage(
       "How many days a week can you train?",
     ),
@@ -477,6 +554,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "type_your_announcement": MessageLookupByLibrary.simpleMessage(
       "Type your announcement",
     ),
+    "unfreeze_subscription": MessageLookupByLibrary.simpleMessage("Unfreeze"),
     "upcoming": MessageLookupByLibrary.simpleMessage("Upcoming"),
     "upcoming_meals": MessageLookupByLibrary.simpleMessage("Upcoming Meals"),
     "update_current_weight": MessageLookupByLibrary.simpleMessage(
@@ -501,6 +579,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "water_intake": MessageLookupByLibrary.simpleMessage("Water Intake"),
     "water_l": MessageLookupByLibrary.simpleMessage("L Water"),
     "week": MessageLookupByLibrary.simpleMessage("Week"),
+    "weekly_progress": MessageLookupByLibrary.simpleMessage("Weekly Progress"),
     "weekly_schedule": MessageLookupByLibrary.simpleMessage("Weekly Schedule"),
     "weight_kg": MessageLookupByLibrary.simpleMessage("Kg Weight"),
     "weight_tracker": MessageLookupByLibrary.simpleMessage("Weight Tracker"),
@@ -509,10 +588,13 @@ class MessageLookup extends MessageLookupByLibrary {
     "workout_completion_rate": MessageLookupByLibrary.simpleMessage(
       "Workout Completion Rate",
     ),
+    "workout_done": MessageLookupByLibrary.simpleMessage("Done"),
+    "workout_partial": MessageLookupByLibrary.simpleMessage("Partial"),
     "year": MessageLookupByLibrary.simpleMessage("Year"),
     "you_are_about_to_hire_coach": MessageLookupByLibrary.simpleMessage(
       "You are about to hire ",
     ),
+    "your_coach": MessageLookupByLibrary.simpleMessage("Your Coach"),
     "your_personal_fitness_assistant": MessageLookupByLibrary.simpleMessage(
       "Your personal fitness assistant",
     ),

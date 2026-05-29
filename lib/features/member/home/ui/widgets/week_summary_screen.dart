@@ -71,7 +71,7 @@ class _WeekSummaryScreenState extends State<WeekSummaryScreen> {
           children: [
             Text(s.custom_plan, style: AppTextStyles.font16WhiteBold),
             Text(
-              '$totalExercises training days this week',
+              '$totalExercises ${s.training_days_this_week}',
               style: AppTextStyles.font14GreyRegular.copyWith(fontSize: 12.sp),
             ),
           ],
@@ -202,7 +202,7 @@ class _WeekSummaryScreenState extends State<WeekSummaryScreen> {
                         ),
                         vGap(2),
                         Text(
-                          _dayLabel,
+                          _isRestDay ? s.rest_day : (day['type'] as String? ?? s.training_day),
                           style: AppTextStyles.font16WhiteBold,
                         ),
                       ],
@@ -313,13 +313,13 @@ class _RestDayView extends StatelessWidget {
               color: AppColors.grey, size: 64.r),
           vGap(16),
           Text(
-            'Rest Day',
+            S.of(context).rest_day,
             style: AppTextStyles.font16WhiteBold
                 .copyWith(color: AppColors.grey),
           ),
           vGap(8),
           Text(
-            'Recovery is part of the plan.\nStretch, sleep well, and recharge.',
+            S.of(context).rest_day_message,
             style: AppTextStyles.font14GreyRegular.copyWith(fontSize: 13.sp),
             textAlign: TextAlign.center,
           ),

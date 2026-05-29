@@ -12,6 +12,7 @@ import 'package:gym_app/core/theme/app_text_styles.dart';
 import 'package:gym_app/features/member/home/manager/member_cubit.dart';
 import 'package:gym_app/features/member/home/manager/member_state.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../../../../generated/l10n.dart';
 
 // ── Message type ──────────────────────────────────────────────────────────────
 
@@ -379,7 +380,7 @@ class _MemberChatScreenState extends State<MemberChatScreen> {
                 Text(widget.coachName,
                     style: AppTextStyles.font14WhiteRegular
                         .copyWith(fontWeight: FontWeight.w600)),
-                Text('Your Coach',
+                Text(S.of(context).your_coach,
                     style: AppTextStyles.font14GreyRegular
                         .copyWith(fontSize: 10.sp, color: AppColors.teal)),
               ],
@@ -610,7 +611,7 @@ class _TextBubble extends StatelessWidget {
                       ),
                     ),
                     hGap(4),
-                    Text('Sending…',
+                    Text(S.of(context).sending,
                         style: AppTextStyles.font14GreyRegular
                             .copyWith(fontSize: 10.sp)),
                   ] else
@@ -1080,7 +1081,7 @@ class _PlansSheet extends StatelessWidget {
                   ),
                 ),
                 const Spacer(),
-                Text('Plans from Coach',
+                Text(S.of(context).plans_from_coach,
                     style: AppTextStyles.font16WhiteBold),
                 const Spacer(),
                 SizedBox(width: 40.w),
@@ -1467,7 +1468,7 @@ class _EmptyState extends StatelessWidget {
         children: [
           Icon(Icons.chat_bubble_outline, color: AppColors.grey, size: 56.r),
           vGap(16),
-          Text('No messages yet', style: AppTextStyles.font16WhiteBold),
+          Text(S.of(context).no_messages_yet, style: AppTextStyles.font16WhiteBold),
           vGap(8),
           Text('Say hi to $coachName!',
               style: AppTextStyles.font14GreyRegular,

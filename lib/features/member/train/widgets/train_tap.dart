@@ -50,25 +50,25 @@ class TrainTab extends StatelessWidget {
                 children: [
                   _StatBox(
                     value: '$totalCheckIns',
-                    label: 'This Week',
+                    label: s.this_week,
                     icon: Icons.fitness_center,
                     color: AppColors.teal,
                   ),
                   hGap(10),
                   _StatBox(
-                    value: hasPlan ? 'Active' : 'None',
-                    label: 'Plan',
+                    value: hasPlan ? s.active : s.no_plan_yet,
+                    label: s.plan,
                     icon: Icons.assignment_outlined,
                     color: hasPlan ? AppColors.emerald : AppColors.grey,
                   ),
                   hGap(10),
                   _StatBox(
                     value: status == 'done'
-                        ? 'Done'
+                        ? s.workout_done
                         : status == 'semi'
-                            ? 'Partial'
+                            ? s.workout_partial
                             : '—',
-                    label: 'Today',
+                    label: s.today,
                     icon: status == 'done'
                         ? Icons.check_circle
                         : status == 'semi'
@@ -90,7 +90,7 @@ class TrainTab extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'How do you want to train?',
+                s.how_to_train,
                 style: AppTextStyles.font14GreyRegular.copyWith(
                   color: Colors.grey.shade500,
                   fontSize: 12.sp,
@@ -101,7 +101,7 @@ class TrainTab extends StatelessWidget {
                 onPressed: () => context.push(WorkoutHistoryScreen.routeName),
                 style: TextButton.styleFrom(padding: EdgeInsets.zero),
                 icon: Icon(Icons.history, size: 16.r, color: AppColors.teal),
-                label: Text('History',
+                label: Text(s.history,
                     style: AppTextStyles.font14GreyRegular
                         .copyWith(color: AppColors.teal, fontSize: 12.sp)),
               ),
@@ -119,7 +119,7 @@ class TrainTab extends StatelessWidget {
             icon: Icons.edit_note_outlined,
             title: s.design_manually,
             subtitle: s.select_days_exercises,
-            badge: 'Full Control',
+            badge: s.full_control,
             badgeColor: const Color(0xFF42A5F5),
             onTap: () => context.push(DesignPlanManuallyScreen.routeName),
           ),
@@ -133,7 +133,7 @@ class TrainTab extends StatelessWidget {
             icon: Icons.smart_toy_outlined,
             title: s.ask_ai_coach,
             subtitle: s.instant_personalized_plan,
-            badge: 'Instant',
+            badge: s.instant,
             badgeColor: const Color(0xFF26A69A),
             onTap: () => context.read<BottomNavBarCubit>().changeIndex(2),
           ),
@@ -147,7 +147,7 @@ class TrainTab extends StatelessWidget {
             icon: Icons.sports_gymnastics,
             title: s.real_coach,
             subtitle: s.request_professional_plan,
-            badge: 'Professional',
+            badge: s.professional,
             badgeColor: const Color(0xFFAB47BC),
             onTap: () => context.push(
               ChooseCoachScreen.routeName,
