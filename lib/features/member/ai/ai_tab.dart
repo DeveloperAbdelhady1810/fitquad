@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:gym_app/core/cubit/health/health_cubit.dart';
+import 'package:gym_app/core/services/health_service.dart';
 import 'package:gym_app/core/theme/app_colors.dart';
 
 import '../ai/chat_bubble.dart';
@@ -52,14 +54,17 @@ class _AiTabState extends State<AiTab> {
     } catch (_) {}
   }
 
-  AiMemberContext _buildContext(MemberCubit memberCubit) {
+  AiMemberContext _buildContext(MemberCubit memberCubit, HealthState healthState) {
     final ms = memberCubit.state;
+    HealthSnapshot? snapshot;
+    if (healthState is HealthLoaded) snapshot = healthState.snapshot;
     return AiMemberContext(
-      member: ms is MemberLoaded ? ms.member : null,
-      latestInBody: _latestInBody,
-      workoutPlan: memberCubit.workoutPlan,
-      nutritionPlan: memberCubit.nutritionPlan,
-      weekCheckIns: memberCubit.weekCheckIns,
+      member:          ms is MemberLoaded ? ms.member : null,
+      latestInBody:    _latestInBody,
+      workoutPlan:     memberCubit.workoutPlan,
+      nutritionPlan:   memberCubit.nutritionPlan,
+      weekCheckIns:    memberCubit.weekCheckIns,
+      healthSnapshot:  snapshot,
     );
   }
 
@@ -84,10 +89,11 @@ class _AiTabState extends State<AiTab> {
 
   @override
   Widget build(BuildContext context) {
-    final memberCubit = context.watch<MemberCubit>();
-    final aiContext = _buildContext(memberCubit);
+    final memberCubit  = context.watch<MemberCubit>();
+    final healthState  = context.watch<HealthCubit>().state;
+    final aiContext    = _buildContext(memberCubit, healthState);
 
-    // Update cubit context every build (member may have just loaded)
+    // Update cubit context every build (member / health data may have just loaded)
     _cubit.updateContext(aiContext);
 
     return BlocProvider.value(
