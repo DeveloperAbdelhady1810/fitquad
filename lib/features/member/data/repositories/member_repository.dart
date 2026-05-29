@@ -233,8 +233,11 @@ class MemberRepository {
   }
 
   // ── Coach Messaging ──────────────────────────────────────────
-  static Future<void> sendMessageToCoach(String body) async {
-    await ApiClient.post('/member/messages', {'body': body});
+  static Future<void> sendMessageToCoach(String body, {int? coachId}) async {
+    await ApiClient.post('/member/messages', {
+      'body': body,
+      if (coachId != null) 'coach_id': coachId,
+    });
   }
 
   static Future<List<dynamic>> getCoachThread() async {

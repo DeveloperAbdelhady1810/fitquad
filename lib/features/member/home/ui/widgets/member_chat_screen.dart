@@ -1,11 +1,16 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gym_app/core/helpers/spacing.dart';
 import 'package:gym_app/core/services/api_client.dart';
 import 'package:gym_app/core/theme/app_colors.dart';
 import 'package:gym_app/core/theme/app_text_styles.dart';
+import 'package:gym_app/features/member/home/manager/member_cubit.dart';
+import 'package:gym_app/features/member/home/manager/member_state.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 // ── Message type ──────────────────────────────────────────────────────────────
 
@@ -14,13 +19,15 @@ enum ChatMsgType {
   inbodyAttachment,
   analyticsAttachment,
   workoutPlan,
-  nutritionPlan;
+  nutritionPlan,
+  deleted;
 
   static ChatMsgType fromString(String? s) => switch (s) {
         'inbody_attachment'    => inbodyAttachment,
         'analytics_attachment' => analyticsAttachment,
         'workout_plan'         => workoutPlan,
         'nutrition_plan'       => nutritionPlan,
+        'deleted'              => deleted,
         _                      => text,
       };
 
@@ -82,6 +89,7 @@ class _MemberChatScreenState extends State<MemberChatScreen> {
   bool _sending  = false;
   bool _sendingInBody    = false;
   bool _sendingAnalytics = false;
+  bool _safetyAlertShown = true; // true = already shown / dismissed
   Timer? _pollTimer;
 
   List<_ChatMsg> get _plans =>
@@ -92,6 +100,19 @@ class _MemberChatScreenState extends State<MemberChatScreen> {
     super.initState();
     _load();
     _pollTimer = Timer.periodic(const Duration(seconds: 4), (_) => _poll());
+    _checkSafetyAlert();
+  }
+
+  Future<void> _checkSafetyAlert() async {
+    final prefs = await SharedPreferences.getInstance();
+    final shown = prefs.getBool('chat_safety_alert_shown') ?? false;
+    if (!shown && mounted) setState(() => _safetyAlertShown = false);
+  }
+
+  Future<void> _dismissSafetyAlert() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('chat_safety_alert_shown', true);
+    if (mounted) setState(() => _safetyAlertShown = true);
   }
 
   @override
@@ -182,36 +203,77 @@ class _MemberChatScreenState extends State<MemberChatScreen> {
     try {
       final res = await ApiClient.post('/member/messages/send-inbody', {});
       final msg = _ChatMsg.fromJson(res['data'] as Map<String, dynamic>);
-      setState(() => _messages.add(msg));
-      _scrollToBottom();
-    } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(e.toString().replaceFirst('Exception: ', '')),
-          backgroundColor: AppColors.red,
-          behavior: SnackBarBehavior.floating,
-        ));
+        setState(() => _messages.add(msg));
+        _scrollToBottom();
       }
+    } catch (e) {
+      if (mounted) _showFriendlyError('Could not attach InBody', e);
     } finally {
       if (mounted) setState(() => _sendingInBody = false);
     }
+  }
+
+  void _showFriendlyError(String prefix, Object e) {
+    final raw = e.toString().replaceFirst('Exception: ', '');
+    final friendly = raw.toLowerCase().contains('no inbody')
+        ? 'No InBody scan found. Add one in the InBody tab first.'
+        : raw.toLowerCase().contains('coach')
+            ? 'You don\'t have an assigned coach yet.'
+            : '$prefix. Please try again.';
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(friendly),
+      backgroundColor: AppColors.red,
+      behavior: SnackBarBehavior.floating,
+    ));
+  }
+
+  Future<void> _deleteMessage(_ChatMsg msg) async {
+    try {
+      await ApiClient.delete('/member/messages/${msg.id}');
+      if (mounted) {
+        setState(() {
+          final idx = _messages.indexOf(msg);
+          if (idx >= 0) {
+            _messages[idx] = _ChatMsg(
+              id: msg.id,
+              body: '',
+              isMe: msg.isMe,
+              time: msg.time,
+              type: ChatMsgType.deleted,
+            );
+          }
+        });
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _sendQuickReply(String text) async {
+    _ctrl.text = text;
+    await _send();
   }
 
   Future<void> _sendAnalytics() async {
     if (_sendingAnalytics) return;
     setState(() => _sendingAnalytics = true);
     try {
-      final res = await ApiClient.post('/member/messages/send-analytics', {});
+      // Read available health data from MemberCubit state
+      final memberState = context.read<MemberCubit>().state;
+      final body = <String, dynamic>{};
+      if (memberState is MemberLoaded) {
+        final m = memberState.member;
+        if (m.sleepHrs != null && m.sleepHrs! > 0) body['sleep_hours'] = m.sleepHrs;
+        if (m.waterL != null && m.waterL! > 0) body['water_liters'] = m.waterL;
+      }
+      final res = await ApiClient.post('/member/messages/send-analytics', body);
       final msg = _ChatMsg.fromJson(res['data'] as Map<String, dynamic>);
-      setState(() => _messages.add(msg));
-      _scrollToBottom();
+      if (mounted) {
+        setState(() => _messages.add(msg));
+        _scrollToBottom();
+      }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(e.toString().replaceFirst('Exception: ', '')),
-          backgroundColor: AppColors.red,
-          behavior: SnackBarBehavior.floating,
-        ));
+        _showFriendlyError('Could not send analytics', e);
       }
     } finally {
       if (mounted) setState(() => _sendingAnalytics = false);
@@ -258,7 +320,8 @@ class _MemberChatScreenState extends State<MemberChatScreen> {
       isScrollControlled: true,
       shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(20.r))),
-      builder: (_) => _PlansSheet(plans: _plans, onApply: _applyPlan),
+      builder: (_) => _PlansSheet(
+          plans: _plans, onApply: _applyPlan, onQuickReply: _sendQuickReply),
     );
   }
 
@@ -341,6 +404,10 @@ class _MemberChatScreenState extends State<MemberChatScreen> {
       ),
       body: Column(
         children: [
+          // Safety alert banner (one-time)
+          if (!_safetyAlertShown)
+            _SafetyBanner(onDismiss: _dismissSafetyAlert),
+
           Expanded(
             child: _loading
                 ? const Center(
@@ -355,6 +422,8 @@ class _MemberChatScreenState extends State<MemberChatScreen> {
                         itemBuilder: (_, i) => _MessageRow(
                           msg: _messages[i],
                           onApply: _applyPlan,
+                          onDelete: _deleteMessage,
+                          onQuickReply: _sendQuickReply,
                         ),
                       ),
           ),
@@ -380,20 +449,71 @@ class _MemberChatScreenState extends State<MemberChatScreen> {
 class _MessageRow extends StatelessWidget {
   final _ChatMsg msg;
   final void Function(_ChatMsg) onApply;
+  final void Function(_ChatMsg) onDelete;
+  final void Function(String) onQuickReply;
 
-  const _MessageRow({required this.msg, required this.onApply});
+  const _MessageRow({
+    required this.msg,
+    required this.onApply,
+    required this.onDelete,
+    required this.onQuickReply,
+  });
+
+  void _showOptions(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.secondary,
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(16.r))),
+      builder: (_) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: Icon(Icons.copy_outlined, color: AppColors.grey),
+              title: Text('Copy', style: AppTextStyles.font14WhiteRegular),
+              onTap: () {
+                Navigator.pop(context);
+                Clipboard.setData(ClipboardData(text: msg.body));
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                  content: Text('Copied to clipboard'),
+                  behavior: SnackBarBehavior.floating,
+                  duration: Duration(seconds: 1),
+                ));
+              },
+            ),
+            if (msg.isMe)
+              ListTile(
+                leading: Icon(Icons.delete_outline, color: AppColors.red),
+                title: Text('Delete for me',
+                    style: AppTextStyles.font14WhiteRegular
+                        .copyWith(color: AppColors.red)),
+                onTap: () {
+                  Navigator.pop(context);
+                  onDelete(msg);
+                },
+              ),
+          ],
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(bottom: 12.h),
-      child: switch (msg.type) {
-        ChatMsgType.inbodyAttachment    => _InBodyBubble(msg: msg),
-        ChatMsgType.analyticsAttachment => _AnalyticsBubble(msg: msg),
-        ChatMsgType.workoutPlan         => _PlanBubble(msg: msg, onApply: onApply),
-        ChatMsgType.nutritionPlan       => _PlanBubble(msg: msg, onApply: onApply),
-        _                               => _TextBubble(msg: msg),
-      },
+    return GestureDetector(
+      onLongPress: () => _showOptions(context),
+      child: Padding(
+        padding: EdgeInsets.only(bottom: 12.h),
+        child: switch (msg.type) {
+          ChatMsgType.deleted             => _DeletedBubble(msg: msg),
+          ChatMsgType.inbodyAttachment    => _InBodyBubble(msg: msg, onQuickReply: onQuickReply),
+          ChatMsgType.analyticsAttachment => _AnalyticsBubble(msg: msg, onQuickReply: onQuickReply),
+          ChatMsgType.workoutPlan         => _PlanBubble(msg: msg, onApply: onApply, onQuickReply: onQuickReply),
+          ChatMsgType.nutritionPlan       => _PlanBubble(msg: msg, onApply: onApply, onQuickReply: onQuickReply),
+          _                               => _TextBubble(msg: msg),
+        },
+      ),
     );
   }
 }
@@ -460,11 +580,44 @@ class _TextBubble extends StatelessWidget {
   }
 }
 
+// ── Deleted bubble ────────────────────────────────────────────────────────────
+
+class _DeletedBubble extends StatelessWidget {
+  final _ChatMsg msg;
+  const _DeletedBubble({required this.msg});
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: msg.isMe ? Alignment.centerRight : Alignment.centerLeft,
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
+        decoration: BoxDecoration(
+          color: Colors.white10,
+          borderRadius: BorderRadius.circular(12.r),
+          border: Border.all(color: Colors.white12),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.block, color: AppColors.grey, size: 13.r),
+            hGap(6),
+            Text('Message deleted',
+                style: AppTextStyles.font14GreyRegular
+                    .copyWith(fontSize: 12.sp, fontStyle: FontStyle.italic)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 // ── InBody premium bubble ─────────────────────────────────────────────────────
 
 class _InBodyBubble extends StatelessWidget {
   final _ChatMsg msg;
-  const _InBodyBubble({required this.msg});
+  final void Function(String) onQuickReply;
+  const _InBodyBubble({required this.msg, required this.onQuickReply});
 
   @override
   Widget build(BuildContext context) {
@@ -492,31 +645,41 @@ class _InBodyBubble extends StatelessWidget {
           children: [
             _PremiumHeader(
               icon: Icons.monitor_weight_outlined,
-              label: 'In-Body Results',
+              label: msg.isMe ? 'In-Body Results Shared' : 'Member shared In-Body',
               color: AppColors.teal,
               time: _fmt(msg.time),
+              badge: '📊',
             ),
             Padding(
-              padding: EdgeInsets.fromLTRB(14.w, 4.h, 14.w, 14.h),
+              padding: EdgeInsets.fromLTRB(14.w, 4.h, 14.w, 8.h),
               child: Wrap(
-                spacing: 12.w,
+                spacing: 10.w,
                 runSpacing: 8.h,
                 children: [
                   if (p['weight'] != null)
-                    _Stat('Weight', '${p['weight']} kg', AppColors.teal),
+                    _Stat('⚖️ Weight', '${p['weight']} kg', AppColors.teal),
                   if (p['body_fat_pct'] != null)
-                    _Stat('Body Fat', '${p['body_fat_pct']}%', AppColors.red),
+                    _Stat('🔥 Body Fat', '${p['body_fat_pct']}%', AppColors.red),
                   if (p['muscle_mass'] != null)
-                    _Stat('Muscle', '${p['muscle_mass']} kg', AppColors.emerald),
+                    _Stat('💪 Muscle', '${p['muscle_mass']} kg', AppColors.emerald),
                   if (p['bmi'] != null)
-                    _Stat('BMI', '${p['bmi']}', AppColors.blue),
+                    _Stat('📐 BMI', '${p['bmi']}', AppColors.blue),
                   if (p['visceral_fat'] != null)
-                    _Stat('Visceral Fat', '${p['visceral_fat']}', AppColors.purple),
+                    _Stat('🫀 Visceral', '${p['visceral_fat']}', AppColors.purple),
                   if (p['inbody_score'] != null)
-                    _Stat('Score', '${p['inbody_score']}', AppColors.teal),
+                    _Stat('🏆 Score', '${p['inbody_score']}', AppColors.teal),
                 ],
               ),
             ),
+            // Fast action chips (only if this was sent by me — coach sees on their side)
+            if (msg.isMe)
+              Padding(
+                padding: EdgeInsets.fromLTRB(14.w, 0, 14.w, 12.h),
+                child: _FastActions([
+                  _FastAction('📋 Make a plan for me', onQuickReply),
+                  _FastAction('🔍 Analyse my results', onQuickReply),
+                ]),
+              ),
           ],
         ),
       ),
@@ -528,7 +691,8 @@ class _InBodyBubble extends StatelessWidget {
 
 class _AnalyticsBubble extends StatelessWidget {
   final _ChatMsg msg;
-  const _AnalyticsBubble({required this.msg});
+  final void Function(String) onQuickReply;
+  const _AnalyticsBubble({required this.msg, required this.onQuickReply});
 
   @override
   Widget build(BuildContext context) {
@@ -556,31 +720,40 @@ class _AnalyticsBubble extends StatelessWidget {
           children: [
             _PremiumHeader(
               icon: Icons.watch_outlined,
-              label: 'Smart Watch Analytics',
+              label: msg.isMe ? 'Smart Watch Analytics Shared' : 'Member shared Analytics',
               color: AppColors.purple,
               time: _fmt(msg.time),
+              badge: '⌚',
             ),
             Padding(
-              padding: EdgeInsets.fromLTRB(14.w, 4.h, 14.w, 14.h),
+              padding: EdgeInsets.fromLTRB(14.w, 4.h, 14.w, 8.h),
               child: Wrap(
-                spacing: 12.w,
+                spacing: 10.w,
                 runSpacing: 8.h,
                 children: [
                   if (p['steps'] != null)
-                    _Stat('Steps', _n(p['steps']), AppColors.purple),
+                    _Stat('👟 Steps', _n(p['steps']), AppColors.purple),
                   if (p['active_minutes'] != null)
-                    _Stat('Active', '${p['active_minutes']} min', AppColors.blue),
+                    _Stat('⚡ Active', '${p['active_minutes']} min', AppColors.blue),
                   if (p['calories_burned'] != null)
-                    _Stat('Calories', '${p['calories_burned']} kcal', AppColors.red),
+                    _Stat('🔥 Calories', '${p['calories_burned']} kcal', AppColors.red),
                   if (p['heart_rate_avg'] != null)
-                    _Stat('Avg HR', '${p['heart_rate_avg']} bpm', AppColors.red),
+                    _Stat('❤️ Avg HR', '${p['heart_rate_avg']} bpm', AppColors.red),
                   if (p['sleep_hours'] != null)
-                    _Stat('Sleep', '${p['sleep_hours']} hrs', AppColors.blue),
+                    _Stat('🌙 Sleep', '${p['sleep_hours']} hrs', AppColors.blue),
                   if (p['water_liters'] != null)
-                    _Stat('Water', '${p['water_liters']} L', AppColors.teal),
+                    _Stat('💧 Water', '${p['water_liters']} L', AppColors.teal),
                 ],
               ),
             ),
+            if (msg.isMe)
+              Padding(
+                padding: EdgeInsets.fromLTRB(14.w, 0, 14.w, 12.h),
+                child: _FastActions([
+                  _FastAction('💪 Suggest recovery tips', onQuickReply),
+                  _FastAction('🏃 Improve my training', onQuickReply),
+                ]),
+              ),
           ],
         ),
       ),
@@ -593,8 +766,9 @@ class _AnalyticsBubble extends StatelessWidget {
 class _PlanBubble extends StatelessWidget {
   final _ChatMsg msg;
   final void Function(_ChatMsg) onApply;
+  final void Function(String) onQuickReply;
 
-  const _PlanBubble({required this.msg, required this.onApply});
+  const _PlanBubble({required this.msg, required this.onApply, required this.onQuickReply});
 
   @override
   Widget build(BuildContext context) {
@@ -629,9 +803,10 @@ class _PlanBubble extends StatelessWidget {
               icon: isWorkout
                   ? Icons.fitness_center_outlined
                   : Icons.restaurant_outlined,
-              label: isWorkout ? 'Workout Plan from Coach' : 'Nutrition Plan from Coach',
+              label: isWorkout ? '🏋️ Workout Plan from Coach' : '🥗 Nutrition Plan from Coach',
               color: color,
               time: _fmt(msg.time),
+              badge: isWorkout ? '💪' : '🥗',
             ),
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 14.w),
@@ -674,38 +849,47 @@ class _PlanBubble extends StatelessWidget {
                 ],
               ),
             ),
-            // Apply button
+            // Apply button + fast actions
             Padding(
               padding: EdgeInsets.fromLTRB(14.w, 0, 14.w, 14.h),
-              child: msg.isApplied
-                  ? Row(
-                      children: [
-                        Icon(Icons.check_circle,
-                            color: AppColors.emerald, size: 16.r),
-                        hGap(6),
-                        Text('Plan Applied',
-                            style: AppTextStyles.font14GreyRegular.copyWith(
-                                color: AppColors.emerald,
-                                fontWeight: FontWeight.w600)),
-                      ],
-                    )
-                  : SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: () => onApply(msg),
-                        icon: Icon(Icons.check_circle_outline, size: 16.r),
-                        label: Text('Apply ${isWorkout ? 'Workout' : 'Nutrition'} Plan'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: color,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10.r)),
-                          padding: EdgeInsets.symmetric(vertical: 10.h),
-                          textStyle: AppTextStyles.font14WhiteRegular
-                              .copyWith(fontWeight: FontWeight.w600, fontSize: 13.sp),
+              child: Column(
+                children: [
+                  msg.isApplied
+                      ? Row(
+                          children: [
+                            Icon(Icons.check_circle,
+                                color: AppColors.emerald, size: 16.r),
+                            hGap(6),
+                            Text('Plan Applied ✅',
+                                style: AppTextStyles.font14GreyRegular.copyWith(
+                                    color: AppColors.emerald,
+                                    fontWeight: FontWeight.w600)),
+                          ],
+                        )
+                      : SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed: () => onApply(msg),
+                            icon: Icon(Icons.check_circle_outline, size: 16.r),
+                            label: Text('✅ Apply ${isWorkout ? 'Workout' : 'Nutrition'} Plan'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: color,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10.r)),
+                              padding: EdgeInsets.symmetric(vertical: 10.h),
+                              textStyle: AppTextStyles.font14WhiteRegular
+                                  .copyWith(fontWeight: FontWeight.w600, fontSize: 13.sp),
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
+                  vGap(8),
+                  _FastActions([
+                    _FastAction('✏️ Request modification', onQuickReply),
+                    _FastAction('❓ Ask about this plan', onQuickReply),
+                  ]),
+                ],
+              ),
             ),
           ],
         ),
@@ -719,8 +903,13 @@ class _PlanBubble extends StatelessWidget {
 class _PlansSheet extends StatelessWidget {
   final List<_ChatMsg> plans;
   final void Function(_ChatMsg) onApply;
+  final void Function(String) onQuickReply;
 
-  const _PlansSheet({required this.plans, required this.onApply});
+  const _PlansSheet({
+    required this.plans,
+    required this.onApply,
+    required this.onQuickReply,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -761,6 +950,7 @@ class _PlansSheet extends StatelessWidget {
               itemBuilder: (_, i) => _PlanBubble(
                 msg: plans[i],
                 onApply: onApply,
+                onQuickReply: onQuickReply,
               ),
             ),
           ),
@@ -935,22 +1125,36 @@ class _PremiumHeader extends StatelessWidget {
   final String label;
   final Color color;
   final String time;
+  final String? badge;
 
   const _PremiumHeader({
     required this.icon,
     required this.label,
     required this.color,
     required this.time,
+    this.badge,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.fromLTRB(12.w, 12.h, 12.w, 10.h),
+    return Container(
+      padding: EdgeInsets.fromLTRB(12.w, 10.h, 12.w, 10.h),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(16.r),
+          topRight: Radius.circular(16.r),
+        ),
+      ),
       child: Row(
         children: [
-          Icon(icon, color: color, size: 16.r),
-          hGap(6),
+          if (badge != null) ...[
+            Text(badge!, style: TextStyle(fontSize: 14.sp)),
+            hGap(6),
+          ] else ...[
+            Icon(icon, color: color, size: 16.r),
+            hGap(6),
+          ],
           Expanded(
             child: Text(label,
                 style: AppTextStyles.font14WhiteRegular.copyWith(
@@ -960,6 +1164,82 @@ class _PremiumHeader extends StatelessWidget {
           ),
           Text(time,
               style: AppTextStyles.font14GreyRegular.copyWith(fontSize: 10.sp)),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Fast actions row ──────────────────────────────────────────────────────────
+
+class _FastAction {
+  final String label;
+  final void Function(String) onTap;
+  _FastAction(this.label, this.onTap);
+}
+
+class _FastActions extends StatelessWidget {
+  final List<_FastAction> actions;
+  const _FastActions(this.actions);
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 6.w,
+      runSpacing: 6.h,
+      children: actions
+          .map((a) => GestureDetector(
+                onTap: () => a.onTap(a.label),
+                child: Container(
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(16.r),
+                    border: Border.all(color: Colors.white24),
+                  ),
+                  child: Text(a.label,
+                      style: AppTextStyles.font14GreyRegular.copyWith(
+                          color: Colors.white, fontSize: 11.sp)),
+                ),
+              ))
+          .toList(),
+    );
+  }
+}
+
+// ── Safety banner ─────────────────────────────────────────────────────────────
+
+class _SafetyBanner extends StatelessWidget {
+  final VoidCallback onDismiss;
+  const _SafetyBanner({required this.onDismiss});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: EdgeInsets.fromLTRB(12.w, 8.h, 12.w, 0),
+      padding: EdgeInsets.all(12.r),
+      decoration: BoxDecoration(
+        color: AppColors.teal.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: AppColors.teal.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.verified_user_outlined, color: AppColors.teal, size: 18.r),
+          hGap(10),
+          Expanded(
+            child: Text(
+              'For your safety, keep all communication inside FitQuad. '
+              'In-app chat protects both you and your coach.',
+              style: AppTextStyles.font14GreyRegular
+                  .copyWith(fontSize: 11.sp, height: 1.4),
+            ),
+          ),
+          GestureDetector(
+            onTap: onDismiss,
+            child: Icon(Icons.close, color: AppColors.grey, size: 16.r),
+          ),
         ],
       ),
     );

@@ -417,25 +417,61 @@ class _WatchStatsRow extends StatelessWidget {
   }
 
   Future<void> _sendToCoach(BuildContext context, String memberName) async {
+    // Load the member's coaches first
+    List<Map<String, dynamic>> coaches;
+    try {
+      final raw = await MemberRepository.getMyCoaches();
+      coaches = raw.cast<Map<String, dynamic>>();
+    } catch (_) {
+      coaches = [];
+    }
+
+    if (!context.mounted) return;
+
+    if (coaches.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+              "You don't have a coach yet. Go to Personal Training to hire one."),
+        ),
+      );
+      return;
+    }
+
+    // If one coach, send directly; otherwise let the member pick
+    Map<String, dynamic>? chosen;
+    if (coaches.length == 1) {
+      chosen = coaches.first;
+    } else {
+      chosen = await showModalBottomSheet<Map<String, dynamic>>(
+        context: context,
+        backgroundColor: AppColors.secondary,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+        ),
+        builder: (_) => _CoachPickerSheet(coaches: coaches),
+      );
+    }
+
+    if (chosen == null || !context.mounted) return;
+
+    final coachId = chosen['coach_id'] as int?;
+    final coachName = chosen['name'] as String? ?? 'your coach';
     final body = _buildSummaryText(memberName);
     try {
-      await MemberRepository.sendMessageToCoach(body);
+      await MemberRepository.sendMessageToCoach(body, coachId: coachId);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Health summary sent to your coach!'),
+          SnackBar(
+            content: Text('Health summary sent to $coachName!'),
             backgroundColor: Colors.green,
           ),
         );
       }
     } catch (e) {
       if (context.mounted) {
-        final errStr = e.toString().toLowerCase();
-        final msg = errStr.contains('coach') || errStr.contains('assign')
-            ? "You don't have an assigned coach yet. Go to Personal Training to request one."
-            : 'Could not send the summary. Please try again.';
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(msg)),
+          const SnackBar(content: Text('Could not send the summary. Please try again.')),
         );
       }
     }
@@ -1095,6 +1131,87 @@ class _WatchPermissionBanner extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ── Coach picker sheet (analytics → which coach?) ─────────────────────────────
+
+class _CoachPickerSheet extends StatelessWidget {
+  final List<Map<String, dynamic>> coaches;
+  const _CoachPickerSheet({required this.coaches});
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Padding(
+        padding: EdgeInsets.all(20.r),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.send_outlined, color: AppColors.teal, size: 20.r),
+                hGap(10),
+                Text('Send to which coach?',
+                    style: AppTextStyles.font16WhiteBold),
+              ],
+            ),
+            vGap(14),
+            ...coaches.map((c) {
+              final name = c['name'] as String? ?? 'Coach';
+              final spec = c['specialization'] as String? ?? '';
+              final initials = name.trim().split(' ').take(2)
+                  .map((p) => p.isNotEmpty ? p[0].toUpperCase() : '')
+                  .join();
+              return Padding(
+                padding: EdgeInsets.only(bottom: 8.h),
+                child: GestureDetector(
+                  onTap: () => Navigator.pop(context, c),
+                  child: Container(
+                    padding: EdgeInsets.all(12.r),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      borderRadius: BorderRadius.circular(12.r),
+                      border: Border.all(color: Colors.white10),
+                    ),
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 20.r,
+                          backgroundColor: AppColors.teal.withValues(alpha: 0.15),
+                          child: Text(initials,
+                              style: AppTextStyles.font14WhiteRegular
+                                  .copyWith(color: AppColors.teal)),
+                        ),
+                        hGap(12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(name,
+                                  style: AppTextStyles.font14WhiteRegular
+                                      .copyWith(fontWeight: FontWeight.w600)),
+                              if (spec.isNotEmpty)
+                                Text(spec,
+                                    style: AppTextStyles.font14GreyRegular
+                                        .copyWith(fontSize: 11.sp,
+                                            color: AppColors.teal)),
+                            ],
+                          ),
+                        ),
+                        Icon(Icons.chevron_right,
+                            color: AppColors.grey, size: 18.r),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }),
+          ],
+        ),
       ),
     );
   }

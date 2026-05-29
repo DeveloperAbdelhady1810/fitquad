@@ -1,12 +1,14 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gym_app/core/helpers/spacing.dart';
 import 'package:gym_app/core/services/api_client.dart';
 import 'package:gym_app/core/theme/app_colors.dart';
 import 'package:gym_app/core/theme/app_text_styles.dart';
 import 'package:gym_app/features/coach/chat/widgets/send_plan_sheet.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 // ── Message type ──────────────────────────────────────────────────────────────
 
@@ -15,13 +17,15 @@ enum _MsgType {
   inbodyAttachment,
   analyticsAttachment,
   workoutPlan,
-  nutritionPlan;
+  nutritionPlan,
+  deleted;
 
   static _MsgType fromString(String? s) => switch (s) {
         'inbody_attachment'    => inbodyAttachment,
         'analytics_attachment' => analyticsAttachment,
         'workout_plan'         => workoutPlan,
         'nutrition_plan'       => nutritionPlan,
+        'deleted'              => deleted,
         _                      => text,
       };
 }
@@ -83,6 +87,7 @@ class _CoachChatThreadScreenState extends State<CoachChatThreadScreen> {
   bool _loading       = true;
   bool _sending       = false;
   bool _showTemplates = false;
+  bool _safetyAlertShown = true;
   int? _memberUserId;
   Timer? _pollTimer;
 
@@ -101,6 +106,39 @@ class _CoachChatThreadScreenState extends State<CoachChatThreadScreen> {
     _memberUserId = widget.memberUserId;
     _load();
     _pollTimer = Timer.periodic(const Duration(seconds: 4), (_) => _poll());
+    _checkSafetyAlert();
+  }
+
+  Future<void> _checkSafetyAlert() async {
+    final prefs = await SharedPreferences.getInstance();
+    final shown = prefs.getBool('coach_chat_safety_alert_shown') ?? false;
+    if (!shown && mounted) setState(() => _safetyAlertShown = false);
+  }
+
+  Future<void> _dismissSafetyAlert() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('coach_chat_safety_alert_shown', true);
+    if (mounted) setState(() => _safetyAlertShown = true);
+  }
+
+  Future<void> _deleteMessage(_Msg msg) async {
+    try {
+      await ApiClient.delete('/coach/messages/${msg.id}');
+      if (mounted) {
+        setState(() {
+          final idx = _messages.indexOf(msg);
+          if (idx >= 0) {
+            _messages[idx] = _Msg(
+              id: msg.id,
+              body: '',
+              isCoach: msg.isCoach,
+              time: msg.time,
+              type: _MsgType.deleted,
+            );
+          }
+        });
+      }
+    } catch (_) {}
   }
 
   @override
@@ -274,6 +312,8 @@ class _CoachChatThreadScreenState extends State<CoachChatThreadScreen> {
       ),
       body: Column(
         children: [
+          if (!_safetyAlertShown)
+            _SafetyBanner(onDismiss: _dismissSafetyAlert),
           Expanded(
             child: _loading
                 ? const Center(
@@ -285,8 +325,11 @@ class _CoachChatThreadScreenState extends State<CoachChatThreadScreen> {
                         padding: EdgeInsets.symmetric(
                             horizontal: 16.w, vertical: 12.h),
                         itemCount: _messages.length,
-                        itemBuilder: (_, i) =>
-                            _CoachMsgRow(msg: _messages[i]),
+                        itemBuilder: (_, i) => _CoachMsgRow(
+                          msg: _messages[i],
+                          onDelete: _deleteMessage,
+                          onMakePlan: _showSendPlan,
+                        ),
                       ),
           ),
           if (_showTemplates)
@@ -309,19 +352,97 @@ class _CoachChatThreadScreenState extends State<CoachChatThreadScreen> {
 
 class _CoachMsgRow extends StatelessWidget {
   final _Msg msg;
-  const _CoachMsgRow({required this.msg});
+  final void Function(_Msg) onDelete;
+  final VoidCallback onMakePlan;
+
+  const _CoachMsgRow({
+    required this.msg,
+    required this.onDelete,
+    required this.onMakePlan,
+  });
+
+  void _showOptions(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.secondary,
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(16.r))),
+      builder: (_) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: Icon(Icons.copy_outlined, color: AppColors.grey),
+              title: Text('Copy', style: AppTextStyles.font14WhiteRegular),
+              onTap: () {
+                Navigator.pop(context);
+                Clipboard.setData(ClipboardData(text: msg.body));
+              },
+            ),
+            if (msg.isCoach)
+              ListTile(
+                leading: Icon(Icons.delete_outline, color: AppColors.red),
+                title: Text('Delete for me',
+                    style: AppTextStyles.font14WhiteRegular
+                        .copyWith(color: AppColors.red)),
+                onTap: () {
+                  Navigator.pop(context);
+                  onDelete(msg);
+                },
+              ),
+          ],
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(bottom: 12.h),
-      child: switch (msg.type) {
-        _MsgType.inbodyAttachment    => _InBodyCard(msg: msg),
-        _MsgType.analyticsAttachment => _AnalyticsCard(msg: msg),
-        _MsgType.workoutPlan         => _PlanSentCard(msg: msg),
-        _MsgType.nutritionPlan       => _PlanSentCard(msg: msg),
-        _                            => _TextBubble(msg: msg),
-      },
+    return GestureDetector(
+      onLongPress: () => _showOptions(context),
+      child: Padding(
+        padding: EdgeInsets.only(bottom: 12.h),
+        child: switch (msg.type) {
+          _MsgType.deleted             => _DeletedBubble(msg: msg),
+          _MsgType.inbodyAttachment    => _InBodyCard(msg: msg, onMakePlan: onMakePlan),
+          _MsgType.analyticsAttachment => _AnalyticsCard(msg: msg, onMakePlan: onMakePlan),
+          _MsgType.workoutPlan         => _PlanSentCard(msg: msg),
+          _MsgType.nutritionPlan       => _PlanSentCard(msg: msg),
+          _                            => _TextBubble(msg: msg),
+        },
+      ),
+    );
+  }
+}
+
+// ── Deleted bubble ────────────────────────────────────────────────────────────
+
+class _DeletedBubble extends StatelessWidget {
+  final _Msg msg;
+  const _DeletedBubble({required this.msg});
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: msg.isCoach ? Alignment.centerRight : Alignment.centerLeft,
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
+        decoration: BoxDecoration(
+          color: Colors.white10,
+          borderRadius: BorderRadius.circular(12.r),
+          border: Border.all(color: Colors.white12),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.block, color: AppColors.grey, size: 13.r),
+            hGap(6),
+            Text('Message deleted',
+                style: AppTextStyles.font14GreyRegular
+                    .copyWith(fontSize: 12.sp, fontStyle: FontStyle.italic)),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -394,7 +515,8 @@ class _TextBubble extends StatelessWidget {
 
 class _InBodyCard extends StatefulWidget {
   final _Msg msg;
-  const _InBodyCard({required this.msg});
+  final VoidCallback onMakePlan;
+  const _InBodyCard({required this.msg, required this.onMakePlan});
 
   @override
   State<_InBodyCard> createState() => _InBodyCardState();
@@ -465,6 +587,15 @@ class _InBodyCardState extends State<_InBodyCard> {
                 ],
               ),
             ),
+            if (!widget.msg.isCoach)
+              Padding(
+                padding: EdgeInsets.fromLTRB(14.w, 0, 14.w, 12.h),
+                child: _MakePlanButton(
+                  label: '📋 Make a plan from this data',
+                  color: AppColors.teal,
+                  onTap: widget.onMakePlan,
+                ),
+              ),
           ],
         ),
       ),
@@ -476,7 +607,8 @@ class _InBodyCardState extends State<_InBodyCard> {
 
 class _AnalyticsCard extends StatelessWidget {
   final _Msg msg;
-  const _AnalyticsCard({required this.msg});
+  final VoidCallback onMakePlan;
+  const _AnalyticsCard({required this.msg, required this.onMakePlan});
 
   @override
   Widget build(BuildContext context) {
@@ -525,7 +657,44 @@ class _AnalyticsCard extends StatelessWidget {
                 ],
               ),
             ),
+            if (!msg.isCoach)
+              Padding(
+                padding: EdgeInsets.fromLTRB(14.w, 0, 14.w, 12.h),
+                child: _MakePlanButton(
+                  label: '📋 Make a plan from this data',
+                  color: AppColors.purple,
+                  onTap: onMakePlan,
+                ),
+              ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Make-plan fast action button ──────────────────────────────────────────────
+
+class _MakePlanButton extends StatelessWidget {
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+  const _MakePlanButton({required this.label, required this.color, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton.icon(
+        onPressed: onTap,
+        icon: Icon(Icons.note_add_outlined, size: 15.r),
+        label: Text(label, style: TextStyle(fontSize: 12.sp)),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: color,
+          foregroundColor: Colors.white,
+          padding: EdgeInsets.symmetric(vertical: 9.h),
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10.r)),
         ),
       ),
     );
@@ -831,6 +1000,44 @@ class _InputBar extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// ── Safety banner ─────────────────────────────────────────────────────────────
+
+class _SafetyBanner extends StatelessWidget {
+  final VoidCallback onDismiss;
+  const _SafetyBanner({required this.onDismiss});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: EdgeInsets.fromLTRB(12.w, 8.h, 12.w, 0),
+      padding: EdgeInsets.all(12.r),
+      decoration: BoxDecoration(
+        color: AppColors.teal.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: AppColors.teal.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.verified_user_outlined, color: AppColors.teal, size: 18.r),
+          hGap(10),
+          Expanded(
+            child: Text(
+              'Keep all communication inside FitQuad. In-app chat keeps a '
+              'safe record and protects both you and your client.',
+              style: AppTextStyles.font14GreyRegular
+                  .copyWith(fontSize: 11.sp, height: 1.4),
+            ),
+          ),
+          GestureDetector(
+            onTap: onDismiss,
+            child: Icon(Icons.close, color: AppColors.grey, size: 16.r),
+          ),
+        ],
       ),
     );
   }

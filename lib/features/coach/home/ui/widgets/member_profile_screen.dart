@@ -1041,6 +1041,34 @@ class _EmbeddedMsgBubble extends StatelessWidget {
     final time   = DateTime.tryParse(msg['sent_at'] as String? ?? '') ?? DateTime.now();
     final timeStr = '${time.hour.toString().padLeft(2,'0')}:${time.minute.toString().padLeft(2,'0')}';
 
+    // Deleted bubble
+    if (type == 'deleted') {
+      return Padding(
+        padding: EdgeInsets.only(bottom: 8.h),
+        child: Align(
+          alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+          child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 7.h),
+            decoration: BoxDecoration(
+              color: Colors.white10,
+              borderRadius: BorderRadius.circular(12.r),
+              border: Border.all(color: Colors.white12),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.block, color: AppColors.grey, size: 12.r),
+                hGap(5),
+                Text('Message deleted',
+                    style: AppTextStyles.font14GreyRegular.copyWith(
+                        fontSize: 11.sp, fontStyle: FontStyle.italic)),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     // Premium attachment bubble
     if (type == 'inbody_attachment' || type == 'analytics_attachment') {
       final color = type == 'inbody_attachment' ? AppColors.teal : AppColors.purple;
