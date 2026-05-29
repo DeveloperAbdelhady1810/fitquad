@@ -329,12 +329,14 @@ class _MemberChatScreenState extends State<MemberChatScreen> {
   }
 
   void _scrollToBottom() {
+    // Double post-frame ensures ListView has finished layout before reading
+    // maxScrollExtent; jumpTo is instant so there are no animation timing races.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scroll.hasClients) {
-        _scroll.animateTo(_scroll.position.maxScrollExtent,
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeOut);
-      }
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_scroll.hasClients) {
+          _scroll.jumpTo(_scroll.position.maxScrollExtent);
+        }
+      });
     });
   }
 

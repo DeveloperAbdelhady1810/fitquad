@@ -52,11 +52,21 @@ class _WorkoutActiveScreenState extends State<WorkoutActiveScreen> {
   }
 
   // ── Helpers ───────────────────────────────────────────────────
+  bool get _hasExercises => widget.exercises.isNotEmpty;
   Map<String, dynamic> get _ex => widget.exercises[_exerciseIndex];
-  int get _totalSets       => (_ex['sets'] as num?)?.toInt() ?? 3;
-  int get _reps            => (_ex['reps'] as num?)?.toInt() ?? 10;
-  String get _exName       => _ex['name'] as String? ?? 'Exercise';
-  String get _muscleGroup  => _ex['muscle_group'] as String? ?? '';
+  // sets/reps may be top-level (manually built plan) or in pivot (DB loaded plan)
+  int get _totalSets {
+    final ex = _ex;
+    final v = ex['sets'] ?? (ex['pivot'] as Map?)?['sets'];
+    return ((v as num?)?.toInt() ?? 3).clamp(1, 99);
+  }
+  int get _reps {
+    final ex = _ex;
+    final v = ex['reps'] ?? (ex['pivot'] as Map?)?['reps'];
+    return ((v as num?)?.toInt() ?? 10).clamp(1, 999);
+  }
+  String get _exName      => _ex['name'] as String? ?? _ex['exercise']?['name'] as String? ?? 'Exercise';
+  String get _muscleGroup => _ex['muscle_group'] as String? ?? _ex['exercise']?['muscle_group'] as String? ?? '';
 
   IconData get _muscleIcon {
     switch (_muscleGroup.toLowerCase()) {
@@ -173,6 +183,41 @@ class _WorkoutActiveScreenState extends State<WorkoutActiveScreen> {
   // ── Build ─────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
+    if (!_hasExercises) {
+      return Scaffold(
+        backgroundColor: AppColors.primary,
+        appBar: AppBar(
+          backgroundColor: AppColors.secondary,
+          foregroundColor: Colors.white,
+          title: Text(widget.planTitle,
+              style: AppTextStyles.font14WhiteRegular),
+        ),
+        body: Center(
+          child: Padding(
+            padding: EdgeInsets.all(32.r),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.fitness_center_outlined,
+                    color: AppColors.grey, size: 56.r),
+                vGap(16),
+                Text('No exercises for today',
+                    style: AppTextStyles.font16WhiteBold,
+                    textAlign: TextAlign.center),
+                vGap(8),
+                Text(
+                  'Your coach hasn\'t assigned exercises for this day yet, '
+                  'or today is a rest day.',
+                  style: AppTextStyles.font14GreyRegular,
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     if (_finished) return _buildCompletionScreen();
 
     return Scaffold(
