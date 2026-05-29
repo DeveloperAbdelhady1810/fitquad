@@ -193,7 +193,8 @@ class _OptionsList extends StatelessWidget {
               context,
               MaterialPageRoute(
                 builder: (_) => MemberChatScreen(
-                  coachName: myCoach['name'] as String? ?? 'Coach',
+                  coachName:      myCoach['name'] as String? ?? 'Coach',
+                  coachAvatarUrl: myCoach['avatar_url'] as String?,
                 ),
               ),
             ),

@@ -50,8 +50,9 @@ class CoachChatTab extends StatelessWidget {
                             context,
                             MaterialPageRoute(
                               builder: (_) => CoachChatThreadScreen(
-                                memberId: item.senderId!,
-                                memberName: item.name,
+                                memberId:        item.senderId!,
+                                memberName:      item.name,
+                                memberAvatarUrl: item.avatarUrl,
                               ),
                             ),
                           );

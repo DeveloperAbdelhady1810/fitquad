@@ -8,6 +8,7 @@ import 'package:gym_app/core/theme/app_colors.dart';
 import 'package:gym_app/features/coach/home/manager/date_time_extensions.dart';
 import 'package:gym_app/features/coach/home/manager/status_ext.dart';
 import 'package:gym_app/features/coach/home/ui/widgets/add_session_dialog.dart';
+import 'package:gym_app/core/widgets/app_avatar.dart';
 import 'package:gym_app/features/coach/chat/widgets/send_plan_sheet.dart';
 import 'package:gym_app/features/member/data/models/member_model.dart';
 import 'package:gym_app/features/member/home/manager/bottom_nav_bar_cubit.dart';
@@ -312,18 +313,10 @@ class HomeTab extends StatelessWidget {
                             extra: member),
                         child: Column(
                           children: [
-                            CircleAvatar(
-                              radius: 20.r,
-                              backgroundColor:
-                                  AppColors.teal.withValues(alpha: 0.2),
-                              child: Text(
-                                (member.name?.isNotEmpty == true
-                                        ? member.name![0]
-                                        : '?')
-                                    .toUpperCase(),
-                                style: AppTextStyles.font14WhiteRegular
-                                    .copyWith(fontWeight: FontWeight.bold),
-                              ),
+                            AppAvatar(
+                              name:   member.name ?? '?',
+                              url:    member.avatarUrl,
+                              radius: 20,
                             ),
                             vGap(4),
                             Text(

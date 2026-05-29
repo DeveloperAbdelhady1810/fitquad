@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:gym_app/core/helpers/helpers.dart';
+import 'package:gym_app/core/widgets/app_avatar.dart';
 import 'package:gym_app/core/helpers/spacing.dart';
 import 'package:gym_app/core/services/api_client.dart';
 import 'package:gym_app/core/theme/app_colors.dart';
@@ -51,7 +51,6 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
   Widget build(BuildContext context) {
     final s = S.of(context);
     final m = widget.member;
-    final initials = Helpers.getInitials(m.name ?? '');
 
     return Scaffold(
       appBar: AppBar(
@@ -103,14 +102,7 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        CircleAvatar(
-                          backgroundColor: AppColors.teal.withValues(alpha: 0.2),
-                          radius: 26.r,
-                          child: Text(initials,
-                              style: AppTextStyles.font14WhiteRegular
-                                  .copyWith(color: AppColors.teal,
-                                      fontWeight: FontWeight.w700)),
-                        ),
+                        AppAvatar(name: m.name ?? '', url: m.avatarUrl, radius: 26),
                         hGap(12),
                         Expanded(
                           child: Column(
@@ -1096,6 +1088,8 @@ class _MessagesTabState extends State<_MessagesTab> {
                         msg: _messages[i],
                         onMakePlan: _showSendPlan,
                         onSend: _send,
+                        memberName:      widget.member.name ?? 'Member',
+                        memberAvatarUrl: widget.member.avatarUrl,
                       ),
                     ),
         ),
@@ -1158,10 +1152,14 @@ class _EmbeddedMsgBubble extends StatefulWidget {
   final Map<String, dynamic> msg;
   final VoidCallback onMakePlan;
   final void Function(String) onSend;
+  final String memberName;
+  final String? memberAvatarUrl;
   const _EmbeddedMsgBubble({
     required this.msg,
     required this.onMakePlan,
     required this.onSend,
+    required this.memberName,
+    this.memberAvatarUrl,
   });
 
   @override
@@ -1419,10 +1417,12 @@ class _EmbeddedMsgBubbleState extends State<_EmbeddedMsgBubble> {
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           if (!isMe) ...[
-            CircleAvatar(
-              radius: 12.r,
-              backgroundColor: AppColors.blue.withValues(alpha: 0.2),
-              child: Icon(Icons.person, size: 12.r, color: AppColors.blue),
+            AppAvatar(
+              name:      widget.memberName,
+              url:       widget.memberAvatarUrl,
+              radius:    12,
+              bgColor:   AppColors.blue.withValues(alpha: 0.2),
+              textColor: AppColors.blue,
             ),
             hGap(6),
           ],

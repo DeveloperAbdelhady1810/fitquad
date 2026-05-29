@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:gym_app/core/helpers/app_decoration.dart';
+import 'package:gym_app/core/widgets/app_avatar.dart';
 import 'package:gym_app/core/helpers/spacing.dart';
 import 'package:gym_app/core/theme/app_colors.dart';
 import 'package:gym_app/core/theme/app_text_styles.dart';
@@ -81,11 +82,6 @@ class _HeroSliver extends StatelessWidget {
   final CoachModel coach;
   const _HeroSliver({required this.coach});
 
-  String _initials(String name) {
-    final parts = name.trim().split(' ');
-    if (parts.length >= 2) return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
-    return name.isNotEmpty ? name[0].toUpperCase() : '?';
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -110,15 +106,7 @@ class _HeroSliver extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               SizedBox(height: 40.h),
-              CircleAvatar(
-                radius: 52.r,
-                backgroundColor: AppColors.teal.withValues(alpha: 0.2),
-                child: Text(
-                  _initials(coach.name),
-                  style: AppTextStyles.font16WhiteBold.copyWith(
-                      color: AppColors.teal, fontSize: 32.sp),
-                ),
-              ),
+              AppAvatar(name: coach.name, url: coach.avatarUrl, radius: 52),
               vGap(12),
               Text(coach.name, style: AppTextStyles.font16WhiteBold.copyWith(fontSize: 20.sp)),
               vGap(4),
@@ -333,11 +321,6 @@ class _HireBar extends StatefulWidget {
 class _HireBarState extends State<_HireBar> {
   bool _loading = false;
 
-  String _initials(String name) {
-    final parts = name.trim().split(' ');
-    if (parts.length >= 2) return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
-    return name.isNotEmpty ? name[0].toUpperCase() : '?';
-  }
 
   Future<void> _hire() async {
     setState(() => _loading = true);
@@ -383,13 +366,7 @@ class _HireBarState extends State<_HireBar> {
             children: [
               Row(
                 children: [
-                  CircleAvatar(
-                    radius: 22.r,
-                    backgroundColor: AppColors.teal.withValues(alpha: 0.15),
-                    child: Text(_initials(coach.name),
-                        style: AppTextStyles.font14WhiteRegular
-                            .copyWith(color: AppColors.teal)),
-                  ),
+                  AppAvatar(name: coach.name, url: coach.avatarUrl, radius: 22),
                   hGap(12),
                   Expanded(
                     child: Column(

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:gym_app/core/helpers/app_decoration.dart';
+import 'package:gym_app/core/widgets/app_avatar.dart';
 import 'package:gym_app/core/helpers/spacing.dart';
 import 'package:gym_app/core/theme/app_colors.dart';
 import 'package:gym_app/core/theme/app_text_styles.dart';
@@ -123,15 +124,7 @@ class _CoachCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Avatar
-                CircleAvatar(
-                  radius: 28.r,
-                  backgroundColor: AppColors.teal.withValues(alpha: 0.15),
-                  child: Text(
-                    _initials(coach.name),
-                    style: AppTextStyles.font16WhiteBold.copyWith(
-                        color: AppColors.teal, fontSize: 18.sp),
-                  ),
-                ),
+                AppAvatar(name: coach.name, url: coach.avatarUrl, radius: 28),
                 hGap(12),
                 // Name + title
                 Expanded(
@@ -358,14 +351,7 @@ class _CoachCard extends StatelessWidget {
                   ),
                   child: Row(
                     children: [
-                      CircleAvatar(
-                        radius: 20.r,
-                        backgroundColor:
-                            AppColors.teal.withValues(alpha: 0.15),
-                        child: Text(_initials(coach.name),
-                            style: AppTextStyles.font14WhiteRegular
-                                .copyWith(color: AppColors.teal)),
-                      ),
+                      AppAvatar(name: coach.name, url: coach.avatarUrl, radius: 20),
                       hGap(10),
                       Expanded(
                         child: Column(
@@ -551,11 +537,6 @@ class _CoachCard extends StatelessWidget {
     }
   }
 
-  String _initials(String name) {
-    final parts = name.trim().split(' ');
-    if (parts.length >= 2) return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
-    return name.isNotEmpty ? name[0].toUpperCase() : '?';
-  }
 }
 
 // ── Helper Widgets ────────────────────────────────────────────────────────────

@@ -2,14 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gym_app/core/enums/member_type.dart';
+import 'package:gym_app/core/widgets/app_avatar.dart';
 import 'package:gym_app/core/helpers/spacing.dart';
+
 import 'package:gym_app/core/theme/app_colors.dart';
 import 'package:gym_app/core/theme/app_text_styles.dart';
 import 'package:gym_app/core/widgets/custom_tab_bar.dart';
 import 'package:gym_app/features/coach/home/ui/widgets/member_profile_screen.dart';
 import 'package:gym_app/features/member/data/models/member_model.dart';
 
-import '../../../../core/helpers/helpers.dart';
 import '../../home/manager/coach_cubit.dart';
 
 class MembersTab extends StatefulWidget {
@@ -136,7 +137,6 @@ class _MemberCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final initials = Helpers.getInitials(member.name ?? '');
     final goal     = member.type?.label(context) ?? 'Member';
     final status   = member.status;
 
@@ -163,13 +163,7 @@ class _MemberCard extends StatelessWidget {
         ),
         child: Row(
           children: [
-            CircleAvatar(
-              radius: 22.r,
-              backgroundColor: AppColors.teal.withValues(alpha: 0.15),
-              child: Text(initials,
-                  style: AppTextStyles.font14WhiteRegular
-                      .copyWith(color: AppColors.teal, fontWeight: FontWeight.w700)),
-            ),
+            AppAvatar(name: member.name ?? '', url: member.avatarUrl, radius: 22),
             hGap(12),
             Expanded(
               child: Column(

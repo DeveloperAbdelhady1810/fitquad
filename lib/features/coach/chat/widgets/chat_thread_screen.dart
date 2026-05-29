@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gym_app/core/helpers/spacing.dart';
 import 'package:gym_app/core/services/api_client.dart';
+import 'package:gym_app/core/widgets/app_avatar.dart';
 import 'package:gym_app/core/theme/app_colors.dart';
 import 'package:gym_app/core/theme/app_text_styles.dart';
 import 'package:gym_app/features/coach/chat/widgets/send_plan_sheet.dart';
@@ -66,12 +67,14 @@ class CoachChatThreadScreen extends StatefulWidget {
   final int memberId;
   final String memberName;
   final int? memberUserId;
+  final String? memberAvatarUrl;
 
   const CoachChatThreadScreen({
     super.key,
     required this.memberId,
     required this.memberName,
     this.memberUserId,
+    this.memberAvatarUrl,
   });
 
   static const routeName = '/coach-chat-thread';
@@ -263,11 +266,6 @@ class _CoachChatThreadScreenState extends State<CoachChatThreadScreen> {
     });
   }
 
-  String _initials(String name) {
-    final parts = name.trim().split(' ');
-    if (parts.length >= 2) return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
-    return name.isNotEmpty ? name[0].toUpperCase() : '?';
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -280,12 +278,12 @@ class _CoachChatThreadScreenState extends State<CoachChatThreadScreen> {
         titleSpacing: 0,
         title: Row(
           children: [
-            CircleAvatar(
-              radius: 18.r,
-              backgroundColor: AppColors.blue.withValues(alpha: 0.2),
-              child: Text(_initials(widget.memberName),
-                  style: AppTextStyles.font14WhiteRegular
-                      .copyWith(color: AppColors.blue, fontSize: 12.sp)),
+            AppAvatar(
+              name:   widget.memberName,
+              url:    widget.memberAvatarUrl,
+              radius: 18,
+              bgColor:   AppColors.blue.withValues(alpha: 0.2),
+              textColor: AppColors.blue,
             ),
             hGap(10),
             Column(
@@ -336,6 +334,8 @@ class _CoachChatThreadScreenState extends State<CoachChatThreadScreen> {
                           onDelete: _deleteMessage,
                           onMakePlan: _showSendPlan,
                           onQuickReply: _startReply,
+                          memberName:      widget.memberName,
+                          memberAvatarUrl: widget.memberAvatarUrl,
                         ),
                       ),
           ),
@@ -362,12 +362,16 @@ class _CoachMsgRow extends StatelessWidget {
   final void Function(_Msg) onDelete;
   final VoidCallback onMakePlan;
   final void Function(String) onQuickReply;
+  final String memberName;
+  final String? memberAvatarUrl;
 
   const _CoachMsgRow({
     required this.msg,
     required this.onDelete,
     required this.onMakePlan,
     required this.onQuickReply,
+    required this.memberName,
+    this.memberAvatarUrl,
   });
 
   void _showOptions(BuildContext context) {
@@ -417,7 +421,7 @@ class _CoachMsgRow extends StatelessWidget {
           _MsgType.analyticsAttachment => _AnalyticsCard(msg: msg, onMakePlan: onMakePlan, onQuickReply: onQuickReply),
           _MsgType.workoutPlan         => _PlanSentCard(msg: msg),
           _MsgType.nutritionPlan       => _PlanSentCard(msg: msg),
-          _                            => _TextBubble(msg: msg),
+          _                            => _TextBubble(msg: msg, memberName: memberName, memberAvatarUrl: memberAvatarUrl),
         },
       ),
     );
@@ -460,7 +464,9 @@ class _DeletedBubble extends StatelessWidget {
 
 class _TextBubble extends StatelessWidget {
   final _Msg msg;
-  const _TextBubble({required this.msg});
+  final String memberName;
+  final String? memberAvatarUrl;
+  const _TextBubble({required this.msg, required this.memberName, this.memberAvatarUrl});
 
   @override
   Widget build(BuildContext context) {
@@ -471,10 +477,12 @@ class _TextBubble extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
         if (!msg.isCoach) ...[
-          CircleAvatar(
-            radius: 14.r,
-            backgroundColor: AppColors.blue.withValues(alpha: 0.2),
-            child: Icon(Icons.person, size: 14.r, color: AppColors.blue),
+          AppAvatar(
+            name:      memberName,
+            url:       memberAvatarUrl,
+            radius:    14,
+            bgColor:   AppColors.blue.withValues(alpha: 0.2),
+            textColor: AppColors.blue,
           ),
           hGap(8),
         ],

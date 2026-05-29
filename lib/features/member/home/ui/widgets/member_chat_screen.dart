@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gym_app/core/helpers/spacing.dart';
 import 'package:gym_app/core/services/api_client.dart';
+import 'package:gym_app/core/widgets/app_avatar.dart';
 import 'package:gym_app/core/theme/app_colors.dart';
 import 'package:gym_app/core/theme/app_text_styles.dart';
 import 'package:gym_app/features/member/home/manager/member_cubit.dart';
@@ -72,8 +73,13 @@ class _ChatMsg {
 
 class MemberChatScreen extends StatefulWidget {
   final String coachName;
+  final String? coachAvatarUrl;
 
-  const MemberChatScreen({super.key, required this.coachName});
+  const MemberChatScreen({
+    super.key,
+    required this.coachName,
+    this.coachAvatarUrl,
+  });
 
   static const routeName = '/member-chat';
 
@@ -361,11 +367,10 @@ class _MemberChatScreenState extends State<MemberChatScreen> {
         titleSpacing: 0,
         title: Row(
           children: [
-            CircleAvatar(
-              radius: 18.r,
-              backgroundColor: AppColors.teal.withValues(alpha: 0.2),
-              child: Icon(Icons.sports_gymnastics,
-                  size: 16.r, color: AppColors.teal),
+            AppAvatar(
+              name:   widget.coachName,
+              url:    widget.coachAvatarUrl,
+              radius: 18,
             ),
             hGap(10),
             Column(
@@ -437,6 +442,8 @@ class _MemberChatScreenState extends State<MemberChatScreen> {
                           onApply: _applyPlan,
                           onDelete: _deleteMessage,
                           onQuickReply: _sendQuickReply,
+                          coachName: widget.coachName,
+                          coachAvatarUrl: widget.coachAvatarUrl,
                         ),
                       ),
           ),
@@ -464,12 +471,16 @@ class _MessageRow extends StatelessWidget {
   final void Function(_ChatMsg) onApply;
   final void Function(_ChatMsg) onDelete;
   final void Function(String) onQuickReply;
+  final String coachName;
+  final String? coachAvatarUrl;
 
   const _MessageRow({
     required this.msg,
     required this.onApply,
     required this.onDelete,
     required this.onQuickReply,
+    required this.coachName,
+    this.coachAvatarUrl,
   });
 
   void _showOptions(BuildContext context) {
@@ -524,7 +535,7 @@ class _MessageRow extends StatelessWidget {
           ChatMsgType.analyticsAttachment => _AnalyticsBubble(msg: msg, onQuickReply: onQuickReply),
           ChatMsgType.workoutPlan         => _PlanBubble(msg: msg, onApply: onApply, onQuickReply: onQuickReply),
           ChatMsgType.nutritionPlan       => _PlanBubble(msg: msg, onApply: onApply, onQuickReply: onQuickReply),
-          _                               => _TextBubble(msg: msg),
+          _                               => _TextBubble(msg: msg, coachName: coachName, coachAvatarUrl: coachAvatarUrl),
         },
       ),
     );
@@ -535,7 +546,9 @@ class _MessageRow extends StatelessWidget {
 
 class _TextBubble extends StatelessWidget {
   final _ChatMsg msg;
-  const _TextBubble({required this.msg});
+  final String coachName;
+  final String? coachAvatarUrl;
+  const _TextBubble({required this.msg, required this.coachName, this.coachAvatarUrl});
 
   // Optimistic messages use DateTime.millisecondsSinceEpoch as ID (~1.7 trillion)
   // Real server IDs are small sequential integers, never this large.
@@ -550,11 +563,10 @@ class _TextBubble extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
         if (!msg.isMe) ...[
-          CircleAvatar(
-            radius: 14.r,
-            backgroundColor: AppColors.teal.withValues(alpha: 0.2),
-            child: Icon(Icons.sports_gymnastics,
-                size: 14.r, color: AppColors.teal),
+          AppAvatar(
+            name:   coachName,
+            url:    coachAvatarUrl,
+            radius: 14,
           ),
           hGap(8),
         ],

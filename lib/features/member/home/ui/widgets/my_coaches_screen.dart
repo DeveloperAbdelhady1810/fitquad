@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:gym_app/core/helpers/spacing.dart';
 import 'package:gym_app/core/theme/app_colors.dart';
 import 'package:gym_app/core/theme/app_text_styles.dart';
+import 'package:gym_app/core/widgets/app_avatar.dart';
 import 'package:gym_app/features/member/data/repositories/member_repository.dart';
 import 'package:gym_app/features/member/home/ui/widgets/member_chat_screen.dart';
 
@@ -222,7 +223,6 @@ class _CoachCard extends StatelessWidget {
     final planType = data['plan_type'] as String? ?? '';
     final status = data['status'] as String? ?? '';
 
-    final initials = _initials(name);
     final typeLabel = _typeLabel(coachType);
     final typeColor = _typeColor(coachType);
 
@@ -240,12 +240,10 @@ class _CoachCard extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                CircleAvatar(
-                  radius: 26.r,
-                  backgroundColor: AppColors.teal.withValues(alpha: 0.15),
-                  child: Text(initials,
-                      style: AppTextStyles.font16WhiteBold
-                          .copyWith(color: AppColors.teal, fontSize: 17.sp)),
+                AppAvatar(
+                  name:   name,
+                  url:    data['avatar_url'] as String?,
+                  radius: 26,
                 ),
                 hGap(12),
                 Expanded(
@@ -306,7 +304,10 @@ class _CoachCard extends StatelessWidget {
                     onPressed: () => Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => MemberChatScreen(coachName: name),
+                        builder: (_) => MemberChatScreen(
+                          coachName:      name,
+                          coachAvatarUrl: data['avatar_url'] as String?,
+                        ),
                       ),
                     ),
                     icon: Icon(Icons.chat_bubble_outline, size: 16.r),
@@ -328,12 +329,6 @@ class _CoachCard extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  String _initials(String name) {
-    final parts = name.trim().split(' ');
-    if (parts.length >= 2) return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
-    return name.isNotEmpty ? name[0].toUpperCase() : '?';
   }
 
   String _typeLabel(String type) => switch (type) {
