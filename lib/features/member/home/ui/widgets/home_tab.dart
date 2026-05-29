@@ -267,13 +267,15 @@ class _HomeTabState extends State<HomeTab> {
     Map<String, dynamic>? todayDay;
     try {
       final days = plan['days'] as List?;
-      if (days != null) {
-        // Try by order field first, fall back to index
-        todayDay = days.cast<Map<String, dynamic>>().firstWhere(
-              (d) => (d['order'] as num?)?.toInt() == todayOrder,
-              orElse: () => days[(todayOrder - 1).clamp(0, days.length - 1)]
-                  as Map<String, dynamic>,
-            );
+      if (days != null && days.isNotEmpty) {
+        final castDays = days.cast<Map<String, dynamic>>();
+        // 1. Try exact match by order field
+        todayDay = castDays.cast<Map<String, dynamic>?>().firstWhere(
+          (d) => (d!['order'] as num?)?.toInt() == todayOrder,
+          orElse: () => null,
+        );
+        // 2. Cycle through the plan with modulo so a 2-day plan loops every week
+        todayDay ??= castDays[(todayOrder - 1) % castDays.length];
       }
     } catch (_) {}
 
