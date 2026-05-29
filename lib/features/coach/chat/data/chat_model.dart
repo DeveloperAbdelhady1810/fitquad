@@ -16,13 +16,14 @@ class CoachChatMessage {
   });
 
   factory CoachChatMessage.fromJson(Map<String, dynamic> json) {
-    final sender = json['sender'] as Map<String, dynamic>? ?? {};
+    final contact = json['contact'] as Map<String, dynamic>? ?? {};
+    final lastMsg = json['last_message'] as Map<String, dynamic>? ?? {};
     return CoachChatMessage(
-      senderId: json['sender_id'] as int?,
-      name: sender['name'] as String? ?? 'Member',
-      message: json['body'] as String? ?? '',
+      senderId: json['member_id'] as int?,
+      name: contact['name'] as String? ?? 'Member',
+      message: lastMsg['body'] as String? ?? '',
       type: MessageType.member,
-      time: _formatTime(json['sent_at'] as String?),
+      time: _formatTime(lastMsg['sent_at'] as String?),
     );
   }
 

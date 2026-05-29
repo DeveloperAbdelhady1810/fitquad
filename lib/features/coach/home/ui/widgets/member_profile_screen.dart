@@ -1090,8 +1090,11 @@ class _MessagesTabState extends State<_MessagesTab> {
                       padding: EdgeInsets.symmetric(
                           horizontal: 12.w, vertical: 8.h),
                       itemCount: _messages.length,
-                      itemBuilder: (_, i) =>
-                          _EmbeddedMsgBubble(msg: _messages[i]),
+                      itemBuilder: (_, i) => _EmbeddedMsgBubble(
+                        msg: _messages[i],
+                        onMakePlan: _showSendPlan,
+                        onSend: _send,
+                      ),
                     ),
         ),
 
@@ -1149,19 +1152,38 @@ class _MessagesTabState extends State<_MessagesTab> {
   }
 }
 
-class _EmbeddedMsgBubble extends StatelessWidget {
+class _EmbeddedMsgBubble extends StatefulWidget {
   final Map<String, dynamic> msg;
-  const _EmbeddedMsgBubble({required this.msg});
+  final VoidCallback onMakePlan;
+  final void Function(String) onSend;
+  const _EmbeddedMsgBubble({
+    required this.msg,
+    required this.onMakePlan,
+    required this.onSend,
+  });
+
+  @override
+  State<_EmbeddedMsgBubble> createState() => _EmbeddedMsgBubbleState();
+}
+
+class _EmbeddedMsgBubbleState extends State<_EmbeddedMsgBubble> {
+  bool _expanded = true;
+
+  String _fmtTime(String? iso) {
+    final dt = DateTime.tryParse(iso ?? '') ?? DateTime.now();
+    return '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+  }
 
   @override
   Widget build(BuildContext context) {
-    final isMe   = msg['sender_role'] == 'coach' || msg['is_me'] == true;
-    final body   = msg['body'] as String? ?? '';
-    final type   = msg['type'] as String? ?? 'text';
-    final time   = DateTime.tryParse(msg['sent_at'] as String? ?? '') ?? DateTime.now();
-    final timeStr = '${time.hour.toString().padLeft(2,'0')}:${time.minute.toString().padLeft(2,'0')}';
+    final msg     = widget.msg;
+    final isMe    = msg['sender_role'] == 'coach' || msg['is_me'] == true;
+    final body    = msg['body'] as String? ?? '';
+    final type    = msg['type'] as String? ?? 'text';
+    final payload = (msg['payload'] as Map<String, dynamic>?) ?? {};
+    final timeStr = _fmtTime(msg['sent_at'] as String?);
 
-    // Deleted bubble
+    // ── Deleted ──────────────────────────────────────────────────────────────
     if (type == 'deleted') {
       return Padding(
         padding: EdgeInsets.only(bottom: 8.h),
@@ -1189,31 +1211,123 @@ class _EmbeddedMsgBubble extends StatelessWidget {
       );
     }
 
-    // Premium attachment bubble
+    // ── InBody / Analytics rich card ─────────────────────────────────────────
     if (type == 'inbody_attachment' || type == 'analytics_attachment') {
-      final color = type == 'inbody_attachment' ? AppColors.teal : AppColors.purple;
-      final icon  = type == 'inbody_attachment'
-          ? Icons.monitor_weight_outlined
-          : Icons.watch_outlined;
+      final isInBody = type == 'inbody_attachment';
+      final color    = isInBody ? AppColors.teal : AppColors.purple;
+      final icon     = isInBody ? Icons.monitor_weight_outlined : Icons.watch_outlined;
+      final label    = isMe
+          ? (isInBody ? 'In-Body Results Shared' : 'Smart Watch Analytics Shared')
+          : (isInBody ? 'Member sent In-Body Results' : 'Member sent Smart Watch Analytics');
+
       return Padding(
-        padding: EdgeInsets.only(bottom: 8.h),
+        padding: EdgeInsets.only(bottom: 10.h),
         child: Align(
           alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
           child: Container(
-            padding: EdgeInsets.all(10.r),
-            constraints: BoxConstraints(maxWidth: 0.7.sw),
+            constraints: BoxConstraints(maxWidth: 0.85.sw),
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(12.r),
-              border: Border.all(color: color.withValues(alpha: 0.4)),
+              gradient: LinearGradient(colors: [
+                color.withValues(alpha: 0.22),
+                color.withValues(alpha: 0.08),
+              ]),
+              borderRadius: BorderRadius.circular(16.r),
+              border: Border.all(color: color.withValues(alpha: 0.45)),
             ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(icon, color: color, size: 16.r),
-                hGap(6),
-                Flexible(child: Text(body,
-                    style: AppTextStyles.font14GreyRegular.copyWith(color: color))),
+                // Header (tappable to toggle)
+                GestureDetector(
+                  onTap: () => setState(() => _expanded = !_expanded),
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(12.w, 12.h, 8.w, 8.h),
+                    child: Row(
+                      children: [
+                        Icon(icon, color: color, size: 15.r),
+                        hGap(6),
+                        Expanded(
+                          child: Text(label,
+                              style: AppTextStyles.font14WhiteRegular.copyWith(
+                                  color: color,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 12.sp)),
+                        ),
+                        Text(timeStr,
+                            style: AppTextStyles.font14GreyRegular
+                                .copyWith(fontSize: 10.sp)),
+                        hGap(4),
+                        Icon(
+                          _expanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                          color: color, size: 18.r,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                if (_expanded) ...[
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(14.w, 0, 14.w, 12.h),
+                    child: Wrap(
+                      spacing: 8.w,
+                      runSpacing: 8.h,
+                      children: [
+                        if (isInBody) ...[
+                          if (payload['weight'] != null)
+                            _IbStat('Weight', '${payload['weight']} kg', AppColors.teal),
+                          if (payload['body_fat_pct'] != null)
+                            _IbStat('Body Fat', '${payload['body_fat_pct']}%', AppColors.red),
+                          if (payload['muscle_mass'] != null)
+                            _IbStat('Muscle', '${payload['muscle_mass']} kg', AppColors.emerald),
+                          if (payload['bmi'] != null)
+                            _IbStat('BMI', '${payload['bmi']}', AppColors.blue),
+                          if (payload['visceral_fat'] != null)
+                            _IbStat('Visceral', '${payload['visceral_fat']}', AppColors.purple),
+                          if (payload['inbody_score'] != null)
+                            _IbStat('Score', '${payload['inbody_score']}', AppColors.teal),
+                          if (payload['bmr'] != null)
+                            _IbStat('BMR', '${payload['bmr']} kcal', AppColors.blue),
+                        ] else ...[
+                          if (payload['sleep_hours'] != null)
+                            _IbStat('Sleep', '${payload['sleep_hours']} hrs', AppColors.blue),
+                          if (payload['water_liters'] != null)
+                            _IbStat('Water', '${payload['water_liters']} L', AppColors.teal),
+                          if (payload['steps'] != null)
+                            _IbStat('Steps', '${payload['steps']}', AppColors.purple),
+                          if (payload['active_minutes'] != null)
+                            _IbStat('Active', '${payload['active_minutes']} min', AppColors.blue),
+                          if (payload['calories_burned'] != null)
+                            _IbStat('Calories', '${payload['calories_burned']} kcal', AppColors.red),
+                          if (payload['heart_rate_avg'] != null)
+                            _IbStat('Avg HR', '${payload['heart_rate_avg']} bpm', AppColors.red),
+                        ],
+                      ],
+                    ),
+                  ),
+                  // Action buttons (only when viewing member's sent data as coach)
+                  if (!isMe) ...[
+                    Padding(
+                      padding: EdgeInsets.fromLTRB(14.w, 0, 14.w, 8.h),
+                      child: _ActionBtn(
+                        label: '📋 Make a plan from this data',
+                        color: color,
+                        onTap: widget.onMakePlan,
+                      ),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.fromLTRB(14.w, 0, 14.w, 12.h),
+                      child: _ActionBtn(
+                        label: '💬 Reply to member',
+                        color: AppColors.blue,
+                        onTap: () => widget.onSend(
+                          isInBody
+                              ? 'I reviewed your In-Body results 📊 '
+                              : 'I checked your Smart Watch Analytics ⌚ ',
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
               ],
             ),
           ),
@@ -1221,53 +1335,80 @@ class _EmbeddedMsgBubble extends StatelessWidget {
       );
     }
 
-    // Plan bubble
+    // ── Plan card ─────────────────────────────────────────────────────────────
     if (type == 'workout_plan' || type == 'nutrition_plan') {
-      final color = type == 'workout_plan' ? AppColors.blue : AppColors.emerald;
+      final isWorkout = type == 'workout_plan';
+      final color     = isWorkout ? AppColors.blue : AppColors.emerald;
+      final days      = (payload['days'] as List?)?.cast<Map>() ?? [];
+      final meals     = (payload['meals'] as List?)?.cast<Map>() ?? [];
+      final title     = payload['title'] as String? ?? body;
       return Padding(
-        padding: EdgeInsets.only(bottom: 8.h),
+        padding: EdgeInsets.only(bottom: 10.h),
         child: Align(
           alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
           child: Container(
-            padding: EdgeInsets.all(10.r),
-            constraints: BoxConstraints(maxWidth: 0.72.sw),
+            constraints: BoxConstraints(maxWidth: 0.82.sw),
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(12.r),
-              border: Border.all(color: color.withValues(alpha: 0.4)),
+              gradient: LinearGradient(colors: [
+                color.withValues(alpha: 0.20),
+                color.withValues(alpha: 0.06),
+              ]),
+              borderRadius: BorderRadius.circular(16.r),
+              border: Border.all(color: color.withValues(alpha: 0.45)),
             ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  type == 'workout_plan'
-                      ? Icons.fitness_center_outlined
-                      : Icons.restaurant_outlined,
-                  color: color,
-                  size: 16.r,
-                ),
-                hGap(6),
-                Flexible(
-                  child: Text(body,
-                      style: AppTextStyles.font14GreyRegular.copyWith(
-                          color: color, fontWeight: FontWeight.w600)),
-                ),
-                hGap(4),
-                Icon(msg['is_applied'] == true
-                    ? Icons.check_circle
-                    : Icons.pending_outlined,
-                    color: msg['is_applied'] == true
-                        ? AppColors.emerald
-                        : AppColors.grey,
-                    size: 14.r),
-              ],
+            child: Padding(
+              padding: EdgeInsets.all(14.r),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(isWorkout ? Icons.fitness_center_outlined : Icons.restaurant_outlined,
+                          color: color, size: 16.r),
+                      hGap(8),
+                      Expanded(
+                        child: Text(title,
+                            style: AppTextStyles.font14WhiteRegular
+                                .copyWith(fontWeight: FontWeight.w600)),
+                      ),
+                      Text(timeStr,
+                          style: AppTextStyles.font14GreyRegular.copyWith(fontSize: 10.sp)),
+                    ],
+                  ),
+                  vGap(8),
+                  if (isWorkout)
+                    ...days.take(3).map((d) => _PlanPreviewLine(
+                        icon: Icons.calendar_today_outlined,
+                        text: d['day_name'] as String? ?? '',
+                        color: color))
+                  else
+                    ...meals.take(3).map((m) => _PlanPreviewLine(
+                        icon: Icons.restaurant_menu_outlined,
+                        text: m['name'] as String? ?? '',
+                        color: color)),
+                  if (msg['is_applied'] == true) ...[
+                    vGap(6),
+                    Row(
+                      children: [
+                        Icon(Icons.check_circle, color: AppColors.emerald, size: 13.r),
+                        hGap(4),
+                        Text('Member applied this plan',
+                            style: AppTextStyles.font14GreyRegular.copyWith(
+                                color: AppColors.emerald,
+                                fontSize: 10.sp,
+                                fontWeight: FontWeight.w600)),
+                      ],
+                    ),
+                  ],
+                ],
+              ),
             ),
           ),
         ),
       );
     }
 
-    // Normal text bubble
+    // ── Normal text bubble ────────────────────────────────────────────────────
     return Padding(
       padding: EdgeInsets.only(bottom: 8.h),
       child: Row(
@@ -1319,6 +1460,60 @@ class _EmbeddedMsgBubble extends StatelessWidget {
             ),
           ),
           if (isMe) hGap(6),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Embedded message helper widgets ──────────────────────────────────────────
+
+class _ActionBtn extends StatelessWidget {
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+  const _ActionBtn({required this.label, required this.color, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: onTap,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: color,
+          foregroundColor: Colors.white,
+          padding: EdgeInsets.symmetric(vertical: 9.h),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.r)),
+          textStyle: TextStyle(fontSize: 12.sp),
+        ),
+        child: Text(label),
+      ),
+    );
+  }
+}
+
+class _PlanPreviewLine extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  final Color color;
+  const _PlanPreviewLine({required this.icon, required this.text, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 3.h),
+      child: Row(
+        children: [
+          Icon(icon, color: color, size: 11.r),
+          hGap(5),
+          Expanded(
+            child: Text(text,
+                style: AppTextStyles.font14GreyRegular
+                    .copyWith(fontSize: 11.sp, color: Colors.white70),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis),
+          ),
         ],
       ),
     );
