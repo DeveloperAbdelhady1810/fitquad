@@ -43,3 +43,12 @@ android {
 flutter {
     source = "../.."
 }
+
+dependencies {
+    // Firebase BoM — manages all Firebase library versions together
+    implementation(platform("com.google.firebase:firebase-bom:34.0.0"))
+    // FCM (push notifications)
+    implementation("com.google.firebase:firebase-messaging")
+    // Analytics (required by Firebase)
+    implementation("com.google.firebase:firebase-analytics")
+}
