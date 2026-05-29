@@ -413,9 +413,31 @@ Opened from the chat bubble icon in the home AppBar. Loads `GET /member/my-coach
   - "Open AI Coach" → pops back to home (AI tab is always available)
   - "Find a Coach" → pushes `/choose_coach`
 
-### Member Chat Screen
+### Member Chat Screen (rich chat system)
 File: `lib/features/member/home/ui/widgets/member_chat_screen.dart`
-Chat thread with coach. Loads `GET /member/messages`. Speech-bubble UI (teal for member, dark for coach). Send via `POST /member/messages`. Reached via `MyCoachesScreen` → "Message" button (not directly from home AppBar).
+Chat thread with coach. Reached via `MyCoachesScreen` → "Message" button.
+
+**Message types** (`ChatMsgType` enum: text, inbodyAttachment, analyticsAttachment, workoutPlan, nutritionPlan, deleted). Each renders a distinct bubble:
+- **text** — normal speech bubble (teal = me, dark = coach)
+- **inbody_attachment / analytics_attachment** — premium gradient card (teal / purple) with emoji-badge header and emoji-labelled stat chips
+- **workout_plan / nutrition_plan** — premium card (blue / green) with day/meal preview + **Apply** button (calls `POST /member/messages/apply-plan/{id}` → saves plan app-wide, sets is_applied)
+- **deleted** — greyed "Message deleted" pill
+
+**Fast reply bar** (above input): "Attach In-Body" (teal, `POST /member/messages/send-inbody`) and "Send Analytics" (purple, `POST /member/messages/send-analytics`, passes sleep/water from MemberCubit). Errors show friendly SnackBars, NOT raw backend strings (see `_showFriendlyError`).
+
+**Fast actions** (chips/buttons inside own premium bubbles): e.g. "Make a plan for me", "Analyse my results", "Request modification" — tapping sends that text as a quick reply.
+
+**Delete**: long-press own message → "Delete for me" → `DELETE /member/messages/{id}` (soft delete via deleted_by_sender flag, never removed from DB).
+
+**Safety banner**: one-time dismissible banner advising to keep chat in-app (SharedPreferences key `chat_safety_alert_shown`).
+
+**Auto-refresh**: polls `GET /member/messages` every 4s, only rebuilds on change, preserves scroll position (see `_poll`).
+
+**Plans section**: AppBar 📋 button opens `_PlansSheet` listing all received plans with badge count for unapplied ones.
+
+### Coach Chat Thread Screen (mirror of member rich chat)
+File: `lib/features/coach/chat/widgets/chat_thread_screen.dart`
+Same message types/bubbles from the coach's perspective. Coach-side fast action on received InBody/Analytics: **"Make a plan from this data"** button → opens `SendPlanSheet`. Same long-press delete, safety banner (key `coach_chat_safety_alert_shown`), and 4s auto-refresh. Also embedded (without Scaffold) as `_MessagesTab` inside `MemberProfileScreen`.
 
 ### Gym Selection Screen (`/gym_selection`)
 File: `lib/features/member/gym/ui/gym_selection_screen.dart`
@@ -568,7 +590,12 @@ All protected routes require: `Authorization: Bearer <token>`
 | POST | `/member/notifications/read` | Mark read |
 | POST | `/member/ai/chat` | AI chat |
 | GET | `/member/ai/history` | Chat history |
-| POST/GET | `/member/messages` | Coach messages |
+| POST/GET | `/member/messages` | Coach messages (POST accepts optional `coach_id` to target a specific subscribed coach) |
+| POST | `/member/messages/send-inbody` | Attach latest InBody as a premium message (optional `coach_id`) |
+| POST | `/member/messages/send-analytics` | Attach smart-watch analytics as a premium message (optional `coach_id`; always succeeds, defaults sleep/water to 0) |
+| POST | `/member/messages/apply-plan/{message}` | Apply a coach-sent workout/nutrition plan app-wide |
+| GET | `/member/messages/unread-plans-count` | Count of unapplied plan messages |
+| DELETE | `/member/messages/{message}` | Soft-delete (deleted_by_sender/receiver, kept in DB) |
 | GET | `/member/branches` | Gym branches |
 | POST | `/member/branch` | Assign to branch |
 | GET | `/member/branches/{id}/crowding` | Crowding % |
@@ -586,18 +613,20 @@ All protected routes require: `Authorization: Bearer <token>`
 | Method | Path | Description |
 |--------|------|-------------|
 | GET | `/coach/dashboard` | Stats + client alerts |
-| GET | `/coach/members` | Member list |
-| GET | `/coach/members/{id}` | Member detail |
-| GET/POST | `/coach/sessions` | Sessions CRUD |
+| GET | `/coach/members` | Member list (ONLY members with accepted/completed plan requests — i.e. subscribed/paid) |
+| GET | `/coach/members/{id}` | Member detail (plans + InBody + sessions + gamification) |
+| GET/POST | `/coach/sessions` | Sessions CRUD (index filtered to subscribed members only) |
 | PUT/DELETE | `/coach/sessions/{id}` | Update/delete session |
 | GET | `/coach/plan-requests` | Plan requests |
 | PUT | `/coach/plan-requests/{id}` | Update request status |
 | POST | `/coach/workout-plans` | Create workout plan |
 | POST | `/coach/nutrition-plans` | Create nutrition plan |
 | GET | `/coach/messages` | Conversation list |
-| GET | `/coach/messages/{memberId}` | Thread with member |
-| POST | `/coach/messages` | Send message |
-| POST | `/coach/broadcast` | Broadcast to all |
+| GET | `/coach/messages/{memberId}` | Thread with member (returns {contact, messages}) |
+| POST | `/coach/messages` | Send message (body + receiver_id) |
+| POST | `/coach/messages/send-plan` | Send workout/nutrition plan as premium message (type, title, payload) |
+| DELETE | `/coach/messages/{message}` | Soft-delete message |
+| POST | `/coach/broadcast` | Broadcast to all subscribed members |
 
 ### Admin Routes (role:admin)
 All under `/admin/*` — members, coaches, subscriptions, products, orders, analytics, check-ins, staff, promo-codes, announcements.
@@ -814,21 +843,37 @@ Run `dart analyze lib/` to check for new issues before committing.
 | Payment decline clears cart / shows success popup | URL-based detection unreliable — Paymob stays on its own domain when no redirect_url is set | **Fixed:** backend payload now includes `redirect_url = 'https://app.fitquad.local/payment-result'`; Flutter intercepts that URL in `onNavigationRequest`, prevents navigation, reads `?success=true/false` |
 | AI says "couldn't connect" | Gemini API key invalid or quota | Check `GeminiService` key |
 | `BlocProvider not found: MarketCubit` | Cubit not in tree | `MarketCubit` must be in `main.dart` `MultiBlocProvider` |
+| Member message sends but never appears | `MemberMessageController::resolveCoachUserId` called `coachPlanRequests()` but the relation is `planRequests()` — threw `BadMethodCallException`, swallowed by Flutter `catch` | **Fixed:** use `$member->planRequests()`. Also `_send()` now surfaces send failures as SnackBars instead of silently swallowing |
+| "Send Analytics" always errors "no data" | Backend rejected payload when count <= 1 | **Fixed:** payload always includes sleep/water (default 0) + date; never rejected |
+| Coach logged in lands on member screen until hot restart | Login made a separate `/auth/me` call to get role after login | **Fixed:** `member_tabbar_view.dart` reads role directly from the login response |
+| Coach sees members/sessions they were never hired for | `MemberController`/`SessionController`/dashboard queried by `sessions()` (includes seeded fakes) | **Fixed:** all now filter by `CoachPlanRequest` status accepted/completed |
 
 ---
 
 ## Backend Migration Notes (local only, never pushed)
+
+**CRITICAL RULE: the backend (`D:\gym_app-master\backend`) is LOCAL ONLY. NEVER commit or push backend files. Only Flutter (`D:\gym_app-master\gym_app-master`) is committed/pushed to git.** Backend changes are applied directly on the local machine (MySQL via XAMPP, port 8080).
 
 The following backend files were created/modified locally and are NOT in git:
 - `database/migrations/2025_05_26_100003_add_gamification_to_members.php` — streak_days, xp_points, level, last_activity_date
 - `database/migrations/2025_05_26_100004_create_progress_photos_table.php`
 - `database/migrations/2025_05_26_100005_add_referral_to_members_table.php` — referral_code, referred_by_member_id
 - `database/migrations/2025_05_26_100006_create_community_posts_table.php` — posts + community_reactions
-- `app/Http/Controllers/Member/ProgressPhotoController.php`
-- `app/Http/Controllers/Member/CommunityController.php`
-- `app/Http/Controllers/Member/LeaderboardController.php`
+- `database/migrations/2026_05_28_141932_add_type_payload_to_messages_table.php` — type enum, payload JSON, is_applied (rich chat)
+- `database/migrations/2026_05_29_113348_add_is_deleted_to_messages_table.php` — deleted_by_sender, deleted_by_receiver (soft delete)
+- `app/Models/Message.php` — type/payload/is_applied/deleted flags in fillable+casts
+- `app/Models/InBodyRecord.php` — `protected $table = 'inbody_records'`
+- `app/Http/Controllers/Member/MemberMessageController.php` — send (optional coach_id), sendInBody, sendAnalytics, applyPlan, unreadPlansCount, deleteMessage, formatMessage (per-viewer is_deleted)
+- `app/Http/Controllers/Coach/MessageController.php` — sendPlan, deleteMessage, formatMessage
+- `app/Http/Controllers/Coach/MemberController.php` — filters by CoachPlanRequest (subscribed only)
+- `app/Http/Controllers/Coach/SessionController.php` — index filters to subscribed members
+- `app/Http/Controllers/Coach/CoachDashboardController.php` — active_members + client_alerts by CoachPlanRequest
+- `app/Http/Controllers/Member/PaymentController.php` — Paymob redirect_url + initiateOrderPayment
+- `app/Http/Controllers/Member/CoachController.php` — myCoaches() endpoint
 - `app/Models/Member.php` — referral_code in fillable + booted() observer
 - `routes/api.php` — all new routes added
+
+**Message types** (messages.type enum): text, inbody_attachment, analytics_attachment, workout_plan, nutrition_plan. Deleted messages keep their row; `formatMessage` blanks body/payload and returns type='deleted' + is_deleted=true for the viewer who deleted it.
 
 Run after pulling backend:
 ```bash
@@ -836,3 +881,8 @@ php artisan migrate
 php artisan db:seed --class=BadgesSeeder
 php artisan db:seed --class=ProductSeeder
 ```
+
+## Test accounts / seeded data state (local DB)
+- Member `developerabdelhady@icloud.com` (member_id=5, user_id=9) is subscribed to coach **Ahmed Hassan** (coach_id=1, user_id=2, `ahmed.coach@fitquad.com` / password `password`) via an accepted CoachPlanRequest, and has a completed 320 EGP payment (coach earnings show 320).
+- Coaches are freelance (branch_id=null) so visible to all members in "Hire a Coach".
+- Messages/sessions are NOT seeded — they only exist when created through the app (do not re-seed fake ones; the user explicitly wants real interactions only).
