@@ -45,6 +45,12 @@
 	<string>FitQuad reads your health data (steps, heart rate, sleep) to show your activity on the dashboard.</string>
 	<key>NSHealthUpdateUsageDescription</key>
 	<string>FitQuad saves workout data to Apple Health so your Apple Watch activity rings stay in sync.</string>
+	<!-- Push Notifications: allow app to receive remote notifications in background -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>fetch</string>
+		<string>remote-notification</string>
+	</array>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>

@@ -1,8 +1,10 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gym_app/core/cubit/health/health_cubit.dart';
+import 'package:gym_app/core/services/push_notification_service.dart';
 import 'package:gym_app/core/services/reminder_service.dart';
 import 'package:gym_app/features/member/home/manager/food_cubit.dart';
 import 'package:gym_app/features/member/home/manager/member_cubit.dart';
@@ -15,7 +17,9 @@ import 'generated/l10n.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
   await ReminderService.init();
+  await PushNotificationService.init();
   runApp(const MyApp());
 }
 
@@ -48,6 +52,7 @@ class MyApp extends StatelessWidget {
               return MaterialApp.router(
                 routerConfig: AppRouter.getRouter(),
                 debugShowCheckedModeBanner: false,
+                scaffoldMessengerKey: GlobalKey<ScaffoldMessengerState>(),
                 theme: ThemeData.light(),
                 locale: isArabic ? const Locale('ar') : const Locale('en'),
                 supportedLocales: S.delegate.supportedLocales,

@@ -1,4 +1,5 @@
 import '../../../core/services/api_client.dart';
+import '../../../core/services/push_notification_service.dart';
 
 class AuthRepository {
   static Future<Map<String, dynamic>> login({
@@ -12,7 +13,9 @@ class AuthRepository {
     );
     final data = response['data'] as Map<String, dynamic>;
     await ApiClient.saveToken(data['token'] as String);
-    await ApiClient.saveRole(data['user']?['role'] as String? ?? 'member');
+    final role = data['user']?['role'] as String? ?? 'member';
+    await ApiClient.saveRole(role);
+    await PushNotificationService.subscribeToTopic(role == 'member' ? 'members' : 'coaches');
     return data;
   }
 
@@ -37,7 +40,9 @@ class AuthRepository {
     );
     final data = response['data'] as Map<String, dynamic>;
     await ApiClient.saveToken(data['token'] as String);
-    await ApiClient.saveRole(data['user']?['role'] as String? ?? role);
+    final savedRole = data['user']?['role'] as String? ?? role;
+    await ApiClient.saveRole(savedRole);
+    await PushNotificationService.subscribeToTopic(savedRole == 'member' ? 'members' : 'coaches');
     return data;
   }
 
@@ -60,6 +65,7 @@ class AuthRepository {
     final data = response['data'] as Map<String, dynamic>;
     await ApiClient.saveToken(data['token'] as String);
     await ApiClient.saveRole(data['user']?['role'] as String? ?? 'member');
+    await PushNotificationService.subscribeToTopic('members');
     return data;
   }
 
@@ -68,6 +74,7 @@ class AuthRepository {
       await ApiClient.post('/auth/logout', {});
     } finally {
       await ApiClient.clearToken();
+      await PushNotificationService.unsubscribeAll();
     }
   }
 
