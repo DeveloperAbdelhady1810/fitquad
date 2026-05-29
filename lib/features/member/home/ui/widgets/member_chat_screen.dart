@@ -614,13 +614,21 @@ class _DeletedBubble extends StatelessWidget {
 
 // ── InBody premium bubble ─────────────────────────────────────────────────────
 
-class _InBodyBubble extends StatelessWidget {
+class _InBodyBubble extends StatefulWidget {
   final _ChatMsg msg;
   final void Function(String) onQuickReply;
   const _InBodyBubble({required this.msg, required this.onQuickReply});
 
   @override
+  State<_InBodyBubble> createState() => _InBodyBubbleState();
+}
+
+class _InBodyBubbleState extends State<_InBodyBubble> {
+  bool _expanded = false;
+
+  @override
   Widget build(BuildContext context) {
+    final msg = widget.msg;
     final p = msg.payload ?? {};
     return Align(
       alignment: msg.isMe ? Alignment.centerRight : Alignment.centerLeft,
@@ -650,36 +658,77 @@ class _InBodyBubble extends StatelessWidget {
               time: _fmt(msg.time),
               badge: '📊',
             ),
-            Padding(
-              padding: EdgeInsets.fromLTRB(14.w, 4.h, 14.w, 8.h),
-              child: Wrap(
-                spacing: 10.w,
-                runSpacing: 8.h,
-                children: [
-                  if (p['weight'] != null)
-                    _Stat('⚖️ Weight', '${p['weight']} kg', AppColors.teal),
-                  if (p['body_fat_pct'] != null)
-                    _Stat('🔥 Body Fat', '${p['body_fat_pct']}%', AppColors.red),
-                  if (p['muscle_mass'] != null)
-                    _Stat('💪 Muscle', '${p['muscle_mass']} kg', AppColors.emerald),
-                  if (p['bmi'] != null)
-                    _Stat('📐 BMI', '${p['bmi']}', AppColors.blue),
-                  if (p['visceral_fat'] != null)
-                    _Stat('🫀 Visceral', '${p['visceral_fat']}', AppColors.purple),
-                  if (p['inbody_score'] != null)
-                    _Stat('🏆 Score', '${p['inbody_score']}', AppColors.teal),
-                ],
+            // When sent by me: compact bar with "View Details" toggle
+            if (msg.isMe && !_expanded)
+              GestureDetector(
+                onTap: () => setState(() => _expanded = true),
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(14.w, 8.h, 14.w, 12.h),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text('View Details',
+                          style: AppTextStyles.font14WhiteRegular.copyWith(
+                              color: AppColors.teal,
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.w600)),
+                      hGap(4),
+                      Icon(Icons.keyboard_arrow_down,
+                          color: AppColors.teal, size: 16.r),
+                    ],
+                  ),
+                ),
               ),
-            ),
-            // Fast action chips (only if this was sent by me — coach sees on their side)
-            if (msg.isMe)
+            // Expanded stats (always for coach-sent; toggled for own messages)
+            if (!msg.isMe || _expanded) ...[
               Padding(
-                padding: EdgeInsets.fromLTRB(14.w, 0, 14.w, 12.h),
-                child: _FastActions([
-                  _FastAction('📋 Make a plan for me', onQuickReply),
-                  _FastAction('🔍 Analyse my results', onQuickReply),
-                ]),
+                padding: EdgeInsets.fromLTRB(14.w, 4.h, 14.w, 8.h),
+                child: Wrap(
+                  spacing: 10.w,
+                  runSpacing: 8.h,
+                  children: [
+                    if (p['weight'] != null)
+                      _Stat('⚖️ Weight', '${p['weight']} kg', AppColors.teal),
+                    if (p['body_fat_pct'] != null)
+                      _Stat('🔥 Body Fat', '${p['body_fat_pct']}%', AppColors.red),
+                    if (p['muscle_mass'] != null)
+                      _Stat('💪 Muscle', '${p['muscle_mass']} kg', AppColors.emerald),
+                    if (p['bmi'] != null)
+                      _Stat('📐 BMI', '${p['bmi']}', AppColors.blue),
+                    if (p['visceral_fat'] != null)
+                      _Stat('🫀 Visceral', '${p['visceral_fat']}', AppColors.purple),
+                    if (p['inbody_score'] != null)
+                      _Stat('🏆 Score', '${p['inbody_score']}', AppColors.teal),
+                  ],
+                ),
               ),
+              if (msg.isMe) ...[
+                GestureDetector(
+                  onTap: () => setState(() => _expanded = false),
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(14.w, 0, 14.w, 4.h),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text('Hide Details',
+                            style: AppTextStyles.font14WhiteRegular.copyWith(
+                                color: AppColors.teal, fontSize: 12.sp)),
+                        hGap(4),
+                        Icon(Icons.keyboard_arrow_up,
+                            color: AppColors.teal, size: 16.r),
+                      ],
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: EdgeInsets.fromLTRB(14.w, 0, 14.w, 12.h),
+                  child: _FastActions([
+                    _FastAction('📋 Make a plan for me', widget.onQuickReply),
+                    _FastAction('🔍 Analyse my results', widget.onQuickReply),
+                  ]),
+                ),
+              ],
+            ],
           ],
         ),
       ),
@@ -689,13 +738,21 @@ class _InBodyBubble extends StatelessWidget {
 
 // ── Analytics premium bubble ──────────────────────────────────────────────────
 
-class _AnalyticsBubble extends StatelessWidget {
+class _AnalyticsBubble extends StatefulWidget {
   final _ChatMsg msg;
   final void Function(String) onQuickReply;
   const _AnalyticsBubble({required this.msg, required this.onQuickReply});
 
   @override
+  State<_AnalyticsBubble> createState() => _AnalyticsBubbleState();
+}
+
+class _AnalyticsBubbleState extends State<_AnalyticsBubble> {
+  bool _expanded = false;
+
+  @override
   Widget build(BuildContext context) {
+    final msg = widget.msg;
     final p = msg.payload ?? {};
     return Align(
       alignment: msg.isMe ? Alignment.centerRight : Alignment.centerLeft,
@@ -725,35 +782,77 @@ class _AnalyticsBubble extends StatelessWidget {
               time: _fmt(msg.time),
               badge: '⌚',
             ),
-            Padding(
-              padding: EdgeInsets.fromLTRB(14.w, 4.h, 14.w, 8.h),
-              child: Wrap(
-                spacing: 10.w,
-                runSpacing: 8.h,
-                children: [
-                  if (p['steps'] != null)
-                    _Stat('👟 Steps', _n(p['steps']), AppColors.purple),
-                  if (p['active_minutes'] != null)
-                    _Stat('⚡ Active', '${p['active_minutes']} min', AppColors.blue),
-                  if (p['calories_burned'] != null)
-                    _Stat('🔥 Calories', '${p['calories_burned']} kcal', AppColors.red),
-                  if (p['heart_rate_avg'] != null)
-                    _Stat('❤️ Avg HR', '${p['heart_rate_avg']} bpm', AppColors.red),
-                  if (p['sleep_hours'] != null)
-                    _Stat('🌙 Sleep', '${p['sleep_hours']} hrs', AppColors.blue),
-                  if (p['water_liters'] != null)
-                    _Stat('💧 Water', '${p['water_liters']} L', AppColors.teal),
-                ],
+            // When sent by me: compact bar with "View Details" toggle
+            if (msg.isMe && !_expanded)
+              GestureDetector(
+                onTap: () => setState(() => _expanded = true),
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(14.w, 8.h, 14.w, 12.h),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text('View Details',
+                          style: AppTextStyles.font14WhiteRegular.copyWith(
+                              color: AppColors.purple,
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.w600)),
+                      hGap(4),
+                      Icon(Icons.keyboard_arrow_down,
+                          color: AppColors.purple, size: 16.r),
+                    ],
+                  ),
+                ),
               ),
-            ),
-            if (msg.isMe)
+            // Expanded stats (always for coach-sent; toggled for own messages)
+            if (!msg.isMe || _expanded) ...[
               Padding(
-                padding: EdgeInsets.fromLTRB(14.w, 0, 14.w, 12.h),
-                child: _FastActions([
-                  _FastAction('💪 Suggest recovery tips', onQuickReply),
-                  _FastAction('🏃 Improve my training', onQuickReply),
-                ]),
+                padding: EdgeInsets.fromLTRB(14.w, 4.h, 14.w, 8.h),
+                child: Wrap(
+                  spacing: 10.w,
+                  runSpacing: 8.h,
+                  children: [
+                    if (p['steps'] != null)
+                      _Stat('👟 Steps', _n(p['steps']), AppColors.purple),
+                    if (p['active_minutes'] != null)
+                      _Stat('⚡ Active', '${p['active_minutes']} min', AppColors.blue),
+                    if (p['calories_burned'] != null)
+                      _Stat('🔥 Calories', '${p['calories_burned']} kcal', AppColors.red),
+                    if (p['heart_rate_avg'] != null)
+                      _Stat('❤️ Avg HR', '${p['heart_rate_avg']} bpm', AppColors.red),
+                    if (p['sleep_hours'] != null)
+                      _Stat('🌙 Sleep', '${p['sleep_hours']} hrs', AppColors.blue),
+                    if (p['water_liters'] != null)
+                      _Stat('💧 Water', '${p['water_liters']} L', AppColors.teal),
+                  ],
+                ),
               ),
+              if (msg.isMe) ...[
+                GestureDetector(
+                  onTap: () => setState(() => _expanded = false),
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(14.w, 0, 14.w, 4.h),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text('Hide Details',
+                            style: AppTextStyles.font14WhiteRegular.copyWith(
+                                color: AppColors.purple, fontSize: 12.sp)),
+                        hGap(4),
+                        Icon(Icons.keyboard_arrow_up,
+                            color: AppColors.purple, size: 16.r),
+                      ],
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: EdgeInsets.fromLTRB(14.w, 0, 14.w, 12.h),
+                  child: _FastActions([
+                    _FastAction('💪 Suggest recovery tips', widget.onQuickReply),
+                    _FastAction('🏃 Improve my training', widget.onQuickReply),
+                  ]),
+                ),
+              ],
+            ],
           ],
         ),
       ),

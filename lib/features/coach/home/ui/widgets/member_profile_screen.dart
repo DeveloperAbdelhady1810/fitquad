@@ -92,7 +92,7 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
           ? const Center(
               child: CircularProgressIndicator(color: AppColors.teal))
           : DefaultTabController(
-              length: 5,
+              length: 6,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -146,6 +146,7 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
                       Tab(text: s.training),
                       Tab(text: s.nutrition),
                       Tab(text: s.inbody),
+                      const Tab(text: 'Analytics'),
                       Tab(text: s.messages),
                     ],
                   ),
@@ -157,6 +158,7 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
                         _TrainingTab(detail: _detail),
                         _NutritionTab(detail: _detail),
                         _InBodyTab(detail: _detail),
+                        _AnalyticsTab(memberId: m.id ?? ''),
                         _MessagesTab(member: m, detail: _detail),
                       ],
                     ),
@@ -775,6 +777,124 @@ class _IbChip extends StatelessWidget {
       child: Text(text,
           style: AppTextStyles.font14GreyRegular
               .copyWith(color: color, fontSize: 10.sp, fontWeight: FontWeight.w600)),
+    );
+  }
+}
+
+// ── Analytics tab ─────────────────────────────────────────────────────────────
+
+class _AnalyticsTab extends StatefulWidget {
+  final String memberId;
+  const _AnalyticsTab({required this.memberId});
+
+  @override
+  State<_AnalyticsTab> createState() => _AnalyticsTabState();
+}
+
+class _AnalyticsTabState extends State<_AnalyticsTab> {
+  List<Map<String, dynamic>> _records = [];
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final id = int.tryParse(widget.memberId) ?? 0;
+      final res  = await ApiClient.get('/coach/messages/$id');
+      final data = res['data'] as Map<String, dynamic>? ?? {};
+      final msgs = (data['messages'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+      final analytics = msgs
+          .where((m) => m['type'] == 'analytics_attachment')
+          .toList()
+          .reversed
+          .toList();
+      if (mounted) setState(() { _records = analytics; _loading = false; });
+    } catch (_) {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  String _fmtDate(String? iso) {
+    final dt = DateTime.tryParse(iso ?? '');
+    if (dt == null) return '';
+    return '${dt.day}/${dt.month}/${dt.year}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_loading) {
+      return const Center(child: CircularProgressIndicator(color: AppColors.purple));
+    }
+    if (_records.isEmpty) {
+      return const _EmptyState(
+        icon: Icons.watch_outlined,
+        message: 'No Analytics Shared',
+        sub: 'Member has not shared any Smart Watch analytics yet',
+      );
+    }
+    return ListView.builder(
+      padding: EdgeInsets.all(16.r),
+      itemCount: _records.length,
+      itemBuilder: (_, i) {
+        final a = _records[i];
+        final payload = (a['payload'] as Map<String, dynamic>?) ?? {};
+        final dateStr = _fmtDate(a['sent_at'] as String?);
+        return Container(
+          margin: EdgeInsets.only(bottom: 14.h),
+          padding: EdgeInsets.all(14.r),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(colors: [
+              AppColors.purple.withValues(alpha: 0.20),
+              AppColors.purple.withValues(alpha: 0.05),
+            ]),
+            borderRadius: BorderRadius.circular(16.r),
+            border: Border.all(color: AppColors.purple.withValues(alpha: 0.4)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Text('⌚', style: TextStyle(fontSize: 14.sp)),
+                  hGap(8),
+                  Expanded(
+                    child: Text('Smart Watch Analytics',
+                        style: AppTextStyles.font14WhiteRegular.copyWith(
+                            color: AppColors.purple, fontWeight: FontWeight.w700)),
+                  ),
+                  Text(dateStr,
+                      style: AppTextStyles.font14GreyRegular.copyWith(fontSize: 10.sp)),
+                ],
+              ),
+              vGap(10),
+              Wrap(
+                spacing: 8.w,
+                runSpacing: 8.h,
+                children: [
+                  if (payload['steps'] != null)
+                    _IbStat('Steps', '${payload['steps']}', AppColors.purple),
+                  if (payload['active_minutes'] != null)
+                    _IbStat('Active', '${payload['active_minutes']} min', AppColors.blue),
+                  if (payload['calories_burned'] != null)
+                    _IbStat('Calories', '${payload['calories_burned']} kcal', AppColors.red),
+                  if (payload['heart_rate_avg'] != null)
+                    _IbStat('Avg HR', '${payload['heart_rate_avg']} bpm', AppColors.red),
+                  if (payload['sleep_hours'] != null)
+                    _IbStat('Sleep', '${payload['sleep_hours']} hrs', AppColors.blue),
+                  if (payload['water_liters'] != null)
+                    _IbStat('Water', '${payload['water_liters']} L', AppColors.teal),
+                  if (payload['date'] != null)
+                    _IbStat('Date', '${payload['date']}', AppColors.grey),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

@@ -191,6 +191,11 @@ class _CoachChatThreadScreenState extends State<CoachChatThreadScreen> {
     } catch (_) {}
   }
 
+  void _startReply(String prefix) {
+    _ctrl.text = prefix;
+    _scrollToBottom();
+  }
+
   Future<void> _send([String? text]) async {
     final body = (text ?? _ctrl.text).trim();
     if (body.isEmpty) return;
@@ -329,6 +334,7 @@ class _CoachChatThreadScreenState extends State<CoachChatThreadScreen> {
                           msg: _messages[i],
                           onDelete: _deleteMessage,
                           onMakePlan: _showSendPlan,
+                          onQuickReply: _startReply,
                         ),
                       ),
           ),
@@ -354,11 +360,13 @@ class _CoachMsgRow extends StatelessWidget {
   final _Msg msg;
   final void Function(_Msg) onDelete;
   final VoidCallback onMakePlan;
+  final void Function(String) onQuickReply;
 
   const _CoachMsgRow({
     required this.msg,
     required this.onDelete,
     required this.onMakePlan,
+    required this.onQuickReply,
   });
 
   void _showOptions(BuildContext context) {
@@ -404,8 +412,8 @@ class _CoachMsgRow extends StatelessWidget {
         padding: EdgeInsets.only(bottom: 12.h),
         child: switch (msg.type) {
           _MsgType.deleted             => _DeletedBubble(msg: msg),
-          _MsgType.inbodyAttachment    => _InBodyCard(msg: msg, onMakePlan: onMakePlan),
-          _MsgType.analyticsAttachment => _AnalyticsCard(msg: msg, onMakePlan: onMakePlan),
+          _MsgType.inbodyAttachment    => _InBodyCard(msg: msg, onMakePlan: onMakePlan, onQuickReply: onQuickReply),
+          _MsgType.analyticsAttachment => _AnalyticsCard(msg: msg, onMakePlan: onMakePlan, onQuickReply: onQuickReply),
           _MsgType.workoutPlan         => _PlanSentCard(msg: msg),
           _MsgType.nutritionPlan       => _PlanSentCard(msg: msg),
           _                            => _TextBubble(msg: msg),
@@ -513,21 +521,15 @@ class _TextBubble extends StatelessWidget {
 
 // ── InBody card (coach view) ──────────────────────────────────────────────────
 
-class _InBodyCard extends StatefulWidget {
+class _InBodyCard extends StatelessWidget {
   final _Msg msg;
   final VoidCallback onMakePlan;
-  const _InBodyCard({required this.msg, required this.onMakePlan});
-
-  @override
-  State<_InBodyCard> createState() => _InBodyCardState();
-}
-
-class _InBodyCardState extends State<_InBodyCard> {
-  bool _expanded = false;
+  final void Function(String) onQuickReply;
+  const _InBodyCard({required this.msg, required this.onMakePlan, required this.onQuickReply});
 
   @override
   Widget build(BuildContext context) {
-    final p = widget.msg.payload ?? {};
+    final p = msg.payload ?? {};
     return Align(
       alignment: Alignment.centerLeft,
       child: Container(
@@ -545,21 +547,12 @@ class _InBodyCardState extends State<_InBodyCard> {
           children: [
             _CardHeader(
               icon: Icons.monitor_weight_outlined,
-              label: '${widget.msg.isCoach ? '' : 'Member sent '}In-Body Results',
+              label: '${msg.isCoach ? '' : 'Member sent '}In-Body Results',
               color: AppColors.teal,
-              time: _fmt(widget.msg.time),
-              trailing: IconButton(
-                icon: Icon(
-                    _expanded ? Icons.expand_less : Icons.expand_more,
-                    color: AppColors.teal,
-                    size: 20.r),
-                onPressed: () => setState(() => _expanded = !_expanded),
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
-              ),
+              time: _fmt(msg.time),
             ),
             Padding(
-              padding: EdgeInsets.fromLTRB(14.w, 0, 14.w, 12.h),
+              padding: EdgeInsets.fromLTRB(14.w, 4.h, 14.w, 12.h),
               child: Wrap(
                 spacing: 10.w,
                 runSpacing: 8.h,
@@ -570,32 +563,39 @@ class _InBodyCardState extends State<_InBodyCard> {
                     _StatChip('Body Fat', '${p['body_fat_pct']}%', AppColors.red),
                   if (p['muscle_mass'] != null)
                     _StatChip('Muscle', '${p['muscle_mass']} kg', AppColors.emerald),
-                  if (_expanded) ...[
-                    if (p['bmi'] != null)
-                      _StatChip('BMI', '${p['bmi']}', AppColors.blue),
-                    if (p['visceral_fat'] != null)
-                      _StatChip('Visceral', '${p['visceral_fat']}', AppColors.purple),
-                    if (p['inbody_score'] != null)
-                      _StatChip('Score', '${p['inbody_score']}', AppColors.teal),
-                    if (p['fat_mass'] != null)
-                      _StatChip('Fat Mass', '${p['fat_mass']} kg', AppColors.red),
-                    if (p['bmr'] != null)
-                      _StatChip('BMR', '${p['bmr']} kcal', AppColors.blue),
-                    if (p['recorded_at'] != null)
-                      _StatChip('Date', '${p['recorded_at']}', AppColors.grey),
-                  ],
+                  if (p['bmi'] != null)
+                    _StatChip('BMI', '${p['bmi']}', AppColors.blue),
+                  if (p['visceral_fat'] != null)
+                    _StatChip('Visceral', '${p['visceral_fat']}', AppColors.purple),
+                  if (p['inbody_score'] != null)
+                    _StatChip('Score', '${p['inbody_score']}', AppColors.teal),
+                  if (p['fat_mass'] != null)
+                    _StatChip('Fat Mass', '${p['fat_mass']} kg', AppColors.red),
+                  if (p['bmr'] != null)
+                    _StatChip('BMR', '${p['bmr']} kcal', AppColors.blue),
+                  if (p['recorded_at'] != null)
+                    _StatChip('Date', '${p['recorded_at']}', AppColors.grey),
                 ],
               ),
             ),
-            if (!widget.msg.isCoach)
+            if (!msg.isCoach) ...[
               Padding(
-                padding: EdgeInsets.fromLTRB(14.w, 0, 14.w, 12.h),
+                padding: EdgeInsets.fromLTRB(14.w, 0, 14.w, 8.h),
                 child: _MakePlanButton(
                   label: '📋 Make a plan from this data',
                   color: AppColors.teal,
-                  onTap: widget.onMakePlan,
+                  onTap: onMakePlan,
                 ),
               ),
+              Padding(
+                padding: EdgeInsets.fromLTRB(14.w, 0, 14.w, 12.h),
+                child: _MakePlanButton(
+                  label: '💬 Reply to member',
+                  color: AppColors.blue,
+                  onTap: () => onQuickReply('I reviewed your In-Body results 📊 '),
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -608,7 +608,8 @@ class _InBodyCardState extends State<_InBodyCard> {
 class _AnalyticsCard extends StatelessWidget {
   final _Msg msg;
   final VoidCallback onMakePlan;
-  const _AnalyticsCard({required this.msg, required this.onMakePlan});
+  final void Function(String) onQuickReply;
+  const _AnalyticsCard({required this.msg, required this.onMakePlan, required this.onQuickReply});
 
   @override
   Widget build(BuildContext context) {
@@ -635,7 +636,7 @@ class _AnalyticsCard extends StatelessWidget {
               time: _fmt(msg.time),
             ),
             Padding(
-              padding: EdgeInsets.fromLTRB(14.w, 0, 14.w, 12.h),
+              padding: EdgeInsets.fromLTRB(14.w, 4.h, 14.w, 12.h),
               child: Wrap(
                 spacing: 10.w,
                 runSpacing: 8.h,
@@ -657,15 +658,24 @@ class _AnalyticsCard extends StatelessWidget {
                 ],
               ),
             ),
-            if (!msg.isCoach)
+            if (!msg.isCoach) ...[
               Padding(
-                padding: EdgeInsets.fromLTRB(14.w, 0, 14.w, 12.h),
+                padding: EdgeInsets.fromLTRB(14.w, 0, 14.w, 8.h),
                 child: _MakePlanButton(
                   label: '📋 Make a plan from this data',
                   color: AppColors.purple,
                   onTap: onMakePlan,
                 ),
               ),
+              Padding(
+                padding: EdgeInsets.fromLTRB(14.w, 0, 14.w, 12.h),
+                child: _MakePlanButton(
+                  label: '💬 Reply to member',
+                  color: AppColors.blue,
+                  onTap: () => onQuickReply('I checked your Smart Watch Analytics ⌚ '),
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -790,14 +800,12 @@ class _CardHeader extends StatelessWidget {
   final String label;
   final Color color;
   final String time;
-  final Widget? trailing;
 
   const _CardHeader({
     required this.icon,
     required this.label,
     required this.color,
     required this.time,
-    this.trailing,
   });
 
   @override
@@ -817,7 +825,6 @@ class _CardHeader extends StatelessWidget {
           ),
           Text(time,
               style: AppTextStyles.font14GreyRegular.copyWith(fontSize: 10.sp)),
-          if (trailing != null) ...[hGap(4), trailing!],
         ],
       ),
     );
