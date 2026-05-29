@@ -521,14 +521,22 @@ class _TextBubble extends StatelessWidget {
 
 // ── InBody card (coach view) ──────────────────────────────────────────────────
 
-class _InBodyCard extends StatelessWidget {
+class _InBodyCard extends StatefulWidget {
   final _Msg msg;
   final VoidCallback onMakePlan;
   final void Function(String) onQuickReply;
   const _InBodyCard({required this.msg, required this.onMakePlan, required this.onQuickReply});
 
   @override
+  State<_InBodyCard> createState() => _InBodyCardState();
+}
+
+class _InBodyCardState extends State<_InBodyCard> {
+  bool _expanded = true;
+
+  @override
   Widget build(BuildContext context) {
+    final msg = widget.msg;
     final p = msg.payload ?? {};
     return Align(
       alignment: Alignment.centerLeft,
@@ -550,51 +558,55 @@ class _InBodyCard extends StatelessWidget {
               label: '${msg.isCoach ? '' : 'Member sent '}In-Body Results',
               color: AppColors.teal,
               time: _fmt(msg.time),
+              onToggle: () => setState(() => _expanded = !_expanded),
+              expanded: _expanded,
             ),
-            Padding(
-              padding: EdgeInsets.fromLTRB(14.w, 4.h, 14.w, 12.h),
-              child: Wrap(
-                spacing: 10.w,
-                runSpacing: 8.h,
-                children: [
-                  if (p['weight'] != null)
-                    _StatChip('Weight', '${p['weight']} kg', AppColors.teal),
-                  if (p['body_fat_pct'] != null)
-                    _StatChip('Body Fat', '${p['body_fat_pct']}%', AppColors.red),
-                  if (p['muscle_mass'] != null)
-                    _StatChip('Muscle', '${p['muscle_mass']} kg', AppColors.emerald),
-                  if (p['bmi'] != null)
-                    _StatChip('BMI', '${p['bmi']}', AppColors.blue),
-                  if (p['visceral_fat'] != null)
-                    _StatChip('Visceral', '${p['visceral_fat']}', AppColors.purple),
-                  if (p['inbody_score'] != null)
-                    _StatChip('Score', '${p['inbody_score']}', AppColors.teal),
-                  if (p['fat_mass'] != null)
-                    _StatChip('Fat Mass', '${p['fat_mass']} kg', AppColors.red),
-                  if (p['bmr'] != null)
-                    _StatChip('BMR', '${p['bmr']} kcal', AppColors.blue),
-                  if (p['recorded_at'] != null)
-                    _StatChip('Date', '${p['recorded_at']}', AppColors.grey),
-                ],
-              ),
-            ),
-            if (!msg.isCoach) ...[
+            if (_expanded) ...[
               Padding(
-                padding: EdgeInsets.fromLTRB(14.w, 0, 14.w, 8.h),
-                child: _MakePlanButton(
-                  label: '📋 Make a plan from this data',
-                  color: AppColors.teal,
-                  onTap: onMakePlan,
+                padding: EdgeInsets.fromLTRB(14.w, 4.h, 14.w, 12.h),
+                child: Wrap(
+                  spacing: 10.w,
+                  runSpacing: 8.h,
+                  children: [
+                    if (p['weight'] != null)
+                      _StatChip('Weight', '${p['weight']} kg', AppColors.teal),
+                    if (p['body_fat_pct'] != null)
+                      _StatChip('Body Fat', '${p['body_fat_pct']}%', AppColors.red),
+                    if (p['muscle_mass'] != null)
+                      _StatChip('Muscle', '${p['muscle_mass']} kg', AppColors.emerald),
+                    if (p['bmi'] != null)
+                      _StatChip('BMI', '${p['bmi']}', AppColors.blue),
+                    if (p['visceral_fat'] != null)
+                      _StatChip('Visceral', '${p['visceral_fat']}', AppColors.purple),
+                    if (p['inbody_score'] != null)
+                      _StatChip('Score', '${p['inbody_score']}', AppColors.teal),
+                    if (p['fat_mass'] != null)
+                      _StatChip('Fat Mass', '${p['fat_mass']} kg', AppColors.red),
+                    if (p['bmr'] != null)
+                      _StatChip('BMR', '${p['bmr']} kcal', AppColors.blue),
+                    if (p['recorded_at'] != null)
+                      _StatChip('Date', '${p['recorded_at']}', AppColors.grey),
+                  ],
                 ),
               ),
-              Padding(
-                padding: EdgeInsets.fromLTRB(14.w, 0, 14.w, 12.h),
-                child: _MakePlanButton(
-                  label: '💬 Reply to member',
-                  color: AppColors.blue,
-                  onTap: () => onQuickReply('I reviewed your In-Body results 📊 '),
+              if (!msg.isCoach) ...[
+                Padding(
+                  padding: EdgeInsets.fromLTRB(14.w, 0, 14.w, 8.h),
+                  child: _MakePlanButton(
+                    label: '📋 Make a plan from this data',
+                    color: AppColors.teal,
+                    onTap: widget.onMakePlan,
+                  ),
                 ),
-              ),
+                Padding(
+                  padding: EdgeInsets.fromLTRB(14.w, 0, 14.w, 12.h),
+                  child: _MakePlanButton(
+                    label: '💬 Reply to member',
+                    color: AppColors.blue,
+                    onTap: () => widget.onQuickReply('I reviewed your In-Body results 📊 '),
+                  ),
+                ),
+              ],
             ],
           ],
         ),
@@ -605,14 +617,22 @@ class _InBodyCard extends StatelessWidget {
 
 // ── Analytics card (coach view) ───────────────────────────────────────────────
 
-class _AnalyticsCard extends StatelessWidget {
+class _AnalyticsCard extends StatefulWidget {
   final _Msg msg;
   final VoidCallback onMakePlan;
   final void Function(String) onQuickReply;
   const _AnalyticsCard({required this.msg, required this.onMakePlan, required this.onQuickReply});
 
   @override
+  State<_AnalyticsCard> createState() => _AnalyticsCardState();
+}
+
+class _AnalyticsCardState extends State<_AnalyticsCard> {
+  bool _expanded = true;
+
+  @override
   Widget build(BuildContext context) {
+    final msg = widget.msg;
     final p = msg.payload ?? {};
     return Align(
       alignment: Alignment.centerLeft,
@@ -634,47 +654,51 @@ class _AnalyticsCard extends StatelessWidget {
               label: 'Member sent Smart Watch Analytics',
               color: AppColors.purple,
               time: _fmt(msg.time),
+              onToggle: () => setState(() => _expanded = !_expanded),
+              expanded: _expanded,
             ),
-            Padding(
-              padding: EdgeInsets.fromLTRB(14.w, 4.h, 14.w, 12.h),
-              child: Wrap(
-                spacing: 10.w,
-                runSpacing: 8.h,
-                children: [
-                  if (p['steps'] != null)
-                    _StatChip('Steps', _n(p['steps']), AppColors.purple),
-                  if (p['active_minutes'] != null)
-                    _StatChip('Active', '${p['active_minutes']} min', AppColors.blue),
-                  if (p['calories_burned'] != null)
-                    _StatChip('Calories', '${p['calories_burned']} kcal', AppColors.red),
-                  if (p['heart_rate_avg'] != null)
-                    _StatChip('Avg HR', '${p['heart_rate_avg']} bpm', AppColors.red),
-                  if (p['sleep_hours'] != null)
-                    _StatChip('Sleep', '${p['sleep_hours']} hrs', AppColors.blue),
-                  if (p['water_liters'] != null)
-                    _StatChip('Water', '${p['water_liters']} L', AppColors.teal),
-                  if (p['date'] != null)
-                    _StatChip('Date', '${p['date']}', AppColors.grey),
-                ],
-              ),
-            ),
-            if (!msg.isCoach) ...[
+            if (_expanded) ...[
               Padding(
-                padding: EdgeInsets.fromLTRB(14.w, 0, 14.w, 8.h),
-                child: _MakePlanButton(
-                  label: '📋 Make a plan from this data',
-                  color: AppColors.purple,
-                  onTap: onMakePlan,
+                padding: EdgeInsets.fromLTRB(14.w, 4.h, 14.w, 12.h),
+                child: Wrap(
+                  spacing: 10.w,
+                  runSpacing: 8.h,
+                  children: [
+                    if (p['steps'] != null)
+                      _StatChip('Steps', _n(p['steps']), AppColors.purple),
+                    if (p['active_minutes'] != null)
+                      _StatChip('Active', '${p['active_minutes']} min', AppColors.blue),
+                    if (p['calories_burned'] != null)
+                      _StatChip('Calories', '${p['calories_burned']} kcal', AppColors.red),
+                    if (p['heart_rate_avg'] != null)
+                      _StatChip('Avg HR', '${p['heart_rate_avg']} bpm', AppColors.red),
+                    if (p['sleep_hours'] != null)
+                      _StatChip('Sleep', '${p['sleep_hours']} hrs', AppColors.blue),
+                    if (p['water_liters'] != null)
+                      _StatChip('Water', '${p['water_liters']} L', AppColors.teal),
+                    if (p['date'] != null)
+                      _StatChip('Date', '${p['date']}', AppColors.grey),
+                  ],
                 ),
               ),
-              Padding(
-                padding: EdgeInsets.fromLTRB(14.w, 0, 14.w, 12.h),
-                child: _MakePlanButton(
-                  label: '💬 Reply to member',
-                  color: AppColors.blue,
-                  onTap: () => onQuickReply('I checked your Smart Watch Analytics ⌚ '),
+              if (!msg.isCoach) ...[
+                Padding(
+                  padding: EdgeInsets.fromLTRB(14.w, 0, 14.w, 8.h),
+                  child: _MakePlanButton(
+                    label: '📋 Make a plan from this data',
+                    color: AppColors.purple,
+                    onTap: widget.onMakePlan,
+                  ),
                 ),
-              ),
+                Padding(
+                  padding: EdgeInsets.fromLTRB(14.w, 0, 14.w, 12.h),
+                  child: _MakePlanButton(
+                    label: '💬 Reply to member',
+                    color: AppColors.blue,
+                    onTap: () => widget.onQuickReply('I checked your Smart Watch Analytics ⌚ '),
+                  ),
+                ),
+              ],
             ],
           ],
         ),
@@ -800,32 +824,47 @@ class _CardHeader extends StatelessWidget {
   final String label;
   final Color color;
   final String time;
+  final VoidCallback? onToggle;
+  final bool expanded;
 
   const _CardHeader({
     required this.icon,
     required this.label,
     required this.color,
     required this.time,
+    this.onToggle,
+    this.expanded = true,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.fromLTRB(12.w, 12.h, 12.w, 8.h),
-      child: Row(
-        children: [
-          Icon(icon, color: color, size: 15.r),
-          hGap(6),
-          Expanded(
-            child: Text(label,
-                style: AppTextStyles.font14WhiteRegular.copyWith(
-                    color: color,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 12.sp)),
-          ),
-          Text(time,
-              style: AppTextStyles.font14GreyRegular.copyWith(fontSize: 10.sp)),
-        ],
+    return GestureDetector(
+      onTap: onToggle,
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(12.w, 12.h, 8.w, 8.h),
+        child: Row(
+          children: [
+            Icon(icon, color: color, size: 15.r),
+            hGap(6),
+            Expanded(
+              child: Text(label,
+                  style: AppTextStyles.font14WhiteRegular.copyWith(
+                      color: color,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12.sp)),
+            ),
+            Text(time,
+                style: AppTextStyles.font14GreyRegular.copyWith(fontSize: 10.sp)),
+            if (onToggle != null) ...[
+              hGap(4),
+              Icon(
+                expanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                color: color,
+                size: 18.r,
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }
