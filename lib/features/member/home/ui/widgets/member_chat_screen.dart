@@ -537,6 +537,10 @@ class _TextBubble extends StatelessWidget {
   final _ChatMsg msg;
   const _TextBubble({required this.msg});
 
+  // Optimistic messages use DateTime.millisecondsSinceEpoch as ID (~1.7 trillion)
+  // Real server IDs are small sequential integers, never this large.
+  bool get _isPending => msg.id > 1000000000000;
+
   @override
   Widget build(BuildContext context) {
     final timeStr = _fmt(msg.time);
@@ -564,7 +568,7 @@ class _TextBubble extends StatelessWidget {
                     EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
                 decoration: BoxDecoration(
                   color: msg.isMe
-                      ? AppColors.teal.withValues(alpha: 0.85)
+                      ? AppColors.teal.withValues(alpha: _isPending ? 0.50 : 0.85)
                       : AppColors.secondary,
                   borderRadius: BorderRadius.only(
                     topLeft: Radius.circular(16.r),
@@ -581,9 +585,28 @@ class _TextBubble extends StatelessWidget {
                         .copyWith(height: 1.4, color: Colors.white)),
               ),
               vGap(3),
-              Text(timeStr,
-                  style: AppTextStyles.font14GreyRegular
-                      .copyWith(fontSize: 10.sp)),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (_isPending) ...[
+                    SizedBox(
+                      width: 10.r,
+                      height: 10.r,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 1.2,
+                        color: AppColors.grey,
+                      ),
+                    ),
+                    hGap(4),
+                    Text('Sending…',
+                        style: AppTextStyles.font14GreyRegular
+                            .copyWith(fontSize: 10.sp)),
+                  ] else
+                    Text(timeStr,
+                        style: AppTextStyles.font14GreyRegular
+                            .copyWith(fontSize: 10.sp)),
+                ],
+              ),
             ],
           ),
         ),

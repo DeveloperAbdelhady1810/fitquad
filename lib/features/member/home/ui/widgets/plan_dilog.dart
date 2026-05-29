@@ -78,27 +78,39 @@ List<Map<String, dynamic>> _defaultSchedule() => [
     ];
 
 List<Map<String, dynamic>> _scheduleFromPlan(Map<String, dynamic> plan) {
-  try {
-    final days = plan['days'] as List?;
-    if (days == null || days.isEmpty) return _defaultSchedule();
-    return List.generate(7, (i) {
-      if (i >= days.length) {
-        return {
-          'title': 'Rest Day',
-          'subtitle': 'Recovery',
-          'exercises': <String>[],
-          'group': 'rest',
-        };
-      }
+  final days = plan['days'] as List?;
+  if (days == null || days.isEmpty) return _defaultSchedule();
+  return List.generate(7, (i) {
+    if (i >= days.length) {
+      return {
+        'title': 'Rest Day',
+        'subtitle': 'Recovery',
+        'exercises': <String>[],
+        'group': 'rest',
+      };
+    }
+    try {
       final day = days[i] as Map<String, dynamic>;
-      final title = day['title'] as String? ??
+      // API returns day_name; also support legacy title/type keys
+      final title = day['day_name'] as String? ??
+          day['title'] as String? ??
           day['muscle_group'] as String? ??
           day['type'] as String? ??
           'Training Day';
-      final exercises = (day['exercises'] as List?)
-              ?.map((e) => (e['name'] ?? e.toString()).toString())
-              .toList() ??
-          <String>[];
+      // Support both {name} direct and {exercise: {name}} nested formats
+      String exName(dynamic e) {
+        if (e is Map) {
+          return e['name'] as String? ??
+              (e['exercise'] as Map?)?['name'] as String? ??
+              '';
+        }
+        return e.toString();
+      }
+      final rawExercises = day['exercises'] as List?;
+      final selectedExercises = (day['selectedExercises'] as List?)?.cast<String>();
+      final exercises = rawExercises != null
+          ? rawExercises.map(exName).where((n) => n.isNotEmpty).toList()
+          : selectedExercises ?? <String>[];
       final subtitle = exercises.take(2).join(', ');
       final group = _inferGroup(title);
       return {
@@ -107,10 +119,15 @@ List<Map<String, dynamic>> _scheduleFromPlan(Map<String, dynamic> plan) {
         'exercises': exercises,
         'group': group,
       };
-    });
-  } catch (_) {
-    return _defaultSchedule();
-  }
+    } catch (_) {
+      return {
+        'title': 'Rest Day',
+        'subtitle': 'Recovery',
+        'exercises': <String>[],
+        'group': 'rest',
+      };
+    }
+  });
 }
 
 String _inferGroup(String title) {

@@ -344,11 +344,32 @@ class _DayTile extends StatelessWidget {
   }
 }
 
-class _ExerciseRow extends StatelessWidget {
+// StatefulWidget so the name TextEditingController survives parent rebuilds
+// (adding exercises, changing sets/reps) without losing typed text.
+class _ExerciseRow extends StatefulWidget {
   final Map ex;
   final Function(String, dynamic) onChange;
 
   const _ExerciseRow({required this.ex, required this.onChange});
+
+  @override
+  State<_ExerciseRow> createState() => _ExerciseRowState();
+}
+
+class _ExerciseRowState extends State<_ExerciseRow> {
+  late final TextEditingController _nameCtrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameCtrl = TextEditingController(text: widget.ex['name'] as String? ?? '');
+  }
+
+  @override
+  void dispose() {
+    _nameCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -359,6 +380,7 @@ class _ExerciseRow extends StatelessWidget {
           Expanded(
             flex: 3,
             child: TextField(
+              controller: _nameCtrl,
               style: AppTextStyles.font14GreyRegular.copyWith(fontSize: 12.sp),
               decoration: InputDecoration(
                 hintText: 'Exercise name',
@@ -373,13 +395,13 @@ class _ExerciseRow extends StatelessWidget {
                     borderSide: BorderSide.none),
                 isDense: true,
               ),
-              onChanged: (v) => onChange('name', v),
+              onChanged: (v) => widget.onChange('name', v),
             ),
           ),
           hGap(6),
-          _SmallNum('Sets', ex['sets'], (v) => onChange('sets', v)),
+          _SmallNum('Sets', widget.ex['sets'], (v) => widget.onChange('sets', v)),
           hGap(6),
-          _SmallNum('Reps', ex['reps'], (v) => onChange('reps', v)),
+          _SmallNum('Reps', widget.ex['reps'], (v) => widget.onChange('reps', v)),
         ],
       ),
     );
