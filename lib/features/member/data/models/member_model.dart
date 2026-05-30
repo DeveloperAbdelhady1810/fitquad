@@ -22,6 +22,7 @@ class MemberModel {
   final String? referralCode;
   final int loyaltyPoints;
   final String? avatarUrl;
+  final String? qrCode;
 
   MemberModel({
     this.id,
@@ -43,6 +44,7 @@ class MemberModel {
     this.referralCode,
     this.loyaltyPoints = 0,
     this.avatarUrl,
+    this.qrCode,
   });
 
   bool get needsGymSelection => trainingMode == null;
@@ -75,6 +77,7 @@ class MemberModel {
       avatarUrl: user['avatar_url'] as String? ??
           member['avatar_url'] as String? ??
           json['avatar_url'] as String?,
+      qrCode: member['qr_code'] as String?,
     );
   }
 

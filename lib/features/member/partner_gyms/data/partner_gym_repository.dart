@@ -50,4 +50,18 @@ class PartnerGymRepository {
   static Future<void> sendSupportMessage(int gymId, String body) async {
     await ApiClient.post('/member/gym-support/$gymId', {'body': body});
   }
+
+  static Future<Map<String, dynamic>> initiateGymPayment(int planId) async {
+    final res = await ApiClient.post('/member/payments/initiate-gym', {
+      'gym_subscription_plan_id': planId,
+    });
+    return res['data'] as Map<String, dynamic>;
+  }
+
+  static Future<GymMembershipModel> syncSubscription(int gymId, String externalId) async {
+    final res = await ApiClient.post('/member/partner-gyms/$gymId/sync', {
+      'external_id': externalId,
+    });
+    return GymMembershipModel.fromJson(res['data'] as Map<String, dynamic>);
+  }
 }

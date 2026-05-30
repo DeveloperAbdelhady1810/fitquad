@@ -8,6 +8,7 @@ import 'package:gym_app/features/member/home/ui/widgets/choose_coach_screen.dart
 import 'package:gym_app/features/member/home/ui/widgets/plan_dilog.dart';
 import 'package:gym_app/features/member/community/community_feed_screen.dart';
 import 'package:gym_app/features/member/partner_gyms/ui/partner_gyms_screen.dart';
+import 'package:gym_app/core/services/api_client.dart';
 import 'package:gym_app/features/member/gamification/streak_card.dart';
 import 'package:gym_app/features/member/notifications/notifications_screen.dart';
 import 'package:gym_app/features/member/qr/qr_screen.dart';
@@ -178,7 +179,9 @@ class _HomeTabState extends State<HomeTab> {
                 vGap(10),
                 _CrowdingBanner(info: _crowding!),
               ],
-              vGap(15),
+              vGap(10),
+              _GymSubscriptionsWidget(),
+              vGap(5),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -971,6 +974,140 @@ class _CrowdingBanner extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+// ── Gym Subscriptions Widget (shows active gym memberships with crowd counter) ──
+
+class _GymSubscriptionsWidget extends StatefulWidget {
+  @override
+  State<_GymSubscriptionsWidget> createState() => _GymSubscriptionsWidgetState();
+}
+
+class _GymSubscriptionsWidgetState extends State<_GymSubscriptionsWidget> {
+  List<dynamic> _memberships = [];
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final res = await ApiClient.get('/member/gym-memberships');
+      final list = (res['data'] as List?) ?? [];
+      final active = list.where((m) {
+        final s = (m as Map<String, dynamic>)['status'] as String?;
+        return s == 'active' || s == 'frozen';
+      }).toList();
+      if (mounted) setState(() { _memberships = active; _loading = false; });
+    } catch (_) {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_loading || _memberships.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('My Gyms', style: AppTextStyles.font16WhiteBold),
+        vGap(8),
+        SizedBox(
+          height: 110.h,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: _memberships.length,
+            separatorBuilder: (_, __) => hGap(10),
+            itemBuilder: (_, i) {
+              final m = _memberships[i] as Map<String, dynamic>;
+              final gym = m['gym'] as Map<String, dynamic>? ?? {};
+              final today = (gym['attendance_today'] as num?)?.toInt() ?? 0;
+              final capacity = (gym['capacity'] as num?)?.toInt() ?? 100;
+              final crowdLevel = gym['crowd_level'] as String? ?? 'quiet';
+              final status = m['status'] as String? ?? 'active';
+              final isFrozen = status == 'frozen';
+              final daysLeft = (m['days_remaining'] as num?)?.toInt() ?? 0;
+
+              final crowdColor = crowdLevel == 'crowded'
+                  ? Colors.redAccent
+                  : crowdLevel == 'moderate'
+                      ? const Color(0xFFFFD700)
+                      : AppColors.emerald;
+
+              return Container(
+                width: 180.w,
+                padding: EdgeInsets.all(12.r),
+                decoration: BoxDecoration(
+                  color: AppColors.secondary,
+                  borderRadius: BorderRadius.circular(14.r),
+                  border: Border.all(
+                    color: isFrozen
+                        ? const Color(0xFF4D8DBD).withValues(alpha: 0.4)
+                        : AppColors.teal.withValues(alpha: 0.25),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(children: [
+                      Icon(
+                        isFrozen ? Icons.ac_unit : Icons.fitness_center,
+                        color: isFrozen ? const Color(0xFF4D8DBD) : AppColors.teal,
+                        size: 14.r,
+                      ),
+                      hGap(6),
+                      Expanded(
+                        child: Text(
+                          gym['name'] as String? ?? 'Gym',
+                          style: AppTextStyles.font14WhiteRegular
+                              .copyWith(fontWeight: FontWeight.w600, fontSize: 12.sp),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ]),
+                    vGap(6),
+                    // Crowd count
+                    Row(children: [
+                      Icon(Icons.people_outline, color: crowdColor, size: 13.r),
+                      hGap(4),
+                      Text('$today here now',
+                          style: AppTextStyles.font14GreyRegular
+                              .copyWith(color: crowdColor, fontSize: 11.sp)),
+                    ]),
+                    vGap(4),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(3.r),
+                      child: LinearProgressIndicator(
+                        value: capacity > 0
+                            ? (today / capacity).clamp(0.0, 1.0)
+                            : 0,
+                        backgroundColor: Colors.white12,
+                        color: crowdColor,
+                        minHeight: 4.h,
+                      ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      isFrozen
+                          ? '❄️ Frozen'
+                          : '$daysLeft days left',
+                      style: AppTextStyles.font14GreyRegular
+                          .copyWith(fontSize: 10.sp),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }

@@ -27,9 +27,11 @@ class _QrSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<MemberCubit, MemberState>(
       builder: (context, state) {
-        final memberId = state is MemberLoaded
-            ? (state.member.id?.toString() ?? 'MEMBER')
+        // Use the unique UUID QR token — gym dashboard scans this to identify the member
+        final qrData = state is MemberLoaded
+            ? (state.member.qrCode ?? state.member.id?.toString() ?? 'MEMBER')
             : 'MEMBER';
+        final memberId = state is MemberLoaded ? (state.member.id?.toString() ?? '—') : '—';
         final name =
             state is MemberLoaded ? (state.member.name ?? 'Member') : 'Member';
 
@@ -62,7 +64,7 @@ class _QrSheet extends StatelessWidget {
                   borderRadius: BorderRadius.circular(16.r),
                 ),
                 child: QrImageView(
-                  data: memberId,
+                  data: qrData,
                   version: QrVersions.auto,
                   size: 200.r,
                 ),
@@ -76,8 +78,7 @@ class _QrSheet extends StatelessWidget {
               vGap(6),
               Text(
                 'Member ID: $memberId',
-                style:
-                    AppTextStyles.font14GreyRegular.copyWith(color: AppColors.teal),
+                style: AppTextStyles.font14GreyRegular.copyWith(color: AppColors.teal),
               ),
               vGap(24),
             ],

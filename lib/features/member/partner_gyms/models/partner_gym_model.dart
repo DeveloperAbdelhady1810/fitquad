@@ -25,6 +25,27 @@ class GymPlanModel {
       );
 }
 
+class GymPhotoModel {
+  final int id;
+  final String url;
+  final bool isProfile;
+  final int displayOrder;
+
+  const GymPhotoModel({
+    required this.id,
+    required this.url,
+    required this.isProfile,
+    required this.displayOrder,
+  });
+
+  factory GymPhotoModel.fromJson(Map<String, dynamic> json) => GymPhotoModel(
+        id: (json['id'] as num).toInt(),
+        url: json['url'] as String? ?? '',
+        isProfile: json['is_profile'] == true || json['is_profile'] == 1,
+        displayOrder: (json['display_order'] as num?)?.toInt() ?? 0,
+      );
+}
+
 class PartnerGymModel {
   final int id;
   final String name;
@@ -38,6 +59,7 @@ class PartnerGymModel {
   final int attendanceToday;
   final String crowdLevel;
   final List<GymPlanModel> plans;
+  final List<GymPhotoModel> photos;
 
   const PartnerGymModel({
     required this.id,
@@ -52,7 +74,18 @@ class PartnerGymModel {
     required this.attendanceToday,
     required this.crowdLevel,
     required this.plans,
+    this.photos = const [],
   });
+
+  String? get profilePhotoUrl {
+    try {
+      return photos.firstWhere((p) => p.isProfile).url;
+    } catch (_) {
+      return logo;
+    }
+  }
+
+  List<GymPhotoModel> get galleryPhotos => photos.where((p) => !p.isProfile).toList();
 
   factory PartnerGymModel.fromJson(Map<String, dynamic> json) => PartnerGymModel(
         id: (json['id'] as num).toInt(),
@@ -68,6 +101,10 @@ class PartnerGymModel {
         crowdLevel: json['crowd_level'] as String? ?? 'quiet',
         plans: (json['plans'] as List?)
                 ?.map((e) => GymPlanModel.fromJson(e as Map<String, dynamic>))
+                .toList() ??
+            [],
+        photos: (json['photos'] as List?)
+                ?.map((e) => GymPhotoModel.fromJson(e as Map<String, dynamic>))
                 .toList() ??
             [],
       );
