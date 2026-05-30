@@ -120,6 +120,7 @@ class MemberModel {
     String? referralCode,
     int? loyaltyPoints,
     String? avatarUrl,
+    String? qrCode,
   }) {
     return MemberModel(
       id: id ?? this.id,
@@ -141,6 +142,7 @@ class MemberModel {
       referralCode: referralCode ?? this.referralCode,
       loyaltyPoints: loyaltyPoints ?? this.loyaltyPoints,
       avatarUrl: avatarUrl ?? this.avatarUrl,
+      qrCode: qrCode ?? this.qrCode,
     );
   }
 }
