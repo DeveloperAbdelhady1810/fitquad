@@ -56,7 +56,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "analyzing_your_metrics": MessageLookupByLibrary.simpleMessage(
       "جارٍ تحليل بياناتك",
     ),
-    "app_name": MessageLookupByLibrary.simpleMessage("IronPulse"),
+    "app_name": MessageLookupByLibrary.simpleMessage("FitQuad"),
     "app_tagline": MessageLookupByLibrary.simpleMessage(
       "نظامك المتكامل للياقة البدنية",
     ),

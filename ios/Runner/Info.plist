@@ -22,12 +22,6 @@
 	<string>$(FLUTTER_BUILD_NAME)</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
-	<key>CFBundleVersion</key>
-	<string>$(FLUTTER_BUILD_NUMBER)</string>
-	<key>LSRequiresIPhoneOS</key>
-	<true/>
-	<key>GIDClientID</key>
-	<string>935205416297-90dbo3u43d3i8t0hm1dpt8936ffk8e72.apps.googleusercontent.com</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
@@ -39,20 +33,25 @@
 			</array>
 		</dict>
 	</array>
+	<key>CFBundleVersion</key>
+	<string>$(FLUTTER_BUILD_NUMBER)</string>
+	<key>GIDClientID</key>
+	<string>935205416297-90dbo3u43d3i8t0hm1dpt8936ffk8e72.apps.googleusercontent.com</string>
+	<key>LSRequiresIPhoneOS</key>
+	<true/>
 	<key>NSCameraUsageDescription</key>
 	<string>FitQuad uses the camera to scan your QR check-in code.</string>
 	<key>NSHealthShareUsageDescription</key>
-	<string>FitQuad reads your health data (steps, heart rate, sleep) to show your activity on the dashboard.</string>
+	<string>FitQuad reads your health data (steps, heart rate, sleep) to show your activity on the dashboard .</string>
 	<key>NSHealthUpdateUsageDescription</key>
 	<string>FitQuad saves workout data to Apple Health so your Apple Watch activity rings stay in sync.</string>
-	<!-- Push Notifications: allow app to receive remote notifications in background -->
+	<key>UIApplicationSupportsIndirectInputEvents</key>
+	<true/>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>fetch</string>
 		<string>remote-notification</string>
 	</array>
-	<key>UIApplicationSupportsIndirectInputEvents</key>
-	<true/>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>

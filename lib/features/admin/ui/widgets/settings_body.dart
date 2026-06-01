@@ -20,7 +20,7 @@ class _SettingsBodyState extends State<SettingsBody> {
   void initState() {
     // TODO: implement initState
     super.initState();
-    nameController = TextEditingController(text: 'IronPulse Gym');
+    nameController = TextEditingController(text: 'FitQuad Gym');
   }
 
   @override

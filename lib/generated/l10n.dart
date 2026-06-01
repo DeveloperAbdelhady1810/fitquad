@@ -54,9 +54,9 @@ class S {
     return Localizations.of<S>(context, S);
   }
 
-  /// `IronPulse`
+  /// `FitQuad`
   String get app_name {
-    return Intl.message('IronPulse', name: 'app_name', desc: '', args: []);
+    return Intl.message('FitQuad', name: 'app_name', desc: '', args: []);
   }
 
   /// `Your complete fitness ecosystem`
