@@ -1,3 +1,5 @@
+import 'package:firebase_messaging/firebase_messaging.dart';
+
 import '../../../core/services/api_client.dart';
 import '../../../core/services/push_notification_service.dart';
 
@@ -16,6 +18,7 @@ class AuthRepository {
     final role = data['user']?['role'] as String? ?? 'member';
     await ApiClient.saveRole(role);
     await PushNotificationService.subscribeToTopic(role == 'member' ? 'members' : 'coaches');
+    await _registerFcmToken();
     return data;
   }
 
@@ -43,6 +46,7 @@ class AuthRepository {
     final savedRole = data['user']?['role'] as String? ?? role;
     await ApiClient.saveRole(savedRole);
     await PushNotificationService.subscribeToTopic(savedRole == 'member' ? 'members' : 'coaches');
+    await _registerFcmToken();
     return data;
   }
 
@@ -66,6 +70,7 @@ class AuthRepository {
     await ApiClient.saveToken(data['token'] as String);
     await ApiClient.saveRole(data['user']?['role'] as String? ?? 'member');
     await PushNotificationService.subscribeToTopic('members');
+    await _registerFcmToken();
     return data;
   }
 
@@ -87,5 +92,14 @@ class AuthRepository {
       Map<String, dynamic> data) async {
     final response = await ApiClient.put('/auth/profile', data);
     return response['data'] as Map<String, dynamic>;
+  }
+
+  static Future<void> _registerFcmToken() async {
+    try {
+      final token = await FirebaseMessaging.instance.getToken();
+      if (token != null) {
+        await ApiClient.put('/auth/profile', {'fcm_token': token});
+      }
+    } catch (_) {}
   }
 }
