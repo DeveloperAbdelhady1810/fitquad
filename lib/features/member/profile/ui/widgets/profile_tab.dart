@@ -18,6 +18,8 @@ import 'package:gym_app/features/member/inbody/ui/inbody_screen.dart';
 import 'package:gym_app/features/member/notifications/notification_preferences_screen.dart';
 import 'package:gym_app/features/member/qr/qr_screen.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:gym_app/features/member/invitations/ui/invitations_screen.dart';
 
 import '../../../../../core/cubit/language/language_cubit.dart';
 import '../../../../../core/cubit/theme/theme_cubit.dart';
@@ -935,17 +937,38 @@ class _ReferralCard extends StatelessWidget {
               padding: EdgeInsets.symmetric(vertical: 12.h),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.r)),
             ),
-            onPressed: () {
-              if (code == null) return;
-              final text = 'Join me on FitQuad! Use my code $code to get 1 free month. 💪';
-              Clipboard.setData(ClipboardData(text: text));
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                content: Text('Share message copied to clipboard!'),
-                behavior: SnackBarBehavior.floating,
-              ));
-            },
             icon: Icon(Icons.share_outlined, size: 18.r),
             label: Text('Share Invite Link', style: AppTextStyles.font14WhiteRegular),
+            onPressed: () {
+              if (code == null) return;
+              final text =
+                  'Join me on FitQuad! Use my code $code when signing up. 💪';
+              Share.share(text, subject: 'Join FitQuad!');
+            },
+          ),
+        ),
+        vGap(8),
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            style: OutlinedButton.styleFrom(
+              side:
+                  BorderSide(color: AppColors.blue.withValues(alpha: 0.5)),
+              padding: EdgeInsets.symmetric(vertical: 10.h),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10.r)),
+            ),
+            onPressed: () =>
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => const InvitationsScreen()),
+                ),
+            icon:
+                Icon(Icons.people_outline, color: AppColors.blue, size: 18.r),
+            label: Text('View My Invites',
+                style: AppTextStyles.font14GreyRegular
+                    .copyWith(color: AppColors.blue)),
           ),
         ),
       ]),

@@ -1,4 +1,6 @@
 import '../../../../core/services/api_client.dart';
+import '../models/gym_class_booking_model.dart';
+import '../models/gym_class_model.dart';
 import '../models/gym_membership_model.dart';
 import '../models/partner_gym_model.dart';
 
@@ -63,5 +65,40 @@ class PartnerGymRepository {
       'external_id': externalId,
     });
     return GymMembershipModel.fromJson(res['data'] as Map<String, dynamic>);
+  }
+
+  // ── Gym Classes ─────────────────────────────────────────────
+
+  static Future<List<GymClassModel>> getGymClasses({int? gymId}) async {
+    final query = gymId != null ? '?gym_id=$gymId' : '';
+    final res = await ApiClient.get('/member/classes$query');
+    final list = res['data'] as List;
+    return list
+        .map((e) => GymClassModel.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  static Future<List<GymClassBookingModel>> getMyClassBookings() async {
+    final res = await ApiClient.get('/member/class-bookings');
+    final list = res['data'] as List;
+    return list
+        .map((e) => GymClassBookingModel.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  static Future<Map<String, dynamic>> bookClass(int classId) async {
+    final res = await ApiClient.post('/member/classes/$classId/book', {});
+    return res['data'] as Map<String, dynamic>;
+  }
+
+  static Future<void> cancelClassBooking(int classId) async {
+    await ApiClient.post('/member/classes/$classId/cancel', {});
+  }
+
+  // ── Invitations ──────────────────────────────────────────────
+
+  static Future<Map<String, dynamic>> getInvitations() async {
+    final res = await ApiClient.get('/member/invitations');
+    return res['data'] as Map<String, dynamic>;
   }
 }

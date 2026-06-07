@@ -28,6 +28,7 @@ class AuthRepository {
     required String password,
     required String role,
     String? phone,
+    String? inviteCode,
   }) async {
     final response = await ApiClient.post(
       '/auth/register',
@@ -38,6 +39,8 @@ class AuthRepository {
         'password_confirmation': password,
         'role': role,
         if (phone != null) 'phone': phone,
+        if (inviteCode != null && inviteCode.isNotEmpty)
+          'invite_code': inviteCode.trim().toUpperCase(),
       },
       auth: false,
     );
