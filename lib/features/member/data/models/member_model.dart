@@ -21,6 +21,7 @@ class MemberModel {
   final int level;
   final String? referralCode;
   final int loyaltyPoints;
+  final int referralDiscountCredits;
   final String? avatarUrl;
   final String? qrCode;
 
@@ -43,6 +44,7 @@ class MemberModel {
     this.level = 1,
     this.referralCode,
     this.loyaltyPoints = 0,
+    this.referralDiscountCredits = 0,
     this.avatarUrl,
     this.qrCode,
   });
@@ -72,6 +74,8 @@ class MemberModel {
       level: (member['level'] as num?)?.toInt() ?? 1,
       referralCode: member['referral_code'] as String?,
       loyaltyPoints: (member['loyalty_points'] as num?)?.toInt() ?? 0,
+      referralDiscountCredits:
+          (member['referral_discount_credits'] as num?)?.toInt() ?? 0,
       // user['avatar_url'] covers the member's own dashboard (nested user object)
       // member/json['avatar_url'] covers the flat map from the coach's members list
       avatarUrl: user['avatar_url'] as String? ??
@@ -119,6 +123,7 @@ class MemberModel {
     int? level,
     String? referralCode,
     int? loyaltyPoints,
+    int? referralDiscountCredits,
     String? avatarUrl,
     String? qrCode,
   }) {
@@ -141,6 +146,8 @@ class MemberModel {
       level: level ?? this.level,
       referralCode: referralCode ?? this.referralCode,
       loyaltyPoints: loyaltyPoints ?? this.loyaltyPoints,
+      referralDiscountCredits:
+          referralDiscountCredits ?? this.referralDiscountCredits,
       avatarUrl: avatarUrl ?? this.avatarUrl,
       qrCode: qrCode ?? this.qrCode,
     );

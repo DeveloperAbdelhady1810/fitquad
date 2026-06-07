@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/helpers/app_decoration.dart';
 import '../../../../core/helpers/spacing.dart';
@@ -7,6 +8,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../data/partner_gym_repository.dart';
 import '../models/gym_membership_model.dart';
+import 'guest_passes_screen.dart';
 import 'gym_detail_screen.dart';
 import 'gym_support_screen.dart';
 
@@ -255,12 +257,26 @@ class _MembershipCard extends StatelessWidget {
           ],
 
           vGap(8),
-          TextButton(
-            onPressed: onViewGym,
-            style: TextButton.styleFrom(padding: EdgeInsets.zero),
-            child: Text('View gym →',
-                style: AppTextStyles.font14GreyRegular
-                    .copyWith(color: AppColors.teal, fontSize: 12.sp)),
+          Row(
+            children: [
+              TextButton(
+                onPressed: onViewGym,
+                style: TextButton.styleFrom(padding: EdgeInsets.zero),
+                child: Text('View gym →',
+                    style: AppTextStyles.font14GreyRegular
+                        .copyWith(color: AppColors.teal, fontSize: 12.sp)),
+              ),
+              if (isActive) ...[
+                hGap(16),
+                TextButton(
+                  onPressed: () => context.push(GuestPassesScreen.routeName),
+                  style: TextButton.styleFrom(padding: EdgeInsets.zero),
+                  child: Text('🎟️ Guest passes →',
+                      style: AppTextStyles.font14GreyRegular
+                          .copyWith(color: AppColors.teal, fontSize: 12.sp)),
+                ),
+              ],
+            ],
           ),
         ],
       ),

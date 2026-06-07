@@ -303,6 +303,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     _ReferralCard(
                       code: state.member.referralCode,
                       memberName: state.member.name ?? 'You',
+                      discountCredits: state.member.referralDiscountCredits,
                     ),
                     vGap(20),
                   ],
@@ -869,7 +870,12 @@ class _ThemeTile extends StatelessWidget {
 class _ReferralCard extends StatelessWidget {
   final String? code;
   final String memberName;
-  const _ReferralCard({required this.code, required this.memberName});
+  final int discountCredits;
+  const _ReferralCard({
+    required this.code,
+    required this.memberName,
+    this.discountCredits = 0,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -890,8 +896,30 @@ class _ReferralCard extends StatelessWidget {
           Text('Invite Friends & Earn', style: AppTextStyles.font16WhiteBold),
         ]),
         vGap(8),
-        Text('Share your code. When a friend subscribes, you both get 1 free month!',
+        Text('Share your code. When a friend signs up with it, you instantly earn a 5% platform-fee discount on your next 2 online purchases!',
             style: AppTextStyles.font14GreyRegular.copyWith(fontSize: 12.sp, height: 1.4)),
+        if (discountCredits > 0) ...[
+          vGap(10),
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+            decoration: BoxDecoration(
+              color: AppColors.emerald.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(10.r),
+              border: Border.all(color: AppColors.emerald.withValues(alpha: 0.4)),
+            ),
+            child: Row(children: [
+              Icon(Icons.local_offer_outlined, color: AppColors.emerald, size: 16.r),
+              hGap(8),
+              Expanded(
+                child: Text(
+                  'You have $discountCredits fee-free purchase${discountCredits == 1 ? '' : 's'} waiting — applied automatically at checkout.',
+                  style: AppTextStyles.font14GreyRegular
+                      .copyWith(color: AppColors.emerald, fontSize: 11.sp, height: 1.3),
+                ),
+              ),
+            ]),
+          ),
+        ],
         vGap(14),
         Row(children: [
           Expanded(

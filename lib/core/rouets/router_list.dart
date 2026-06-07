@@ -30,6 +30,7 @@ import 'package:gym_app/features/member/train/widgets/design_manually_screen.dar
 import 'package:gym_app/features/member/partner_gyms/ui/partner_gyms_screen.dart';
 import 'package:gym_app/features/member/partner_gyms/ui/my_gym_memberships_screen.dart';
 import 'package:gym_app/features/member/partner_gyms/ui/gym_classes_screen.dart';
+import 'package:gym_app/features/member/partner_gyms/ui/guest_passes_screen.dart';
 import 'package:gym_app/features/member/invitations/ui/invitations_screen.dart';
 
 import '../../features/auth/ui/views/login_view.dart';
@@ -273,6 +274,11 @@ class RoutesList {
     GoRoute(
       path: InvitationsScreen.routeName,
       builder: (context, state) => const InvitationsScreen(),
+    ),
+
+    GoRoute(
+      path: GuestPassesScreen.routeName,
+      builder: (context, state) => const GuestPassesScreen(),
     ),
 
   ];
