@@ -4,7 +4,10 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:go_router/go_router.dart';
 
+import '../rouets/app_router.dart';
+import '../../features/member/home/ui/widgets/member_chat_screen.dart';
 import 'api_client.dart';
 
 /// Top-level handler for background / terminated messages.
@@ -115,8 +118,6 @@ class PushNotificationService {
 
   // ── Navigation on tap ────────────────────────────────────────────────────────
 
-  static final navigatorKey = GlobalKey<NavigatorState>();
-
   static void _onNotificationTap(RemoteMessage message) {
     _navigate(message.data);
   }
@@ -131,26 +132,27 @@ class PushNotificationService {
 
   static void _navigate(Map<String, dynamic> data) {
     final type = data['type'] as String? ?? '';
-    final ctx  = navigatorKey.currentContext;
+    final ctx  = AppRouter.navigatorKey.currentContext;
     if (ctx == null) return;
 
     switch (type) {
       case 'message':
       case 'plan':
-        // Open chat screen — coachName is included in the data payload
         final coachName = data['coach_name'] as String? ?? 'Coach';
         final coachUrl  = data['coach_avatar'] as String?;
-        Navigator.of(ctx).pushNamed(
-          '/member-chat',
-          arguments: {'coachName': coachName, 'coachAvatarUrl': coachUrl},
-        );
+        Navigator.of(ctx).push(MaterialPageRoute(
+          builder: (_) => MemberChatScreen(
+            coachName: coachName,
+            coachAvatarUrl: coachUrl,
+          ),
+        ));
         break;
       case 'announcement':
       case 'broadcast':
-        Navigator.of(ctx).pushNamed('/notifications');
+        GoRouter.of(ctx).go('/notifications');
         break;
       default:
-        Navigator.of(ctx).pushNamed('/notifications');
+        GoRouter.of(ctx).go('/notifications');
     }
   }
 
