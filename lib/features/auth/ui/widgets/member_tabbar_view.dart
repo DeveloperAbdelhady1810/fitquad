@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:gym_app/core/enums/login.dart';
 import 'package:gym_app/core/theme/app_colors.dart';
@@ -35,14 +36,37 @@ class _MemberTabBarViewState extends State<MemberTabBarView> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _phoneController = TextEditingController();
+  final _inviteCodeController = TextEditingController();
   bool _isLoading = false;
   String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.isSignUp) {
+      _tryAutoFillInviteCode();
+    }
+  }
+
+  Future<void> _tryAutoFillInviteCode() async {
+    try {
+      final data = await Clipboard.getData(Clipboard.kTextPlain);
+      final text = data?.text?.trim() ?? '';
+      // Auto-fill if clipboard contains an 8-char uppercase alphanumeric string
+      if (text.length == 8 && RegExp(r'^[A-Z0-9]+$').hasMatch(text)) {
+        if (mounted) {
+          setState(() => _inviteCodeController.text = text);
+        }
+      }
+    } catch (_) {}
+  }
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
     _phoneController.dispose();
+    _inviteCodeController.dispose();
     super.dispose();
   }
 
@@ -85,6 +109,27 @@ class _MemberTabBarViewState extends State<MemberTabBarView> {
               controller: _phoneController,
               textInputType: TextInputType.phone,
               hintText: '+1 (555) 000-0000',
+            ),
+            vGap(15),
+            Align(
+              alignment: AlignmentDirectional.bottomStart,
+              child: Text('Invite code (optional)',
+                  style: AppTextStyles.font16WhiteBold),
+            ),
+            vGap(4),
+            Align(
+              alignment: AlignmentDirectional.bottomStart,
+              child: Text(
+                'Have a friend\'s invite code? Enter it here.',
+                style: AppTextStyles.font14GreyRegular
+                    .copyWith(fontSize: 12),
+              ),
+            ),
+            vGap(10),
+            CustomTextFormField(
+              controller: _inviteCodeController,
+              textInputType: TextInputType.text,
+              hintText: 'e.g. A3B7F2D1',
             ),
           ],
       
@@ -270,6 +315,9 @@ class _MemberTabBarViewState extends State<MemberTabBarView> {
           password: password,
           role: widget.role.name == 'admin' ? 'member' : widget.role.name,
           phone: _phoneController.text.trim().isEmpty ? null : _phoneController.text.trim(),
+          inviteCode: _inviteCodeController.text.trim().isEmpty
+              ? null
+              : _inviteCodeController.text.trim(),
         );
       } else {
         data = await AuthRepository.login(email: email, password: password);

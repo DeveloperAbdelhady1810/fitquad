@@ -29,6 +29,8 @@ import 'package:gym_app/features/member/profile/ui/widgets/profile_tab.dart';
 import 'package:gym_app/features/member/train/widgets/design_manually_screen.dart';
 import 'package:gym_app/features/member/partner_gyms/ui/partner_gyms_screen.dart';
 import 'package:gym_app/features/member/partner_gyms/ui/my_gym_memberships_screen.dart';
+import 'package:gym_app/features/member/partner_gyms/ui/gym_classes_screen.dart';
+import 'package:gym_app/features/member/invitations/ui/invitations_screen.dart';
 
 import '../../features/auth/ui/views/login_view.dart';
 import '../../features/auth/ui/views/splash_screen.dart';
@@ -261,6 +263,16 @@ class RoutesList {
     GoRoute(
       path: MyGymMembershipsScreen.routeName,
       builder: (context, state) => const MyGymMembershipsScreen(),
+    ),
+
+    GoRoute(
+      path: GymClassesScreen.routeName,
+      builder: (context, state) => const GymClassesScreen(),
+    ),
+
+    GoRoute(
+      path: InvitationsScreen.routeName,
+      builder: (context, state) => const InvitationsScreen(),
     ),
 
   ];
