@@ -380,8 +380,8 @@ class _HomeTabState extends State<HomeTab> {
         onTap: onTap,
         child: Container(
           decoration: AppDecorations.containerDecoration,
-          padding: const EdgeInsets.all(10),
-          height: 100,
+          padding: const EdgeInsets.all(8),
+          height: 110,
           child: ListTile(
             title: Text(
               value.toStringAsFixed(1),
