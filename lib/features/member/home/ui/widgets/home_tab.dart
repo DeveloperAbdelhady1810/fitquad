@@ -146,6 +146,15 @@ class _HomeTabState extends State<HomeTab> {
               vGap(10),
               const StreakCard(),
               vGap(12),
+              // Quick-access banners at the top so they're always visible
+              Row(
+                children: [
+                  Expanded(child: _PartnerGymsBanner()),
+                  hGap(10),
+                  Expanded(child: _CommunityBanner()),
+                ],
+              ),
+              vGap(12),
               if (state is MemberLoaded &&
                   state.member.status == MemberStatus.expiring) ...[
                 _ExpiryBanner(),
@@ -248,12 +257,7 @@ class _HomeTabState extends State<HomeTab> {
                   return const SizedBox.shrink();
                 },
               ),
-              // Partner Gyms shortcut
               vGap(15),
-              _PartnerGymsBanner(),
-              // Community shortcut
-              vGap(12),
-              _CommunityBanner(),
             ],
           ),
         );
@@ -1118,39 +1122,27 @@ class _PartnerGymsBanner extends StatelessWidget {
     return GestureDetector(
       onTap: () => context.push(PartnerGymsScreen.routeName),
       child: Container(
-        width: double.infinity,
-        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 14.h),
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [
-              AppColors.teal.withOpacity(0.25),
-              AppColors.secondary,
-            ],
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
+            colors: [AppColors.teal.withOpacity(0.3), AppColors.secondary],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
           borderRadius: BorderRadius.circular(14.r),
           border: Border.all(color: AppColors.teal.withOpacity(0.35)),
         ),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('🏋️', style: TextStyle(fontSize: 24.sp)),
-            hGap(12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Partner Gyms',
-                      style: AppTextStyles.font14WhiteRegular
-                          .copyWith(fontWeight: FontWeight.w600)),
-                  Text('Browse & subscribe to gyms near you',
-                      style: AppTextStyles.font14GreyRegular
-                          .copyWith(fontSize: 11.sp)),
-                ],
-              ),
-            ),
-            Icon(Icons.arrow_forward_ios,
-                color: AppColors.teal, size: 14.r),
+            Text('🏋️', style: TextStyle(fontSize: 22.sp)),
+            vGap(6),
+            Text('Gyms',
+                style: AppTextStyles.font14WhiteRegular
+                    .copyWith(fontWeight: FontWeight.w700)),
+            Text('Browse & join',
+                style: AppTextStyles.font14GreyRegular
+                    .copyWith(fontSize: 10.sp)),
           ],
         ),
       ),
@@ -1164,37 +1156,27 @@ class _CommunityBanner extends StatelessWidget {
     return GestureDetector(
       onTap: () => context.push(CommunityFeedScreen.routeName),
       child: Container(
-        width: double.infinity,
-        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 14.h),
         decoration: BoxDecoration(
           gradient: const LinearGradient(
-            colors: [Color(0xFF1B2A6B), Color(0xFF2E3D99)],
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
+            colors: [Color(0xFF1B2A6B), Color(0xFF0F172A)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
           borderRadius: BorderRadius.circular(14.r),
-          border: Border.all(
-              color: AppColors.blue.withValues(alpha: 0.3)),
+          border: Border.all(color: AppColors.blue.withValues(alpha: 0.3)),
         ),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('👥', style: TextStyle(fontSize: 24.sp)),
-            hGap(12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(S.of(context).community_feed,
-                      style: AppTextStyles.font14WhiteRegular
-                          .copyWith(fontWeight: FontWeight.w600)),
-                  Text(S.of(context).share_wins,
-                      style: AppTextStyles.font14GreyRegular
-                          .copyWith(fontSize: 11.sp)),
-                ],
-              ),
-            ),
-            Icon(Icons.arrow_forward_ios,
-                size: 16.r, color: AppColors.grey),
+            Text('👥', style: TextStyle(fontSize: 22.sp)),
+            vGap(6),
+            Text(S.of(context).community_feed,
+                style: AppTextStyles.font14WhiteRegular
+                    .copyWith(fontWeight: FontWeight.w700)),
+            Text(S.of(context).share_wins,
+                style: AppTextStyles.font14GreyRegular
+                    .copyWith(fontSize: 10.sp)),
           ],
         ),
       ),

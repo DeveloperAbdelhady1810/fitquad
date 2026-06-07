@@ -27,8 +27,8 @@ class CustomTabBar extends StatelessWidget {
         dividerColor: Colors.transparent,
         /// /// /// /// /// /// /// /// ///
         indicatorPadding: EdgeInsets.all(-10),
-        unselectedLabelStyle: AppTextStyles.font16WhiteRegular,
-        labelStyle: AppTextStyles.font16TealRegular,
+        unselectedLabelStyle: AppTextStyles.font16WhiteRegular.copyWith(fontSize: 12),
+        labelStyle: AppTextStyles.font16TealRegular.copyWith(fontSize: 12),
 
         tabAlignment:isScrollable? TabAlignment.center: TabAlignment.fill,
         indicatorSize: TabBarIndicatorSize.tab,

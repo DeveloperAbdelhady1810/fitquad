@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import 'package:gym_app/core/helpers/app_decoration.dart';
 import 'package:gym_app/core/helpers/spacing.dart';
 import 'package:gym_app/core/theme/app_colors.dart';
@@ -16,13 +15,15 @@ import 'analysis_tab_bar_view.dart';
 Future<void> showWeightDialog(BuildContext context) async {
   if (!context.mounted) return;
 
-  showDialog(
+  final cubit = context.read<MemberCubit>();
+
+  await showDialog(
     context: context,
     builder: (dialogContext) {
       final s = S.of(context);
 
       return BlocProvider.value(
-        value: context.read<MemberCubit>(),
+        value: cubit,
         child: Dialog(
           backgroundColor: Colors.transparent,
           insetPadding: const EdgeInsets.all(16),
@@ -37,48 +38,33 @@ Future<void> showWeightDialog(BuildContext context) async {
               child: Column(
                 children: [
                   ListTile(
-                    leading: Icon(Icons.balance, color: AppColors.emerald),
-                    title: Text(
-                      s.weight_tracker,
-                      style: AppTextStyles.font16WhiteBold,
-                    ),
-                    subtitle: Text(
-                      s.track_progress,
-                      style: AppTextStyles.font14GreyRegular,
-                    ),
+                    leading: const Icon(Icons.balance, color: AppColors.emerald),
+                    title: Text(s.weight_tracker, style: AppTextStyles.font16WhiteBold),
+                    subtitle: Text(s.track_progress, style: AppTextStyles.font14GreyRegular),
                     trailing: IconButton(
-                      onPressed: () => context.pop(),
-                      icon: Icon(Icons.close, color: AppColors.grey),
+                      onPressed: () => Navigator.of(dialogContext).pop(),
+                      icon: const Icon(Icons.close, color: AppColors.grey),
                     ),
                   ),
-
                   const Divider(),
                   vGap(10),
-
                   CustomTabBar(
-                    tabs: [
-                      Text(s.log_weight),
-                      Text(s.analysis_projection),
-                    ],
+                    tabs: [Text(s.log_weight), Text(s.analysis_projection)],
                   ),
-
                   vGap(10),
-
-                  Expanded(
+                  const Expanded(
                     child: TabBarView(
-                      children: [
-                        WeightTabBarView(),
-                        AnalysisTabBarView(),
-                      ],
+                      children: [WeightTabBarView(), AnalysisTabBarView()],
                     ),
                   ),
                   const Divider(),
-                  CustomButton(text: s.save_changes, onPressed: () {
-                    context.read<MemberCubit>().updateWeight;
-                    context.pop();
-                  }
-
-                  )
+                  CustomButton(
+                    text: s.save_changes,
+                    onPressed: () async {
+                      await cubit.saveDashboardToApi();
+                      if (dialogContext.mounted) Navigator.of(dialogContext).pop();
+                    },
+                  ),
                 ],
               ),
             ),
@@ -87,5 +73,4 @@ Future<void> showWeightDialog(BuildContext context) async {
       );
     },
   );
-
 }

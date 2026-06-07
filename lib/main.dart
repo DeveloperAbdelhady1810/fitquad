@@ -4,8 +4,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gym_app/core/cubit/health/health_cubit.dart';
+import 'package:gym_app/core/cubit/theme/theme_cubit.dart';
 import 'package:gym_app/core/services/push_notification_service.dart';
 import 'package:gym_app/core/services/reminder_service.dart';
+import 'package:gym_app/core/theme/theme_config.dart';
 import 'package:gym_app/features/member/home/manager/food_cubit.dart';
 import 'package:gym_app/features/member/home/manager/member_cubit.dart';
 import 'core/cubit/language/language_cubit.dart';
@@ -31,6 +33,7 @@ class MyApp extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider<LanguageCubit>(create: (_) => LanguageCubit()),
+        BlocProvider<ThemeCubit>(create: (_) => ThemeCubit()),
         BlocProvider(create: (_) => BottomNavBarCubit()),
         BlocProvider(create: (_) => CartCubit()),
         BlocProvider(create: (_) => FoodCubit()),
@@ -49,11 +52,12 @@ class MyApp extends StatelessWidget {
               bool isArabic = cubit.isArabic ?? false;
               if (state is LanguageChanged) isArabic = state.isArabic;
 
-              return MaterialApp.router(
+              return BlocBuilder<ThemeCubit, ThemeConfig>(
+                builder: (context, themeConfig) => MaterialApp.router(
                 routerConfig: AppRouter.getRouter(),
                 debugShowCheckedModeBanner: false,
                 scaffoldMessengerKey: GlobalKey<ScaffoldMessengerState>(),
-                theme: ThemeData.light(),
+                theme: themeConfig.toMaterialTheme(),
                 locale: isArabic ? const Locale('ar') : const Locale('en'),
                 supportedLocales: S.delegate.supportedLocales,
                 localizationsDelegates: const [
@@ -67,7 +71,7 @@ class MyApp extends StatelessWidget {
                       .copyWith(textScaler: TextScaler.linear(1.0)),
                   child: widget!,
                 ),
-              );
+              ));
             },
           );
         },

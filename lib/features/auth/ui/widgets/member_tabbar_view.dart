@@ -122,7 +122,116 @@ class _MemberTabBarViewState extends State<MemberTabBarView> {
               ),
             ],
           ),
+          if (widget.role == LoginRole.member) ...[
+            vGap(4),
+            TextButton.icon(
+              onPressed: () => _showMembershipIdDialog(context),
+              icon: Icon(Icons.qr_code_scanner, size: 16, color: AppColors.teal),
+              label: Text(
+                'Already have a gym membership ID?',
+                style: AppTextStyles.font14GreyRegular
+                    .copyWith(color: AppColors.teal, fontSize: 12),
+              ),
+            ),
+          ],
         ],
+      ),
+    );
+  }
+
+  Future<void> _showMembershipIdDialog(BuildContext context) async {
+    final ctrl = TextEditingController();
+    bool loading = false;
+    String? error;
+
+    await showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setLocal) => AlertDialog(
+          backgroundColor: const Color(0xFF0F172A),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Row(
+            children: [
+              const Icon(Icons.qr_code_scanner, color: Color(0xFF00a689), size: 22),
+              const SizedBox(width: 10),
+              const Expanded(
+                child: Text('Gym Membership ID',
+                    style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Enter the membership ID provided by your gym. This links your account to your existing membership.',
+                style: TextStyle(color: Color(0xFFe8c1bb), fontSize: 13),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: ctrl,
+                style: const TextStyle(color: Colors.white),
+                textCapitalization: TextCapitalization.characters,
+                decoration: InputDecoration(
+                  hintText: 'e.g. FQ-2024-001234',
+                  hintStyle: const TextStyle(color: Colors.grey),
+                  filled: true,
+                  fillColor: const Color(0xFF020618),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: Color(0xFF00a689)),
+                  ),
+                ),
+              ),
+              if (error != null) ...[
+                const SizedBox(height: 8),
+                Text(error!, style: const TextStyle(color: Colors.red, fontSize: 12)),
+              ],
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF00a689)),
+              onPressed: loading
+                  ? null
+                  : () async {
+                      final id = ctrl.text.trim();
+                      if (id.isEmpty) return;
+                      setLocal(() { loading = true; error = null; });
+                      try {
+                        await ApiClient.put('/auth/profile', {'membership_code': id});
+                        if (ctx.mounted) Navigator.pop(ctx);
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Membership linked successfully!'),
+                              backgroundColor: Color(0xFF00a689),
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                        setLocal(() {
+                          loading = false;
+                          error = e.toString().replaceFirst('Exception: ', '');
+                        });
+                      }
+                    },
+              child: loading
+                  ? const SizedBox(width: 16, height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  : const Text('Link Membership'),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import 'package:gym_app/features/member/home/ui/widgets/water_circular_slider.dart';
 
 import '../../../../../core/helpers/app_decoration.dart';
@@ -15,13 +14,15 @@ import '../../manager/member_state.dart';
 Future<void> showWaterDialog(BuildContext context) async {
   if (!context.mounted) return;
 
-  showDialog(
+  final cubit = context.read<MemberCubit>();
+
+  await showDialog(
     context: context,
     builder: (dialogContext) {
       final s = S.of(context);
 
       return BlocProvider.value(
-        value: context.read<MemberCubit>(),
+        value: cubit,
         child: Dialog(
           backgroundColor: Colors.transparent,
           insetPadding: const EdgeInsets.all(16),
@@ -32,47 +33,35 @@ Future<void> showWaterDialog(BuildContext context) async {
               color: AppColors.primary,
             ),
             child: BlocBuilder<MemberCubit, MemberState>(
-              builder: (context, state) {
-
+              builder: (_, state) {
                 if (state is MemberLoading) {
-                  return const CircularProgressIndicator();
+                  return const Center(child: CircularProgressIndicator(color: AppColors.teal));
                 }
 
-                if (state is MemberLoaded) {
+                if (state is MemberLoaded || state is MemberUpdated) {
                   return Column(
                     children: [
                       ListTile(
-                        leading: Icon(
-                          Icons.water_drop_outlined,
-                          color: AppColors.purple,
-                        ),
-                        title: Text(
-                          s.hydration,
-                          style: AppTextStyles.font16WhiteBold,
-                        ),
-                        subtitle: Text(
-                          s.hydration_description,
-                          style: AppTextStyles.font14GreyRegular,
-                        ),
+                        leading: const Icon(Icons.water_drop_outlined, color: AppColors.purple),
+                        title: Text(s.hydration, style: AppTextStyles.font16WhiteBold),
+                        subtitle: Text(s.hydration_description, style: AppTextStyles.font14GreyRegular),
                         trailing: IconButton(
-                          onPressed: () => context.pop(),
-                          icon: Icon(Icons.close, color: AppColors.grey),
+                          onPressed: () => Navigator.of(dialogContext).pop(),
+                          icon: const Icon(Icons.close, color: AppColors.grey),
                         ),
                       ),
-
                       const Divider(),
-
-
                       vGap(10),
-                      WaterSlider(),
+                      const WaterSlider(),
                       vGap(10),
-                      Text(s.hydration_daily_goal, style: AppTextStyles.font16GreyRegular,) ,
+                      Text(s.hydration_daily_goal, style: AppTextStyles.font16GreyRegular),
                       const Spacer(),
                       const Divider(),
                       CustomButton(
                         text: s.save_changes,
-                        onPressed: () {
-                          context.pop();
+                        onPressed: () async {
+                          await cubit.saveDashboardToApi();
+                          if (dialogContext.mounted) Navigator.of(dialogContext).pop();
                         },
                       ),
                     ],

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../../../core/helpers/app_decoration.dart';
 import '../../../../../core/helpers/spacing.dart';
@@ -15,12 +14,13 @@ import '../../manager/member_state.dart';
 Future<void> showSleepDialog(BuildContext context) async {
   if (!context.mounted) return;
 
-  showDialog(
+  final cubit = context.read<MemberCubit>();
+
+  await showDialog(
     context: context,
     builder: (dialogContext) {
-
       return BlocProvider.value(
-        value: context.read<MemberCubit>(),
+        value: cubit,
         child: Dialog(
           backgroundColor: Colors.transparent,
           insetPadding: const EdgeInsets.all(16),
@@ -31,35 +31,25 @@ Future<void> showSleepDialog(BuildContext context) async {
               color: AppColors.primary,
             ),
             child: BlocBuilder<MemberCubit, MemberState>(
-              builder: (context, state) {
+              builder: (_, state) {
                 final s = S.of(context);
 
                 if (state is MemberLoading) {
-                  return const CircularProgressIndicator();
+                  return const Center(child: CircularProgressIndicator(color: AppColors.teal));
                 }
 
                 if (state is MemberLoaded) {
                   return Column(
                     children: [
                       ListTile(
-                        leading: Icon(
-                          Icons.nightlight_outlined,
-                          color: AppColors.emerald,
-                        ),
-                        title: Text(
-                          s.weight_tracker,
-                          style: AppTextStyles.font16WhiteBold,
-                        ),
-                        subtitle: Text(
-                          s.track_progress,
-                          style: AppTextStyles.font14GreyRegular,
-                        ),
+                        leading: const Icon(Icons.nightlight_outlined, color: AppColors.emerald),
+                        title: Text('Sleep Tracker', style: AppTextStyles.font16WhiteBold),
+                        subtitle: Text(s.track_progress, style: AppTextStyles.font14GreyRegular),
                         trailing: IconButton(
-                          onPressed: () => context.pop(),
-                          icon: Icon(Icons.close, color: AppColors.grey),
+                          onPressed: () => Navigator.of(dialogContext).pop(),
+                          icon: const Icon(Icons.close, color: AppColors.grey),
                         ),
                       ),
-
                       const Divider(),
                       vGap(10),
                       Container(
@@ -75,20 +65,15 @@ Future<void> showSleepDialog(BuildContext context) async {
                                 style: AppTextStyles.font16WhiteBold.copyWith(fontSize: 20.sp),
                               ),
                               hGap(5),
-                              Text(
-                                s.hrs,
-                                style: AppTextStyles.font14GreyRegular,
-                              ),
+                              Text(s.hrs, style: AppTextStyles.font14GreyRegular),
                             ],
                           ),
                           subtitle: Center(
                             child: Text(
-                              state.member.sleepHrs! < 6.5
+                              (state.member.sleepHrs ?? 0) < 6.5
                                   ? s.below_recommended_amount
                                   : s.optimal_recovery_zone,
-                              style: AppTextStyles.font16GreyRegular.copyWith(
-                                color: Colors.blue,
-                              ),
+                              style: AppTextStyles.font16GreyRegular.copyWith(color: AppColors.blue),
                             ),
                           ),
                         ),
@@ -97,18 +82,9 @@ Future<void> showSleepDialog(BuildContext context) async {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            '4 ${s.hrs}',
-                            style: AppTextStyles.font16WhiteRegular,
-                          ),
-                          Text(
-                            '8 ${s.hrs}',
-                            style: AppTextStyles.font16WhiteRegular,
-                          ),
-                          Text(
-                            '12 ${s.hrs}',
-                            style: AppTextStyles.font16WhiteRegular,
-                          ),
+                          Text('4 ${s.hrs}', style: AppTextStyles.font16WhiteRegular),
+                          Text('8 ${s.hrs}', style: AppTextStyles.font16WhiteRegular),
+                          Text('12 ${s.hrs}', style: AppTextStyles.font16WhiteRegular),
                         ],
                       ),
                       Slider(
@@ -117,29 +93,20 @@ Future<void> showSleepDialog(BuildContext context) async {
                         max: 12,
                         divisions: 16,
                         value: (state.member.sleepHrs ?? 8).clamp(4, 12),
-                        onChanged: (value) {
-                          context.read<MemberCubit>().updateSleepHrs(value);
-                        },
+                        onChanged: (value) => cubit.updateSleepHrs(value),
                       ),
                       vGap(10),
                       Container(
                         decoration: AppDecorations.containerDecoration,
                         child: ListTile(
-                          leading: Icon(
-                            Icons.nightlight_outlined,
-                            color: AppColors.babyBlue,
-                          ),
+                          leading: const Icon(Icons.nightlight_outlined, color: AppColors.babyBlue),
                           title: Text(
                             s.why_it_matters,
-                            style: AppTextStyles.font16WhiteBold.copyWith(
-                              color: AppColors.babyBlue,
-                            ),
+                            style: AppTextStyles.font16WhiteBold.copyWith(color: AppColors.babyBlue),
                           ),
                           subtitle: Text(
                             s.sleep_importance_description,
-                            style: AppTextStyles.font14GreyRegular.copyWith(
-                              color: AppColors.babyBlue,
-                            ),
+                            style: AppTextStyles.font14GreyRegular.copyWith(color: AppColors.babyBlue),
                           ),
                         ),
                       ),
@@ -147,8 +114,9 @@ Future<void> showSleepDialog(BuildContext context) async {
                       const Divider(),
                       CustomButton(
                         text: s.save_changes,
-                        onPressed: () {
-                          context.pop();
+                        onPressed: () async {
+                          await cubit.saveDashboardToApi();
+                          if (dialogContext.mounted) Navigator.of(dialogContext).pop();
                         },
                       ),
                     ],

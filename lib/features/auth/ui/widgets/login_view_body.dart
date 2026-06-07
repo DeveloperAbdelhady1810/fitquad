@@ -180,10 +180,19 @@ class _LoginViewBodyState extends State<LoginViewBody> {
 
   Widget _buildTab({required String text, required IconData icon}) {
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 5),
+      margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 2),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
-        children: [Icon(icon), vGap(5), Text(text)],
+        children: [
+          Icon(icon, size: 20),
+          vGap(4),
+          Text(
+            text,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: 11),
+          ),
+        ],
       ),
     );
   }

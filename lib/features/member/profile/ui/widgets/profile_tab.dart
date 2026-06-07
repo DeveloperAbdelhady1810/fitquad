@@ -20,6 +20,8 @@ import 'package:gym_app/features/member/qr/qr_screen.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../../../core/cubit/language/language_cubit.dart';
+import '../../../../../core/cubit/theme/theme_cubit.dart';
+import '../../../../../core/theme/theme_config.dart';
 import '../../../../../generated/l10n.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -281,6 +283,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           title: 'Security',
                           onTap: () => _showChangePassword(context),
                         ),
+                        const Divider(),
+                        _ThemeTile(),
                       ],
                     ),
                   ),
@@ -761,6 +765,100 @@ class _LoyaltyCard extends StatelessWidget {
                 fontSize: 10.sp, color: const Color(0xFF2ECC71))),
           ]),
         ],
+      ),
+    );
+  }
+}
+
+class _ThemeTile extends StatelessWidget {
+  const _ThemeTile();
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<ThemeCubit, ThemeConfig>(
+      builder: (context, current) => ListTile(
+        dense: true,
+        contentPadding: EdgeInsets.zero,
+        leading: Icon(Icons.palette_outlined, color: current.accent),
+        title: Text('App Theme', style: AppTextStyles.font16WhiteRegular),
+        subtitle: Text('${current.emoji} ${current.name}',
+            style: AppTextStyles.font14GreyRegular.copyWith(fontSize: 11.sp)),
+        trailing: Icon(Icons.arrow_forward_ios_outlined, color: AppColors.grey, size: 14),
+        onTap: () => _showThemePicker(context, current),
+      ),
+    );
+  }
+
+  void _showThemePicker(BuildContext context, ThemeConfig current) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.secondary,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Choose Theme', style: AppTextStyles.font16WhiteBold),
+            vGap(20),
+            GridView.count(
+              crossAxisCount: 2,
+              shrinkWrap: true,
+              mainAxisSpacing: 12,
+              crossAxisSpacing: 12,
+              childAspectRatio: 2.8,
+              physics: const NeverScrollableScrollPhysics(),
+              children: ThemeConfig.presets.map((theme) {
+                final selected = theme.id == current.id;
+                return GestureDetector(
+                  onTap: () {
+                    context.read<ThemeCubit>().setTheme(theme);
+                    Navigator.pop(ctx);
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          theme.gradientStart.withValues(alpha: selected ? 0.4 : 0.15),
+                          theme.gradientEnd.withValues(alpha: selected ? 0.25 : 0.08),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: selected ? theme.accent : theme.accent.withValues(alpha: 0.3),
+                        width: selected ? 2 : 1,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(theme.emoji, style: const TextStyle(fontSize: 20)),
+                        const SizedBox(width: 8),
+                        Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(theme.name,
+                                style: AppTextStyles.font14WhiteRegular
+                                    .copyWith(color: theme.accent, fontWeight: FontWeight.w600)),
+                            if (selected)
+                              Text('Active',
+                                  style: AppTextStyles.font14GreyRegular
+                                      .copyWith(fontSize: 10)),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+            vGap(8),
+          ],
+        ),
       ),
     );
   }
