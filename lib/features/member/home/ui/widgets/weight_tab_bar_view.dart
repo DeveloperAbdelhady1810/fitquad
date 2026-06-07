@@ -42,7 +42,7 @@ class WeightTabBarView extends StatelessWidget {
                 padding: const EdgeInsets.all(20),
                 child: Center(
                   child: Text(
-                    '${state.member.weight!.toStringAsFixed(1)} KG',
+                    '${(state.member.weight ?? 70.0).toStringAsFixed(1)} KG',
                     style: AppTextStyles.font16WhiteBold.copyWith(
                       fontSize: 24.sp,
                     ),
