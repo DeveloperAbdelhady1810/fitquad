@@ -68,7 +68,8 @@ class _GymDetailScreenState extends State<GymDetailScreen> {
     try {
       final data = await PartnerGymRepository.initiateGymPayment(plan.id);
       final paymentUrl = data['payment_url'] as String;
-      final total = (data['amount'] as num).toDouble();
+      final total = (data['total_amount'] as num?)?.toDouble() ??
+          (data['amount'] as num).toDouble();
       final gymName = data['gym_name'] as String? ?? _gym!.name;
 
       if (!mounted) return;
@@ -112,7 +113,14 @@ class _GymDetailScreenState extends State<GymDetailScreen> {
             Text('Subscribe to ${plan.name}',
                 style: AppTextStyles.font16WhiteBold),
             vGap(16),
-            _InfoRow(label: 'Price', value: '${plan.price.toStringAsFixed(0)} EGP'),
+            _InfoRow(label: 'Plan price', value: '${plan.price.toStringAsFixed(0)} EGP'),
+            _InfoRow(label: 'Online processing fee', value: '5 EGP'),
+            Divider(color: AppColors.grey.withOpacity(0.2), height: 20.h),
+            _InfoRow(
+              label: 'Total',
+              value: '${(plan.price + 5).toStringAsFixed(0)} EGP',
+              highlight: true,
+            ),
             _InfoRow(label: 'Duration', value: '${plan.durationDays} days'),
             _InfoRow(label: 'Max freeze', value: '${plan.maxFreezeDays} days'),
             if (plan.features.isNotEmpty) ...[
@@ -138,7 +146,8 @@ class _GymDetailScreenState extends State<GymDetailScreen> {
                   _startPayment(plan);
                 },
                 icon: Icon(Icons.payment, size: 18.r),
-                label: Text('Pay ${plan.price.toStringAsFixed(0)} EGP via Card',
+                label: Text(
+                    'Pay ${(plan.price + 5).toStringAsFixed(0)} EGP via Card',
                     style: AppTextStyles.font16WhiteBold),
                 style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.teal,
@@ -671,7 +680,12 @@ class _InfoRow extends StatelessWidget {
   final IconData? icon;
   final String label;
   final String value;
-  const _InfoRow({this.icon, required this.label, required this.value});
+  final bool highlight;
+  const _InfoRow(
+      {this.icon,
+      required this.label,
+      required this.value,
+      this.highlight = false});
 
   @override
   Widget build(BuildContext context) => Padding(
@@ -683,12 +697,18 @@ class _InfoRow extends StatelessWidget {
               hGap(6),
             ],
             Text('$label: ',
-                style:
-                    AppTextStyles.font14GreyRegular.copyWith(fontSize: 12.sp)),
+                style: highlight
+                    ? AppTextStyles.font14GreyRegular
+                        .copyWith(fontSize: 13.sp, color: AppColors.teal)
+                    : AppTextStyles.font14GreyRegular
+                        .copyWith(fontSize: 12.sp)),
             Expanded(
               child: Text(value,
-                  style: AppTextStyles.font14WhiteRegular
-                      .copyWith(fontSize: 12.sp),
+                  style: highlight
+                      ? AppTextStyles.font16WhiteBold
+                          .copyWith(fontSize: 13.sp, color: AppColors.teal)
+                      : AppTextStyles.font14WhiteRegular
+                          .copyWith(fontSize: 12.sp),
                   overflow: TextOverflow.ellipsis),
             ),
           ],
