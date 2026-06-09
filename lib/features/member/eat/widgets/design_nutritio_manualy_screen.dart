@@ -9,6 +9,7 @@ import '../../../../core/helpers/spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/custom_text_feild.dart';
 import '../../../../generated/l10n.dart';
+import '../../data/repositories/member_repository.dart';
 import 'nutrition_plan_screen.dart';
 
 class DesignNutritionManuallyScreen extends  StatefulWidget {
@@ -36,6 +37,7 @@ class _DesignNutritionManuallyScreenState extends State<DesignNutritionManuallyS
     controller.dispose();
   }
   String? selectedDiet;
+  bool _saving = false;
 
   @override
   Widget build(BuildContext context) {
@@ -76,7 +78,43 @@ class _DesignNutritionManuallyScreenState extends State<DesignNutritionManuallyS
           },
         ),
             vGap(10),
-            CustomButton(text: s.next_meals, onPressed: () => context.push(NutritionPlanScreen.routeName),)
+            CustomButton(
+              text: _saving ? 'Saving…' : s.next_meals,
+              onPressed: _saving
+                  ? null
+                  : () async {
+                      final calories = int.tryParse(controller.text.trim()) ?? 2000;
+                      final diet = selectedDiet ?? 'Balanced';
+                      setState(() => _saving = true);
+                      try {
+                        await MemberRepository.saveNutritionPlan(
+                          title: '$diet Plan',
+                          dailyCalories: calories,
+                          dietType: diet,
+                        );
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Nutrition plan saved!'),
+                              backgroundColor: Color(0xFF00a689),
+                            ),
+                          );
+                          context.push(NutritionPlanScreen.routeName);
+                        }
+                      } catch (e) {
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(e.toString()),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      } finally {
+                        if (mounted) setState(() => _saving = false);
+                      }
+                    },
+            )
           ],
         ),
       ),

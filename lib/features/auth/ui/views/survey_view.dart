@@ -82,19 +82,29 @@ class _OnboardingViewState extends State<OnboardingView> {
 
                     Expanded(
                       flex: currentStep == 0 ? 1 : 2,
-                      child: CustomButton(
-                        iconData: Icons.arrow_forward_ios_outlined,
-                        text: currentStep == 3 ? s.generate_plan : s.continu,
-                        onPressed: () async {
-                          if (currentStep < 3) {
-                            _controller.nextPage(
-                              duration: const Duration(milliseconds: 300),
-                              curve: Curves.easeInOut,
-                            );
-                          } else {
-                            await context.read<OnboardingCubit>().submit();
-                            if (context.mounted) context.go(LoadingScreen.routeName);
-                          }
+                      child: BlocBuilder<OnboardingCubit, OnboardingState>(
+                        builder: (context, state) {
+                          // On the goal step, require at least one goal selected
+                          final goalsEmpty = currentStep == 0 &&
+                              (state is! OnboardingChanged || state.goals.isEmpty);
+
+                          return CustomButton(
+                            iconData: Icons.arrow_forward_ios_outlined,
+                            text: currentStep == 3 ? s.generate_plan : s.continu,
+                            onPressed: goalsEmpty
+                                ? null
+                                : () async {
+                                    if (currentStep < 3) {
+                                      _controller.nextPage(
+                                        duration: const Duration(milliseconds: 300),
+                                        curve: Curves.easeInOut,
+                                      );
+                                    } else {
+                                      await context.read<OnboardingCubit>().submit();
+                                      if (context.mounted) context.go(LoadingScreen.routeName);
+                                    }
+                                  },
+                          );
                         },
                       ),
                     ),

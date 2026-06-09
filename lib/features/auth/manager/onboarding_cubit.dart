@@ -7,12 +7,17 @@ part 'onboarding_state.dart';
 class OnboardingCubit extends Cubit<OnboardingState> {
   OnboardingCubit() : super(OnboardingInitial());
 
-  GoalType? _goal;
+  final Set<GoalType> _goals = {};
   WorkoutDuration _duration = WorkoutDuration.min45;
   AvailabilityType _availability = AvailabilityType.fourDays;
 
   void setGoal(GoalType value) {
-    _goal = value;
+    // Toggle: add if not present, remove if already selected
+    if (_goals.contains(value)) {
+      _goals.remove(value);
+    } else {
+      _goals.add(value);
+    }
     _emit();
   }
 
@@ -28,10 +33,12 @@ class OnboardingCubit extends Cubit<OnboardingState> {
   }
 
   Future<void> submit() async {
-    if (_goal == null) return;
+    if (_goals.isEmpty) return;
     try {
+      final goalsList = _goals.map(_goalToApiValue).toList();
       await ApiClient.post('/auth/profile', {
-        'goal': _goalToApiValue(_goal!),
+        'goal':  goalsList.first,   // keep legacy single-goal for backend compat
+        'goals': goalsList,         // new multi-goal array
         'availability_days': _availability.days,
         'workout_duration_mins': _duration.minutes,
       });
@@ -40,23 +47,23 @@ class OnboardingCubit extends Cubit<OnboardingState> {
 
   static String _goalToApiValue(GoalType goal) {
     switch (goal) {
-      case GoalType.loseWeight: return 'loss';
+      case GoalType.loseWeight:  return 'loss';
       case GoalType.buildMuscle: return 'gain';
-      case GoalType.endurance: return 'fit';
+      case GoalType.endurance:   return 'fit';
       case GoalType.flexibility: return 'maintain';
     }
   }
 
   void _emit() {
     emit(OnboardingChanged(
-      goal: _goal,
+      goals: Set.from(_goals),
       duration: _duration,
       availability: _availability,
     ));
   }
 
   OnboardingChanged get currentSummary => OnboardingChanged(
-        goal: _goal,
+        goals: Set.from(_goals),
         duration: _duration,
         availability: _availability,
       );

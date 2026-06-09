@@ -16,53 +16,107 @@ class StepGoal extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<OnboardingCubit, OnboardingState>(
       builder: (context, state) {
-        final s= S.of(context);
-
-        final selected = state is OnboardingChanged ? state.goal : null;
+        final s = S.of(context);
+        final selectedGoals = state is OnboardingChanged ? state.goals : const <GoalType>{};
 
         return Padding(
           padding: const EdgeInsets.only(top: 20, right: 10, left: 10, bottom: 10),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              CircleAvatar(
-                backgroundColor: AppColors.emerald.withValues(alpha: 0.3),
-                radius: 25.r,
-                child: Icon(Icons.change_circle_outlined, color: AppColors.emerald, size: 25.sp,)
+              Center(
+                child: CircleAvatar(
+                  backgroundColor: AppColors.emerald.withValues(alpha: 0.3),
+                  radius: 25.r,
+                  child: Icon(Icons.change_circle_outlined, color: AppColors.emerald, size: 25.sp),
+                ),
               ),
               vGap(10),
-              Text(s.main_goal_question , style: AppTextStyles.font16WhiteBold,),
-              vGap(10),
-              Text(s.main_goal_description , style: AppTextStyles.font14GreyRegular,),
+              Center(child: Text(s.main_goal_question, style: AppTextStyles.font16WhiteBold)),
+              vGap(6),
+              Center(
+                child: Text(
+                  s.main_goal_description,
+                  style: AppTextStyles.font14GreyRegular,
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              vGap(6),
+              Center(
+                child: Text(
+                  'You can select multiple goals',
+                  style: AppTextStyles.font14GreyRegular.copyWith(
+                    color: AppColors.teal,
+                    fontSize: 12.sp,
+                  ),
+                ),
+              ),
               vGap(15),
               ...GoalType.values.map((goal) {
-                return Container(
-                  margin: EdgeInsets.all(5),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(14.r),
-                    color: AppColors.secondary,
-                  ),
-                  padding: EdgeInsets.all(16),
-                  child: ListTile(
-                    title: Text(
-                      goal.label(context),
-                      style: AppTextStyles.font16WhiteRegular,
+                final isSelected = selectedGoals.contains(goal);
+                return GestureDetector(
+                  onTap: () => context.read<OnboardingCubit>().setGoal(goal),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    margin: EdgeInsets.symmetric(vertical: 5.h),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(14.r),
+                      color: isSelected
+                          ? AppColors.teal.withValues(alpha: 0.12)
+                          : AppColors.secondary,
+                      border: Border.all(
+                        color: isSelected
+                            ? AppColors.teal
+                            : Colors.grey.withValues(alpha: 0.3),
+                        width: isSelected ? 1.5 : 1,
+                      ),
                     ),
-                    subtitle: Text(
-                      goal.subTitle(context),
-                      style: AppTextStyles.font14GreyRegular,
+                    padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+                    child: Row(
+                      children: [
+                        // Checkbox
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 180),
+                          width: 22.r,
+                          height: 22.r,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.rectangle,
+                            borderRadius: BorderRadius.circular(6.r),
+                            color: isSelected ? AppColors.teal : Colors.transparent,
+                            border: Border.all(
+                              color: isSelected ? AppColors.teal : AppColors.grey,
+                              width: 2,
+                            ),
+                          ),
+                          child: isSelected
+                              ? Icon(Icons.check, color: Colors.white, size: 14.r)
+                              : null,
+                        ),
+                        hGap(14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                goal.label(context),
+                                style: AppTextStyles.font16WhiteRegular.copyWith(
+                                  color: isSelected ? AppColors.white : AppColors.white,
+                                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                                ),
+                              ),
+                              vGap(2),
+                              Text(
+                                goal.subTitle(context),
+                                style: AppTextStyles.font14GreyRegular,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                    trailing: selected == goal
-                        ? Icon(Icons.circle, color: AppColors.white)
-                        : Icon(Icons.circle_outlined, color: AppColors.grey),
-                    onTap: () {
-                      context.read<OnboardingCubit>().setGoal(goal);
-                    },
                   ),
                 );
               }),
-
-
-
             ],
           ),
         );

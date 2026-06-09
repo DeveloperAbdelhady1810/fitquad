@@ -83,7 +83,12 @@ class _DesignPlanManuallyScreenState extends State<DesignPlanManuallyScreen> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => DaysContainersScreen(days: selectedDays!),
+                  builder: (_) => DaysContainersScreen(
+                    days: selectedDays!,
+                    planTitle: controller.text.trim().isNotEmpty
+                        ? controller.text.trim()
+                        : 'My Custom Plan',
+                  ),
                 ),
               );
             }

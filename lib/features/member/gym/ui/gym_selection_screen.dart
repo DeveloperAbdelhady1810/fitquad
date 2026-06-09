@@ -57,7 +57,7 @@ class _GymSelectionScreenState extends State<GymSelectionScreen> {
     setState(() => _saving = true);
     try {
       await MemberRepository.assignBranch(
-        branchId: _selectedMode == 'partner_gym' ? _selectedGym?.id.toString() : null,
+        partnerGymId: _selectedMode == 'partner_gym' ? _selectedGym?.id.toString() : null,
         trainingMode: _selectedMode!,
       );
       if (mounted) context.go(BottomNavBarView.routeName);

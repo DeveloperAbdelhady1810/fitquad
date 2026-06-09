@@ -70,13 +70,22 @@ class _QrSheetState extends State<_QrSheet> {
   Widget build(BuildContext context) {
     return BlocBuilder<MemberCubit, MemberState>(
       builder: (context, state) {
-        final qrData = state is MemberLoaded
-            ? (state.member.qrCode ?? state.member.id?.toString() ?? 'MEMBER')
-            : 'MEMBER';
         final memberId =
             state is MemberLoaded ? (state.member.id?.toString() ?? '—') : '—';
         final name =
             state is MemberLoaded ? (state.member.name ?? 'Member') : 'Member';
+
+        // Build gym-encoded QR: "{gymSlug}-{memberId}" when a gym is selected
+        // Falls back to raw qr_code token (legacy) when no gym context
+        String qrData;
+        if (_selectedGym != null && memberId != '—') {
+          final slug = _selectedGym!['slug'] as String? ?? '';
+          qrData = slug.isNotEmpty ? '$slug-$memberId' : memberId;
+        } else if (state is MemberLoaded) {
+          qrData = state.member.qrCode ?? state.member.id?.toString() ?? 'MEMBER';
+        } else {
+          qrData = 'MEMBER';
+        }
 
         return Container(
           decoration: BoxDecoration(
@@ -230,6 +239,15 @@ class _QrCard extends StatelessWidget {
           'Member ID: $memberId',
           style: AppTextStyles.font14GreyRegular
               .copyWith(color: AppColors.teal, fontSize: 11.sp),
+        ),
+        vGap(2),
+        Text(
+          qrData,
+          style: AppTextStyles.font14GreyRegular.copyWith(
+            color: AppColors.grey,
+            fontSize: 10.sp,
+          ),
+          textAlign: TextAlign.center,
         ),
       ],
     );

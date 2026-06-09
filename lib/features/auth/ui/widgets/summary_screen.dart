@@ -47,7 +47,14 @@ class StepSummary extends StatelessWidget {
                 padding: EdgeInsets.all(16),
                 child: Column(
                   children: [
-                    _row(title: s.goal, icon: Icons.change_circle_outlined, color: Colors.green, value: onboarding.goal?.label(context) ?? '—'),
+                    _row(
+                      title: s.goal,
+                      icon: Icons.change_circle_outlined,
+                      color: Colors.green,
+                      value: onboarding.goals.isEmpty
+                          ? '—'
+                          : onboarding.goals.map((g) => g.label(context)).join(', '),
+                    ),
                     _row(title: s.frequency, icon: Icons.date_range, color: AppColors.blue, value: '${onboarding.availability.days} ${s.days_per_week}'),
                     _row(title: s.duration, icon: Icons.access_time, color: AppColors.purple, value: '${onboarding.duration.minutes} ${s.mins}'),
                   ],

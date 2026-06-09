@@ -37,10 +37,12 @@ class MemberRepository {
 
   static Future<void> assignBranch({
     String? branchId,
+    String? partnerGymId,
     required String trainingMode,
   }) async {
     await ApiClient.post('/member/branch', {
       if (branchId != null) 'branch_id': int.tryParse(branchId),
+      if (partnerGymId != null) 'partner_gym_id': int.tryParse(partnerGymId),
       'training_mode': trainingMode,
     });
   }
@@ -77,10 +79,41 @@ class MemberRepository {
         : res['data'] as List<dynamic>;
   }
 
+  static Future<Map<String, dynamic>> saveWorkoutPlan({
+    required String title,
+    required List<Map<String, dynamic>> days,
+  }) async {
+    final res = await ApiClient.post('/member/workout-plan', {
+      'title': title,
+      'days': days,
+    });
+    return res['data'] as Map<String, dynamic>? ?? {};
+  }
+
   // ── Nutrition ────────────────────────────────────────────────
   static Future<Map<String, dynamic>?> getNutritionPlan() async {
     final res = await ApiClient.get('/member/nutrition-plan');
     return res['data']['nutrition_plan'] as Map<String, dynamic>?;
+  }
+
+  static Future<Map<String, dynamic>> saveNutritionPlan({
+    required String title,
+    required int dailyCalories,
+    required String dietType,
+  }) async {
+    // Build a simple 4-meal structure based on the diet type
+    final meals = [
+      {'name': 'Breakfast', 'time_of_day': 'breakfast', 'food_items': []},
+      {'name': 'Lunch',     'time_of_day': 'lunch',     'food_items': []},
+      {'name': 'Dinner',    'time_of_day': 'dinner',    'food_items': []},
+      {'name': 'Snack',     'time_of_day': 'snacks',    'food_items': []},
+    ];
+    final res = await ApiClient.post('/member/nutrition-plan', {
+      'title'          : title,
+      'daily_calories' : dailyCalories,
+      'meals'          : meals,
+    });
+    return res['data'] as Map<String, dynamic>? ?? {};
   }
 
   static Future<List<dynamic>> getFoodItems({

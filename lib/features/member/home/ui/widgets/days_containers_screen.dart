@@ -10,10 +10,12 @@ import 'package:intl/intl.dart';
 import '../../../../../core/widgets/custom_dropdown_menu.dart';
 import '../../../../../generated/l10n.dart';
 import '../../../data/models/exercise.dart';
+import '../../../data/repositories/member_repository.dart';
 
 class DaysContainersScreen extends StatefulWidget {
   final int days;
-  const DaysContainersScreen({super.key, required this.days});
+  final String planTitle;
+  const DaysContainersScreen({super.key, required this.days, this.planTitle = 'My Custom Plan'});
 
   @override
   State<DaysContainersScreen> createState() => _DaysContainersScreenState();
@@ -21,6 +23,7 @@ class DaysContainersScreen extends StatefulWidget {
 
 class _DaysContainersScreenState extends State<DaysContainersScreen> {
   late List<Map<String, dynamic>> daysData;
+  bool _saving = false;
 
   @override
   void initState() {
@@ -99,30 +102,77 @@ class _DaysContainersScreenState extends State<DaysContainersScreen> {
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.all(16),
         child: CustomButton(
-          text: s.save_plan,
-          onPressed: () {
-            final weekPlan = daysData
-                .map(
-                  (day) => {
-                'type': day['exerciseType'],
-                'selectedExercises': (day['exercises'] as List<Exercise>)
-                    .where((e) => e.selected)
-                    .map((e) => e.name)
-                    .toList(),
-              },
-            )
-                .toList();
+          text: _saving ? 'Saving…' : s.save_plan,
+          onPressed: _saving
+              ? null
+              : () async {
+                  // Build the week-plan for summary view
+                  final weekPlan = daysData.map((day) => {
+                    'type': day['exerciseType'],
+                    'selectedExercises': (day['exercises'] as List<Exercise>)
+                        .where((e) => e.selected)
+                        .map((e) => e.name)
+                        .toList(),
+                  }).toList();
 
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => WeekSummaryScreen(
-                  weekPlan: weekPlan,
-                ),
-              ),
-            );
-          },
+                  // Build API payload — each day with its exercises by name
+                  final apiDays = daysData.asMap().entries.map((entry) {
+                    final i = entry.key;
+                    final day = entry.value;
+                    final exercises = (day['exercises'] as List<Exercise>)
+                        .where((e) => e.selected)
+                        .map((e) => {'name': e.name})
+                        .toList();
+                    return {
+                      'day_name'  : DateFormat('EEE').format(DateTime.now().add(Duration(days: i))),
+                      'exercises' : exercises,
+                    };
+                  }).toList();
+
+                  // Skip save if no exercises selected in any day
+                  final hasAny = apiDays.any((d) => (d['exercises'] as List).isNotEmpty);
+                  if (!hasAny) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Please select at least one exercise.')),
+                    );
+                    return;
+                  }
+
+                  setState(() => _saving = true);
+                  try {
+                    await MemberRepository.saveWorkoutPlan(
+                      title: widget.planTitle,
+                      days: apiDays.cast<Map<String, dynamic>>(),
+                    );
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Plan saved!'),
+                          backgroundColor: Color(0xFF00a689),
+                        ),
+                      );
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => WeekSummaryScreen(weekPlan: weekPlan),
+                        ),
+                      );
+                    }
+                  } catch (e) {
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(e.toString()),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
+                  } finally {
+                    if (mounted) setState(() => _saving = false);
+                  }
+                },
         ),
-      ),    );
+      ),
+    );
   }
 }
