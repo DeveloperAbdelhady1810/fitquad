@@ -63,7 +63,7 @@ class ProductCard extends StatelessWidget {
           const Spacer(),
 
           Center(
-            child: Image.asset(
+            child:product.image==null?SizedBox(height: 100.h,): Image.network(
               product.image ?? '',
               fit: BoxFit.fill,
               height: 100.h,
