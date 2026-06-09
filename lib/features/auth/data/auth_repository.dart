@@ -1,7 +1,5 @@
-import 'package:firebase_messaging/firebase_messaging.dart';
-
 import '../../../core/services/api_client.dart';
-import '../../../core/services/push_notification_service.dart';
+import '../../../core/services/notification_service.dart';
 
 class AuthRepository {
   static Future<Map<String, dynamic>> login({
@@ -17,8 +15,7 @@ class AuthRepository {
     await ApiClient.saveToken(data['token'] as String);
     final role = data['user']?['role'] as String? ?? 'member';
     await ApiClient.saveRole(role);
-    await PushNotificationService.subscribeToTopic(role == 'member' ? 'members' : 'coaches');
-    await _registerFcmToken();
+    await NotificationService.syncToken();
     return data;
   }
 
@@ -46,10 +43,8 @@ class AuthRepository {
     );
     final data = response['data'] as Map<String, dynamic>;
     await ApiClient.saveToken(data['token'] as String);
-    final savedRole = data['user']?['role'] as String? ?? role;
-    await ApiClient.saveRole(savedRole);
-    await PushNotificationService.subscribeToTopic(savedRole == 'member' ? 'members' : 'coaches');
-    await _registerFcmToken();
+    await ApiClient.saveRole(data['user']?['role'] as String? ?? role);
+    await NotificationService.syncToken();
     return data;
   }
 
@@ -72,8 +67,7 @@ class AuthRepository {
     final data = response['data'] as Map<String, dynamic>;
     await ApiClient.saveToken(data['token'] as String);
     await ApiClient.saveRole(data['user']?['role'] as String? ?? 'member');
-    await PushNotificationService.subscribeToTopic('members');
-    await _registerFcmToken();
+    await NotificationService.syncToken();
     return data;
   }
 
@@ -82,7 +76,6 @@ class AuthRepository {
       await ApiClient.post('/auth/logout', {});
     } finally {
       await ApiClient.clearToken();
-      await PushNotificationService.unsubscribeAll();
     }
   }
 
@@ -95,14 +88,5 @@ class AuthRepository {
       Map<String, dynamic> data) async {
     final response = await ApiClient.put('/auth/profile', data);
     return response['data'] as Map<String, dynamic>;
-  }
-
-  static Future<void> _registerFcmToken() async {
-    try {
-      final token = await FirebaseMessaging.instance.getToken();
-      if (token != null) {
-        await ApiClient.put('/auth/profile', {'fcm_token': token});
-      }
-    } catch (_) {}
   }
 }

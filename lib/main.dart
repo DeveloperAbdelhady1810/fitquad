@@ -5,7 +5,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gym_app/core/cubit/health/health_cubit.dart';
 import 'package:gym_app/core/cubit/theme/theme_cubit.dart';
-import 'package:gym_app/core/services/push_notification_service.dart';
+import 'package:gym_app/core/services/notification_service.dart';
 import 'package:gym_app/core/services/reminder_service.dart';
 import 'package:gym_app/core/theme/theme_config.dart';
 import 'package:gym_app/features/member/home/manager/food_cubit.dart';
@@ -21,8 +21,12 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   await ReminderService.init();
-  await PushNotificationService.init();
+  await NotificationService.init();
   runApp(const MyApp());
+
+  WidgetsBinding.instance.addPostFrameCallback((_) async {
+    await NotificationService.checkInitialMessage();
+  });
 }
 
 class MyApp extends StatelessWidget {
