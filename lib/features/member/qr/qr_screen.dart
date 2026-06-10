@@ -75,12 +75,25 @@ class _QrSheetState extends State<_QrSheet> {
         final name =
             state is MemberLoaded ? (state.member.name ?? 'Member') : 'Member';
 
-        // Build gym-encoded QR: "{gymSlug}-{memberId}" when a gym is selected
-        // Falls back to raw qr_code token (legacy) when no gym context
+        // QR priority:
+        // 1. external_id from the synced/pre-registered gym membership (e.g. "GLD-2024-001234")
+        // 2. "{gymSlug}-{memberId}" (gym-encoded format)
+        // 3. legacy qr_code token
         String qrData;
         if (_selectedGym != null && memberId != '—') {
-          final slug = _selectedGym!['slug'] as String? ?? '';
-          qrData = slug.isNotEmpty ? '$slug-$memberId' : memberId;
+          // Find the membership for the selected gym to get external_id
+          final selectedGymId = _selectedGym!['id'];
+          final matchingMembership = _memberships.firstWhere(
+            (m) => (m['gym']?['id']) == selectedGymId,
+            orElse: () => <String, dynamic>{},
+          );
+          final externalId = matchingMembership['external_id'] as String?;
+          if (externalId != null && externalId.isNotEmpty) {
+            qrData = externalId;
+          } else {
+            final slug = _selectedGym!['slug'] as String? ?? '';
+            qrData = slug.isNotEmpty ? '$slug-$memberId' : memberId;
+          }
         } else if (state is MemberLoaded) {
           qrData = state.member.qrCode ?? state.member.id?.toString() ?? 'MEMBER';
         } else {

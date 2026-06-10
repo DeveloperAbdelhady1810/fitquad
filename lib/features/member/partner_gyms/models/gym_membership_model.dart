@@ -2,6 +2,7 @@ import 'partner_gym_model.dart';
 
 class GymMembershipModel {
   final int id;
+  final String? externalId;
   final PartnerGymModel? gym;
   final GymPlanModel? plan;
   final String startDate;
@@ -14,6 +15,7 @@ class GymMembershipModel {
 
   const GymMembershipModel({
     required this.id,
+    this.externalId,
     this.gym,
     this.plan,
     required this.startDate,
@@ -35,6 +37,7 @@ class GymMembershipModel {
     final planJson = json['plan'] as Map<String, dynamic>?;
     return GymMembershipModel(
       id: (json['id'] as num).toInt(),
+      externalId: json['external_id'] as String?,
       gym: gymJson != null ? PartnerGymModel.fromJson(gymJson) : null,
       plan: planJson != null ? GymPlanModel.fromJson(planJson) : null,
       startDate: json['start_date'] as String? ?? '',

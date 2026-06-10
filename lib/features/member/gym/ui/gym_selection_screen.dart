@@ -52,13 +52,13 @@ class _GymSelectionScreenState extends State<GymSelectionScreen> {
     }
   }
 
-  Future<void> _confirm() async {
-    if (_selectedMode == null) return;
+  // Called for non-partner-gym modes (other_gym / self) or skip from the gym ID sheet
+  Future<void> _saveMode(String mode, {String? partnerGymId}) async {
     setState(() => _saving = true);
     try {
       await MemberRepository.assignBranch(
-        partnerGymId: _selectedMode == 'partner_gym' ? _selectedGym?.id.toString() : null,
-        trainingMode: _selectedMode!,
+        partnerGymId: partnerGymId,
+        trainingMode: mode,
       );
       if (mounted) context.go(BottomNavBarView.routeName);
     } catch (e) {
@@ -69,6 +69,161 @@ class _GymSelectionScreenState extends State<GymSelectionScreen> {
         });
       }
     }
+  }
+
+  void _onContinue() {
+    if (_selectedMode == null || _saving) return;
+
+    if (_selectedMode == 'partner_gym' && _selectedGym != null) {
+      // Show membership-ID sheet before finalising
+      _showMembershipIdSheet(_selectedGym!);
+    } else {
+      _saveMode(_selectedMode!);
+    }
+  }
+
+  void _showMembershipIdSheet(PartnerGymModel gym) {
+    final ctrl = TextEditingController();
+    bool sheetSaving = false;
+    String? sheetError;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetCtx) => StatefulBuilder(
+        builder: (sheetCtx, setSheetState) {
+          Future<void> doLink() async {
+            final id = ctrl.text.trim();
+            if (id.isEmpty) {
+              setSheetState(() => sheetError = 'Please enter your membership ID.');
+              return;
+            }
+            setSheetState(() {
+              sheetSaving = true;
+              sheetError = null;
+            });
+            try {
+              await PartnerGymRepository.syncSubscription(gym.id, id);
+              if (mounted) {
+                Navigator.pop(sheetCtx);
+                context.go(BottomNavBarView.routeName);
+              }
+            } catch (e) {
+              if (mounted) {
+                setSheetState(() {
+                  sheetSaving = false;
+                  sheetError = e.toString().replaceAll('Exception: ', '');
+                });
+              }
+            }
+          }
+
+          Future<void> doSkip() async {
+            Navigator.pop(sheetCtx);
+            await _saveMode('partner_gym', partnerGymId: gym.id.toString());
+          }
+
+          return Padding(
+            padding: EdgeInsets.only(bottom: MediaQuery.of(sheetCtx).viewInsets.bottom),
+            child: Container(
+              decoration: BoxDecoration(
+                color: AppColors.secondary,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
+              ),
+              padding: EdgeInsets.fromLTRB(24.r, 20.r, 24.r, 32.r),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Handle
+                  Center(
+                    child: Container(
+                      width: 40.w, height: 4.h,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.withValues(alpha: 0.4),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  vGap(20),
+                  Text(
+                    'Link your membership at ${gym.name}',
+                    style: AppTextStyles.font16WhiteBold,
+                  ),
+                  vGap(8),
+                  Text(
+                    'Enter the membership ID the gym gave you when you subscribed on-site. This links your account to your existing subscription.',
+                    style: AppTextStyles.font14GreyRegular.copyWith(fontSize: 13.sp),
+                  ),
+                  vGap(20),
+                  TextField(
+                    controller: ctrl,
+                    style: AppTextStyles.font14WhiteRegular,
+                    textInputAction: TextInputAction.done,
+                    onSubmitted: (_) => doLink(),
+                    decoration: InputDecoration(
+                      hintText: 'e.g. GLD-001234',
+                      hintStyle: AppTextStyles.font14GreyRegular,
+                      filled: true,
+                      fillColor: AppColors.primary,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12.r),
+                        borderSide: BorderSide(color: AppColors.teal.withValues(alpha: 0.4)),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12.r),
+                        borderSide: BorderSide(color: Colors.grey.withValues(alpha: 0.3)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12.r),
+                        borderSide: BorderSide(color: AppColors.teal, width: 1.5),
+                      ),
+                    ),
+                  ),
+                  if (sheetError != null) ...[
+                    vGap(10),
+                    Text(
+                      sheetError!,
+                      style: AppTextStyles.font14GreyRegular.copyWith(color: AppColors.red, fontSize: 12.sp),
+                    ),
+                  ],
+                  vGap(20),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50.h,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.teal,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                      ),
+                      onPressed: sheetSaving ? null : doLink,
+                      child: sheetSaving
+                          ? const SizedBox(
+                              width: 20, height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                          : Text('Link & Continue', style: AppTextStyles.font16WhiteBold),
+                    ),
+                  ),
+                  vGap(10),
+                  SizedBox(
+                    width: double.infinity,
+                    child: TextButton(
+                      onPressed: sheetSaving ? null : doSkip,
+                      child: Text(
+                        "I don't have an ID yet — skip for now",
+                        style: AppTextStyles.font14GreyRegular,
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
   }
 
   @override
@@ -169,13 +324,18 @@ class _GymSelectionScreenState extends State<GymSelectionScreen> {
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12.r)),
                   ),
-                  onPressed: (_selectedMode == null || _saving) ? null : _confirm,
+                  onPressed: (_selectedMode == null || _saving) ? null : _onContinue,
                   child: _saving
                       ? const SizedBox(
                           width: 22, height: 22,
                           child: CircularProgressIndicator(
                               strokeWidth: 2, color: Colors.white))
-                      : Text('Continue', style: AppTextStyles.font16WhiteBold),
+                      : Text(
+                          _selectedMode == 'partner_gym'
+                              ? 'Continue — Link Membership'
+                              : 'Continue',
+                          style: AppTextStyles.font16WhiteBold,
+                        ),
                 ),
               ),
               vGap(8),
