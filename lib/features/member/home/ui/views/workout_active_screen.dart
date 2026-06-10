@@ -503,6 +503,10 @@ class _WorkoutActiveScreenState extends State<WorkoutActiveScreen> {
                     backgroundColor: Colors.white12,
                     valueColor:
                         const AlwaysStoppedAnimation<Color>(AppColors.teal),
+                    constraints: BoxConstraints(
+                      minWidth: 1000.r,
+                      minHeight: 1000.r
+                    ),
                   ),
                   Text(
                     _restDisplay,

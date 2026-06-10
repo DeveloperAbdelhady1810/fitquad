@@ -1122,7 +1122,7 @@ class _PartnerGymsBanner extends StatelessWidget {
     return GestureDetector(
       onTap: () => context.push(PartnerGymsScreen.routeName),
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 14.h),
+        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 20.h),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [AppColors.teal.withOpacity(0.3), AppColors.secondary],
