@@ -9,6 +9,7 @@ import 'package:gym_app/features/auth/ui/views/login_view.dart';
 import 'package:gym_app/features/auth/ui/views/sign_up_view.dart';
 import 'package:gym_app/features/auth/ui/views/survey_view.dart';
 import 'package:gym_app/features/coach/home/ui/views/coach_bottom_nav_bar_view.dart';
+import 'package:gym_app/features/coach/setup/coach_setup_screen.dart';
 import 'package:gym_app/features/member/home/ui/views/bottom_nav_bar_view.dart';
 
 import '../../../../core/helpers/spacing.dart';
@@ -330,7 +331,19 @@ class _MemberTabBarViewState extends State<MemberTabBarView> {
 
       switch (role) {
         case 'coach':
-          context.go(CoachBottomNavBarView.routeName);
+          if (widget.isSignUp) {
+            // New coach: ask freelancer vs gym-staff
+            context.go(CoachSetupScreen.routeName);
+          } else {
+            // Returning coach: check if pending gym request
+            final profile = data['profile'] as Map<String, dynamic>? ?? {};
+            final gymReq  = profile['gym_request'] as Map<String, dynamic>?;
+            if (gymReq != null && gymReq['status'] == 'pending') {
+              context.go(CoachGymPendingScreen.routeName);
+            } else {
+              context.go(CoachBottomNavBarView.routeName);
+            }
+          }
           break;
         case 'admin':
           context.go(AdminView.routeName);

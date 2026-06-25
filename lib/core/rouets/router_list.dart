@@ -32,6 +32,7 @@ import 'package:gym_app/features/member/partner_gyms/ui/my_gym_memberships_scree
 import 'package:gym_app/features/member/partner_gyms/ui/gym_classes_screen.dart';
 import 'package:gym_app/features/member/partner_gyms/ui/guest_passes_screen.dart';
 import 'package:gym_app/features/member/invitations/ui/invitations_screen.dart';
+import 'package:gym_app/features/coach/setup/coach_setup_screen.dart';
 
 import '../../features/auth/ui/views/login_view.dart';
 import '../../features/auth/ui/views/splash_screen.dart';
@@ -277,6 +278,17 @@ class RoutesList {
     GoRoute(
       path: GuestPassesScreen.routeName,
       builder: (context, state) => const GuestPassesScreen(),
+    ),
+
+    // Coach employment setup (post-registration)
+    GoRoute(
+      path: CoachSetupScreen.routeName,
+      builder: (context, state) => const CoachSetupScreen(),
+    ),
+
+    GoRoute(
+      path: CoachGymPendingScreen.routeName,
+      builder: (context, state) => const CoachGymPendingScreen(),
     ),
 
   ];

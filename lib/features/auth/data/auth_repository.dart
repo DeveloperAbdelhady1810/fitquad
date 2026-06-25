@@ -89,4 +89,27 @@ class AuthRepository {
     final response = await ApiClient.put('/auth/profile', data);
     return response['data'] as Map<String, dynamic>;
   }
+
+  // ── Coach gym-request ──────────────────────────────────────
+  static Future<Map<String, dynamic>> getCoachGymRequest() async {
+    final response = await ApiClient.get('/coach/gym-request');
+    return response['data'] as Map<String, dynamic>;
+  }
+
+  static Future<List<Map<String, dynamic>>> getAvailableGyms() async {
+    final response = await ApiClient.get('/coach/available-gyms');
+    final list = response['data'] as List? ?? [];
+    return list.cast<Map<String, dynamic>>();
+  }
+
+  static Future<Map<String, dynamic>> submitGymRequest(int partnerGymId) async {
+    final response = await ApiClient.post('/coach/gym-request', {
+      'partner_gym_id': partnerGymId,
+    });
+    return response['data'] as Map<String, dynamic>;
+  }
+
+  static Future<void> withdrawGymRequest() async {
+    await ApiClient.delete('/coach/gym-request');
+  }
 }

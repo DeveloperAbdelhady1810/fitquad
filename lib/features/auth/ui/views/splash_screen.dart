@@ -4,8 +4,10 @@ import 'package:go_router/go_router.dart';
 import 'package:gym_app/core/services/api_client.dart';
 import 'package:gym_app/core/theme/app_colors.dart';
 import 'package:gym_app/features/admin/ui/views/admin_view.dart';
+import 'package:gym_app/features/auth/data/auth_repository.dart';
 import 'package:gym_app/features/auth/ui/views/login_view.dart';
 import 'package:gym_app/features/coach/home/ui/views/coach_bottom_nav_bar_view.dart';
+import 'package:gym_app/features/coach/setup/coach_setup_screen.dart';
 import 'package:gym_app/features/member/home/ui/views/bottom_nav_bar_view.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -129,16 +131,24 @@ class _SplashScreenState extends State<SplashScreen>
     await Future.delayed(const Duration(milliseconds: 2600));
     if (!mounted) return;
 
-    final dest = _resolveRoute(_token, _role);
+    final dest = await _resolveRoute(_token, _role);
+    if (!mounted) return;
     context.go(dest);
   }
 
-  String _resolveRoute(String? token, String? role) {
+  Future<String> _resolveRoute(String? token, String? role) async {
     if (token == null || token.isEmpty) return LoginView.routeName;
     switch (role) {
       case 'admin':
         return AdminView.routeName;
       case 'coach':
+        try {
+          final data  = await AuthRepository.getCoachGymRequest();
+          final req   = data['gym_request'] as Map<String, dynamic>?;
+          if (req != null && req['status'] == 'pending') {
+            return CoachGymPendingScreen.routeName;
+          }
+        } catch (_) {}
         return CoachBottomNavBarView.routeName;
       default:
         return BottomNavBarView.routeName;
