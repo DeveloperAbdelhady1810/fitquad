@@ -100,7 +100,7 @@ class NotificationService {
   static void _handleTap(Map<String, dynamic> data) {
     final action   = data['action']    as String?;
     final actionId = data['action_id'] as String?;
-    final id       = actionId != null ? int.tryParse(actionId) : null;
+    final _ = actionId != null ? int.tryParse(actionId) : null;
     final router   = AppRouter.getRouter();
 
     switch (action) {

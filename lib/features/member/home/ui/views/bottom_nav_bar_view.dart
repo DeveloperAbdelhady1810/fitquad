@@ -26,7 +26,7 @@ class BottomNavBarView extends StatefulWidget {
 }
 
 class BottomNavBarViewState extends State<BottomNavBarView> {
-  late final List<BlocProviderSingleChildWidget> _localProviders = [
+  late final _localProviders = [
     BlocProvider(create: (_) => BottomNavBarCubit()),
     BlocProvider(create: (_) => FoodCubit()..loadFoods()),
   ];
