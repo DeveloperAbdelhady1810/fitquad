@@ -89,10 +89,8 @@ class RoutesList {
                 ? 'train'
                 : 'eat'
             : null;
-        return BlocProvider(
-          create: (context) => MemberCubit()..loadCoaches(source: source),
-          child: const ChooseCoachScreen(),
-        );
+        context.read<MemberCubit>().loadCoaches(source: source);
+        return const ChooseCoachScreen();
       },
     ),
     //todo cart -----------------------------------------------------

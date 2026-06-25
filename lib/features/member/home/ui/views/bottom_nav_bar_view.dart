@@ -26,6 +26,11 @@ class BottomNavBarView extends StatefulWidget {
 }
 
 class BottomNavBarViewState extends State<BottomNavBarView> {
+  late final _localProviders = [
+    BlocProvider(create: (_) => BottomNavBarCubit()),
+    BlocProvider(create: (_) => FoodCubit()..loadFoods()),
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -70,44 +75,45 @@ class BottomNavBarViewState extends State<BottomNavBarView> {
   @override
   Widget build(BuildContext context) {
     return MultiBlocProvider(
-      providers: [
-        BlocProvider(create: (_) => BottomNavBarCubit()),
-        BlocProvider(create: (_) => FoodCubit()..loadFoods()),
-      ],
-      child: AnnouncementOverlay(
-        child: SafeArea(
-          child: GestureDetector(
-            onTap: () => FocusScope.of(context).unfocus(),
-            child: Scaffold(
-              backgroundColor: AppColors.primary,
-              extendBody: false,
-              body: BlocBuilder<BottomNavBarCubit, BottomNavBarState>(
-                builder: (context, navState) {
-                  final navCubit = context.read<BottomNavBarCubit>();
-                  return BlocBuilder<MemberCubit, MemberState>(
-                    builder: (context, memberState) {
-                      final memberCubit = context.read<MemberCubit>();
-                      final weekPlan = _buildWeekPlan(memberCubit);
-                      final trainWidget = weekPlan != null
-                          ? WeekSummaryScreen(weekPlan: weekPlan)
-                          : const TrainTab();
-                      final bodies = [
-                        HomeTab(),
-                        trainWidget,
-                        AiTab(),
-                        EatTab(),
-                        MarketTab(),
-                      ];
-                      return Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: bodies[navCubit.currentIndex],
-                      );
-                    },
-                  );
-                },
-              ),
-              bottomNavigationBar: BottomNavBarViewBody(),
+      providers: _localProviders,
+      child: _buildBody(context),
+    );
+  }
+
+  Widget _buildBody(BuildContext context) {
+    return AnnouncementOverlay(
+      child: SafeArea(
+        child: GestureDetector(
+          onTap: () => FocusScope.of(context).unfocus(),
+          child: Scaffold(
+            backgroundColor: AppColors.primary,
+            extendBody: false,
+            body: BlocBuilder<BottomNavBarCubit, BottomNavBarState>(
+              builder: (context, navState) {
+                final navCubit = context.read<BottomNavBarCubit>();
+                return BlocBuilder<MemberCubit, MemberState>(
+                  builder: (context, memberState) {
+                    final memberCubit = context.read<MemberCubit>();
+                    final weekPlan = _buildWeekPlan(memberCubit);
+                    final trainWidget = weekPlan != null
+                        ? WeekSummaryScreen(weekPlan: weekPlan)
+                        : const TrainTab();
+                    final bodies = [
+                      HomeTab(),
+                      trainWidget,
+                      AiTab(),
+                      EatTab(),
+                      MarketTab(),
+                    ];
+                    return Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: bodies[navCubit.currentIndex],
+                    );
+                  },
+                );
+              },
             ),
+            bottomNavigationBar: BottomNavBarViewBody(),
           ),
         ),
       ),
