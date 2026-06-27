@@ -1,13 +1,14 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiClient {
   static const String baseUrl =
-  //  kDebugMode
-      // ? 'http://192.168.8.102:8080/api/v1'       // dev: simulator uses localhost
-      // : 
+   kDebugMode
+      ? 'http://192.168.1.16:8080/api/v1'       // dev: simulator uses localhost
+      : 
       'https://api-fitquad.quadrocloud.net/api/v1';     // production
 
   static const String _tokenKey = 'auth_token';
