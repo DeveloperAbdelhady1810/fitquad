@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:gym_app/core/helpers/app_decoration.dart';
@@ -8,27 +7,56 @@ import 'package:gym_app/core/helpers/spacing.dart';
 import 'package:gym_app/core/theme/app_colors.dart';
 import 'package:gym_app/core/theme/app_text_styles.dart';
 import 'package:gym_app/features/member/data/models/coach_model.dart';
-import 'package:gym_app/features/member/home/manager/member_cubit.dart';
-import 'package:gym_app/features/member/home/manager/member_state.dart';
+import 'package:gym_app/features/member/data/repositories/member_repository.dart';
 import 'package:gym_app/features/member/home/ui/widgets/coach_profile_screen.dart';
 import 'package:gym_app/features/member/payment/data/payment_repository.dart';
 import 'package:gym_app/features/member/payment/ui/payment_webview_screen.dart';
 
 import '../../../../../generated/l10n.dart';
 
-class ChooseCoachScreen extends StatelessWidget {
-  const ChooseCoachScreen({super.key});
+class ChooseCoachScreen extends StatefulWidget {
+  const ChooseCoachScreen({super.key, this.source});
+  final String? source;
   static const String routeName = '/choose_coach';
+
+  @override
+  State<ChooseCoachScreen> createState() => _ChooseCoachScreenState();
+}
+
+class _ChooseCoachScreenState extends State<ChooseCoachScreen> {
+  List<CoachModel> _coaches = [];
+  bool _loading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final data = await MemberRepository.getCoaches(source: widget.source);
+      if (!mounted) return;
+      setState(() {
+        _coaches = data
+            .map((j) => CoachModel.fromJson(j as Map<String, dynamic>))
+            .toList();
+        _loading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = 'Failed to load coaches';
+        _loading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final s = S.of(context);
-    final memberCubit = context.read<MemberCubit>();
-    return PopScope(
-      onPopInvokedWithResult: (didPop, _) {
-        if (didPop) memberCubit.loadMember();
-      },
-      child: Scaffold(
+    return Scaffold(
       backgroundColor: AppColors.primary,
       appBar: AppBar(
         iconTheme: IconThemeData(color: AppColors.grey),
@@ -45,56 +73,50 @@ class ChooseCoachScreen extends StatelessWidget {
           ],
         ),
       ),
-      body: BlocBuilder<MemberCubit, MemberState>(
-        builder: (context, state) {
-          if (state is MemberLoading) {
-            return const Center(
-                child: CircularProgressIndicator(color: AppColors.teal));
-          }
-          if (state is MemberError) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.error_outline, color: AppColors.red, size: 48.r),
-                  vGap(12),
-                  Text(state.message, style: AppTextStyles.font16GreyRegular),
-                ],
-              ),
-            );
-          }
-          if (state is CoachLoaded) {
-            if (state.coaches.isEmpty) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.sports_gymnastics,
-                        color: AppColors.grey, size: 56.r),
-                    vGap(16),
-                    Text('No coaches available',
-                        style: AppTextStyles.font16WhiteBold),
-                    vGap(8),
-                    Text('Check back later or try a different category.',
-                        style: AppTextStyles.font14GreyRegular,
-                        textAlign: TextAlign.center),
-                  ],
-                ),
-              );
-            }
-            return ListView.separated(
-              padding: EdgeInsets.all(16.r),
-              itemCount: state.coaches.length,
-              separatorBuilder: (_, __) => vGap(14),
-              itemBuilder: (context, index) {
-                return _CoachCard(coach: state.coaches[index]);
-              },
-            );
-          }
-          return const SizedBox.shrink();
-        },
-      ),
-    ),
+      body: _buildBody(s),
+    );
+  }
+
+  Widget _buildBody(S s) {
+    if (_loading) {
+      return const Center(
+          child: CircularProgressIndicator(color: AppColors.teal));
+    }
+    if (_error != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.error_outline, color: AppColors.red, size: 48.r),
+            vGap(12),
+            Text(_error!, style: AppTextStyles.font16GreyRegular),
+          ],
+        ),
+      );
+    }
+    if (_coaches.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.sports_gymnastics, color: AppColors.grey, size: 56.r),
+            vGap(16),
+            Text('No coaches available', style: AppTextStyles.font16WhiteBold),
+            vGap(8),
+            Text(
+              'Check back later or try a different category.',
+              style: AppTextStyles.font14GreyRegular,
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      );
+    }
+    return ListView.separated(
+      padding: EdgeInsets.all(16.r),
+      itemCount: _coaches.length,
+      separatorBuilder: (_, __) => vGap(14),
+      itemBuilder: (context, index) => _CoachCard(coach: _coaches[index]),
     );
   }
 }
@@ -108,7 +130,6 @@ class _CoachCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final s = S.of(context);
-    // Capture scaffold context here — before any dialog opens
     final scaffoldCtx = context;
 
     return GestureDetector(
@@ -117,169 +138,170 @@ class _CoachCard extends StatelessWidget {
         MaterialPageRoute(builder: (_) => CoachProfileScreen(coach: coach)),
       ),
       child: Container(
-      decoration: AppDecorations.containerDecoration.copyWith(
-        borderRadius: BorderRadius.circular(16.r),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // ── Header ──────────────────────────────────────────────
-          Padding(
-            padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 0),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Avatar
-                AppAvatar(name: coach.name, url: coach.avatarUrl, radius: 28),
-                hGap(12),
-                // Name + title
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(coach.name, style: AppTextStyles.font16WhiteBold),
-                      vGap(2),
-                      Text(
-                        coach.jobTitle,
-                        style: AppTextStyles.font14GreyRegular.copyWith(
-                            color: AppColors.emerald),
-                      ),
-                      vGap(6),
-                      Row(
-                        children: [
-                          _Tag(
-                            label: coach.service,
-                            color: AppColors.blue,
-                          ),
-                          hGap(6),
-                          _Tag(
-                            label: coach.turnaround,
-                            color: AppColors.purple,
-                            icon: Icons.timer_outlined,
-                          ),
-                        ],
-                      ),
-                    ],
+        decoration: AppDecorations.containerDecoration.copyWith(
+          borderRadius: BorderRadius.circular(16.r),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Header ──────────────────────────────────────────────
+            Padding(
+              padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 0),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  AppAvatar(name: coach.name, url: coach.avatarUrl, radius: 28),
+                  hGap(12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(coach.name, style: AppTextStyles.font16WhiteBold),
+                        vGap(2),
+                        Text(
+                          coach.jobTitle,
+                          style: AppTextStyles.font14GreyRegular
+                              .copyWith(color: AppColors.emerald),
+                        ),
+                        vGap(6),
+                        Row(
+                          children: [
+                            _Tag(label: coach.service, color: AppColors.blue),
+                            hGap(6),
+                            _Tag(
+                              label: coach.turnaround,
+                              color: AppColors.purple,
+                              icon: Icons.timer_outlined,
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                // Rating
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Container(
-                      padding: EdgeInsets.symmetric(
-                          horizontal: 10.w, vertical: 5.h),
-                      decoration: BoxDecoration(
-                        color: AppColors.emerald.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(20.r),
-                        border: Border.all(
-                            color: AppColors.emerald.withValues(alpha: 0.4)),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.star_rounded,
-                              color: AppColors.emerald, size: 14.r),
-                          hGap(4),
-                          Text(
-                            coach.rating.toStringAsFixed(1),
-                            style: AppTextStyles.font14GreyRegular.copyWith(
-                                color: AppColors.emerald,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 12.sp),
-                          ),
-                        ],
-                      ),
-                    ),
-                    vGap(4),
-                    Text(
-                      '${coach.reviewsCount} reviews',
-                      style: AppTextStyles.font14GreyRegular
-                          .copyWith(fontSize: 10.sp),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-
-          // ── Bio ─────────────────────────────────────────────────
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-            child: Text(
-              coach.bio,
-              style: AppTextStyles.font14GreyRegular.copyWith(fontSize: 12.sp),
-              maxLines: 3,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-
-          const Divider(height: 1),
-
-          // ── Price + Hire / Subscribed ────────────────────────────
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-            child: Row(
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(s.price.toUpperCase(),
-                        style: AppTextStyles.font14GreyRegular
-                            .copyWith(fontSize: 10.sp)),
-                    vGap(2),
-                    Text(
-                      '${coach.price.toStringAsFixed(0)} EGP',
-                      style: AppTextStyles.font16WhiteBold.copyWith(
-                          color: AppColors.teal, fontSize: 18.sp),
-                    ),
-                  ],
-                ),
-                const Spacer(),
-                coach.isSubscribed
-                    ? Container(
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Container(
                         padding: EdgeInsets.symmetric(
-                            horizontal: 14.w, vertical: 10.h),
+                            horizontal: 10.w, vertical: 5.h),
                         decoration: BoxDecoration(
                           color: AppColors.emerald.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(12.r),
+                          borderRadius: BorderRadius.circular(20.r),
                           border: Border.all(
                               color: AppColors.emerald.withValues(alpha: 0.4)),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.check_circle,
-                                color: AppColors.emerald, size: 16.r),
-                            hGap(6),
-                            Text('Subscribed',
-                                style: AppTextStyles.font14GreyRegular.copyWith(
-                                    color: AppColors.emerald,
-                                    fontWeight: FontWeight.w600)),
+                            Icon(Icons.star_rounded,
+                                color: AppColors.emerald, size: 14.r),
+                            hGap(4),
+                            Text(
+                              coach.rating.toStringAsFixed(1),
+                              style: AppTextStyles.font14GreyRegular.copyWith(
+                                  color: AppColors.emerald,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12.sp),
+                            ),
                           ],
                         ),
-                      )
-                    : SizedBox(
-                        height: 44.h,
-                        child: ElevatedButton.icon(
-                          onPressed: () => _showHireDialog(scaffoldCtx, coach),
-                          icon: Icon(Icons.sports_gymnastics, size: 16.r),
-                          label: Text(s.hire_coach),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.teal,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12.r)),
-                            textStyle: AppTextStyles.font14WhiteRegular
-                                .copyWith(fontWeight: FontWeight.w600),
+                      ),
+                      vGap(4),
+                      Text(
+                        '${coach.reviewsCount} reviews',
+                        style: AppTextStyles.font14GreyRegular
+                            .copyWith(fontSize: 10.sp),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+            // ── Bio ─────────────────────────────────────────────────
+            Padding(
+              padding:
+                  EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+              child: Text(
+                coach.bio,
+                style: AppTextStyles.font14GreyRegular
+                    .copyWith(fontSize: 12.sp),
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+
+            const Divider(height: 1),
+
+            // ── Price + Hire / Subscribed ────────────────────────────
+            Padding(
+              padding:
+                  EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+              child: Row(
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(s.price.toUpperCase(),
+                          style: AppTextStyles.font14GreyRegular
+                              .copyWith(fontSize: 10.sp)),
+                      vGap(2),
+                      Text(
+                        '${coach.price.toStringAsFixed(0)} EGP',
+                        style: AppTextStyles.font16WhiteBold
+                            .copyWith(color: AppColors.teal, fontSize: 18.sp),
+                      ),
+                    ],
+                  ),
+                  const Spacer(),
+                  coach.isSubscribed
+                      ? Container(
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 14.w, vertical: 10.h),
+                          decoration: BoxDecoration(
+                            color: AppColors.emerald.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(12.r),
+                            border: Border.all(
+                                color:
+                                    AppColors.emerald.withValues(alpha: 0.4)),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.check_circle,
+                                  color: AppColors.emerald, size: 16.r),
+                              hGap(6),
+                              Text('Subscribed',
+                                  style:
+                                      AppTextStyles.font14GreyRegular.copyWith(
+                                          color: AppColors.emerald,
+                                          fontWeight: FontWeight.w600)),
+                            ],
+                          ),
+                        )
+                      : SizedBox(
+                          height: 44.h,
+                          child: ElevatedButton.icon(
+                            onPressed: () =>
+                                _showHireDialog(scaffoldCtx, coach),
+                            icon: Icon(Icons.sports_gymnastics, size: 16.r),
+                            label: Text(s.hire_coach),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.teal,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                  borderRadius:
+                                      BorderRadius.circular(12.r)),
+                              textStyle: AppTextStyles.font14WhiteRegular
+                                  .copyWith(fontWeight: FontWeight.w600),
+                            ),
                           ),
                         ),
-                      ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
-      ),
+          ],
+        ),
       ),
     );
   }
@@ -294,7 +316,8 @@ class _CoachCard extends StatelessWidget {
       context: scaffoldCtx,
       builder: (_) => Dialog(
         backgroundColor: Colors.transparent,
-        insetPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 40.h),
+        insetPadding:
+            EdgeInsets.symmetric(horizontal: 16.w, vertical: 40.h),
         child: Container(
           decoration: AppDecorations.containerDecoration.copyWith(
             color: AppColors.secondary,
@@ -303,7 +326,6 @@ class _CoachCard extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // ── Dialog header ──────────────────────────────────
               Padding(
                 padding: EdgeInsets.fromLTRB(20.w, 20.h, 12.w, 0),
                 child: Row(
@@ -336,14 +358,12 @@ class _CoachCard extends StatelessWidget {
                     ),
                     IconButton(
                       onPressed: () => Navigator.pop(scaffoldCtx),
-                      icon:
-                          Icon(Icons.close, color: AppColors.grey, size: 20.r),
+                      icon: Icon(Icons.close,
+                          color: AppColors.grey, size: 20.r),
                     ),
                   ],
                 ),
               ),
-
-              // ── Coach quick info ───────────────────────────────
               Padding(
                 padding:
                     EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
@@ -357,7 +377,10 @@ class _CoachCard extends StatelessWidget {
                   ),
                   child: Row(
                     children: [
-                      AppAvatar(name: coach.name, url: coach.avatarUrl, radius: 20),
+                      AppAvatar(
+                          name: coach.name,
+                          url: coach.avatarUrl,
+                          radius: 20),
                       hGap(10),
                       Expanded(
                         child: Column(
@@ -365,7 +388,8 @@ class _CoachCard extends StatelessWidget {
                           children: [
                             Text(coach.name,
                                 style: AppTextStyles.font14WhiteRegular
-                                    .copyWith(fontWeight: FontWeight.w600)),
+                                    .copyWith(
+                                        fontWeight: FontWeight.w600)),
                             Text(coach.jobTitle,
                                 style: AppTextStyles.font14GreyRegular
                                     .copyWith(
@@ -388,8 +412,6 @@ class _CoachCard extends StatelessWidget {
                   ),
                 ),
               ),
-
-              // ── Fee breakdown ──────────────────────────────────
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16.w),
                 child: Container(
@@ -413,13 +435,13 @@ class _CoachCard extends StatelessWidget {
                       ),
                       Padding(
                         padding: EdgeInsets.symmetric(horizontal: 12.w),
-                        child: Divider(color: Colors.grey.withValues(alpha: 0.2)),
+                        child: Divider(
+                            color: Colors.grey.withValues(alpha: 0.2)),
                       ),
                       _FeeRow(
                         icon: Icons.percent,
                         label: 'Platform fee (5%)',
-                        value:
-                            '${platformFee.toStringAsFixed(0)} EGP',
+                        value: '${platformFee.toStringAsFixed(0)} EGP',
                         iconColor: AppColors.grey,
                         valueStyle: AppTextStyles.font14GreyRegular,
                       ),
@@ -432,7 +454,8 @@ class _CoachCard extends StatelessWidget {
                       ),
                       Padding(
                         padding: EdgeInsets.symmetric(horizontal: 12.w),
-                        child: Divider(color: Colors.grey.withValues(alpha: 0.2)),
+                        child: Divider(
+                            color: Colors.grey.withValues(alpha: 0.2)),
                       ),
                       _FeeRow(
                         icon: Icons.receipt_outlined,
@@ -446,10 +469,7 @@ class _CoachCard extends StatelessWidget {
                   ),
                 ),
               ),
-
               vGap(16),
-
-              // ── Action buttons ─────────────────────────────────
               Padding(
                 padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 20.h),
                 child: Row(
@@ -458,11 +478,14 @@ class _CoachCard extends StatelessWidget {
                       child: OutlinedButton(
                         onPressed: () => Navigator.pop(scaffoldCtx),
                         style: OutlinedButton.styleFrom(
-                          side:
-                              BorderSide(color: AppColors.grey.withValues(alpha: 0.4)),
+                          side: BorderSide(
+                              color:
+                                  AppColors.grey.withValues(alpha: 0.4)),
                           shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12.r)),
-                          padding: EdgeInsets.symmetric(vertical: 12.h),
+                              borderRadius:
+                                  BorderRadius.circular(12.r)),
+                          padding:
+                              EdgeInsets.symmetric(vertical: 12.h),
                         ),
                         child: Text(s.cancel,
                             style: AppTextStyles.font14GreyRegular),
@@ -480,8 +503,10 @@ class _CoachCard extends StatelessWidget {
                           backgroundColor: AppColors.teal,
                           foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12.r)),
-                          padding: EdgeInsets.symmetric(vertical: 12.h),
+                              borderRadius:
+                                  BorderRadius.circular(12.r)),
+                          padding:
+                              EdgeInsets.symmetric(vertical: 12.h),
                           textStyle: AppTextStyles.font14WhiteRegular
                               .copyWith(fontWeight: FontWeight.w600),
                         ),
@@ -499,10 +524,7 @@ class _CoachCard extends StatelessWidget {
 
   Future<void> _initiatePayment(
       BuildContext scaffoldCtx, CoachModel coach) async {
-    // Close the confirm dialog using the scaffold context (still mounted)
     Navigator.of(scaffoldCtx).pop();
-
-    // Show loading indicator
     if (!scaffoldCtx.mounted) return;
     ScaffoldMessenger.of(scaffoldCtx).showSnackBar(
       const SnackBar(
@@ -542,7 +564,6 @@ class _CoachCard extends StatelessWidget {
       ));
     }
   }
-
 }
 
 // ── Helper Widgets ────────────────────────────────────────────────────────────

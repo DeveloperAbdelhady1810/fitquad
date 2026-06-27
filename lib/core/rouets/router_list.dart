@@ -10,7 +10,6 @@ import 'package:gym_app/features/coach/home/ui/widgets/member_profile_screen.dar
 import 'package:gym_app/features/member/eat/widgets/nutrition_overview_screen.dart';
 import 'package:gym_app/features/member/eat/widgets/nutrition_plan_screen.dart';
 import 'package:gym_app/features/member/eat/widgets/plan_ready_screen.dart';
-import 'package:gym_app/features/member/home/manager/member_cubit.dart';
 import 'package:gym_app/features/member/home/ui/widgets/choose_coach_screen.dart';
 import 'package:gym_app/features/member/home/ui/widgets/request_sent_screen.dart';
 import 'package:gym_app/features/member/home/ui/widgets/week_summary_screen.dart';
@@ -90,8 +89,7 @@ class RoutesList {
                 ? 'train'
                 : 'eat'
             : null;
-        context.read<MemberCubit>().loadCoaches(source: source);
-        return const ChooseCoachScreen();
+        return ChooseCoachScreen(source: source);
       },
     ),
     //todo cart -----------------------------------------------------
