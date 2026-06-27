@@ -23,7 +23,12 @@ class ChooseCoachScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final s = S.of(context);
-    return Scaffold(
+    final memberCubit = context.read<MemberCubit>();
+    return PopScope(
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) memberCubit.loadMember();
+      },
+      child: Scaffold(
       backgroundColor: AppColors.primary,
       appBar: AppBar(
         iconTheme: IconThemeData(color: AppColors.grey),
@@ -89,6 +94,7 @@ class ChooseCoachScreen extends StatelessWidget {
           return const SizedBox.shrink();
         },
       ),
+    ),
     );
   }
 }

@@ -109,13 +109,18 @@ class MemberCubit extends Cubit<MemberState> {
   }
 
   Future<void> loadCoaches({String? source}) async {
+    final prevState = state;
     try {
       emit(MemberLoading());
       final data = await MemberRepository.getCoaches(source: source);
       final coaches = data.map((j) => CoachModel.fromJson(j as Map<String, dynamic>)).toList();
       emit(CoachLoaded(coaches));
     } catch (e) {
-      emit(const MemberError('Failed to load coaches'));
+      if (prevState is MemberLoaded) {
+        emit(prevState);
+      } else {
+        emit(const MemberError('Failed to load coaches'));
+      }
     }
   }
 
