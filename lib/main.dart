@@ -8,6 +8,7 @@ import 'package:gym_app/core/cubit/theme/theme_cubit.dart';
 import 'package:gym_app/core/services/notification_service.dart';
 import 'package:gym_app/core/services/reminder_service.dart';
 import 'package:gym_app/core/theme/theme_config.dart';
+import 'package:gym_app/core/skin/app_skin_cubit.dart'; // ignore: unused_import
 import 'package:gym_app/features/member/home/manager/food_cubit.dart';
 import 'package:gym_app/features/member/home/manager/member_cubit.dart';
 import 'core/cubit/language/language_cubit.dart';
@@ -42,6 +43,7 @@ class MyApp extends StatelessWidget {
         BlocProvider(create: (_) => CartCubit()),
         BlocProvider(create: (_) => FoodCubit()),
         BlocProvider(create: (_) => MarketCubit()..loadProducts()),
+        BlocProvider(create: (_) => AppSkinCubit()),
         BlocProvider(create: (_) => MemberCubit()),
         BlocProvider(create: (_) => HealthCubit()),
       ],

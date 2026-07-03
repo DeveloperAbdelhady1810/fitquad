@@ -23,6 +23,8 @@ import 'package:gym_app/features/member/invitations/ui/invitations_screen.dart';
 
 import '../../../../../core/cubit/language/language_cubit.dart';
 import '../../../../../core/cubit/theme/theme_cubit.dart';
+import '../../../../../core/skin/app_skin_cubit.dart';
+import '../../../../../core/theme/neo_theme.dart';
 import '../../../../../core/theme/theme_config.dart';
 import '../../../../../generated/l10n.dart';
 
@@ -241,6 +243,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ],
                     ),
                   ),
+                  vGap(15),
+
+                  // ── UI Skin switcher ─────────────────────────────────
+                  _SectionHeader('UI Skin'),
+                  vGap(8),
+                  _SkinSwitcher(),
                   vGap(15),
 
                   // ── Settings section ────────────────────────────────
@@ -1000,6 +1008,215 @@ class _ReferralCard extends StatelessWidget {
           ),
         ),
       ]),
+    );
+  }
+}
+
+class _SkinSwitcher extends StatelessWidget {
+  const _SkinSwitcher();
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<AppSkinCubit, AppSkin>(
+      builder: (context, current) {
+        return Container(
+          padding: const EdgeInsets.all(6),
+          decoration: AppDecorations.containerDecoration,
+          child: Row(
+            children: [
+              _SkinOption(
+                label: 'Classic',
+                emoji: '🌑',
+                accent: AppColors.teal,
+                selected: current == AppSkin.classic,
+                onTap: () => context.read<AppSkinCubit>().switchTo(AppSkin.classic),
+                preview: _ClassicPreview(),
+              ),
+              const SizedBox(width: 8),
+              _SkinOption(
+                label: 'Neo Cyber',
+                emoji: '⚡',
+                accent: NeoColors.cyan,
+                selected: current == AppSkin.neo,
+                onTap: () => context.read<AppSkinCubit>().switchTo(AppSkin.neo),
+                preview: _NeoPreview(),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _SkinOption extends StatelessWidget {
+  final String label;
+  final String emoji;
+  final Color accent;
+  final bool selected;
+  final VoidCallback onTap;
+  final Widget preview;
+
+  const _SkinOption({
+    required this.label,
+    required this.emoji,
+    required this.accent,
+    required this.selected,
+    required this.onTap,
+    required this.preview,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: selected ? accent.withValues(alpha: 0.08) : Colors.transparent,
+            border: Border.all(
+              color: selected ? accent : AppColors.grey.withValues(alpha: 0.2),
+              width: selected ? 1.5 : 1,
+            ),
+            borderRadius: BorderRadius.circular(10),
+            boxShadow: selected
+                ? [BoxShadow(color: accent.withValues(alpha: 0.18), blurRadius: 12)]
+                : null,
+          ),
+          child: Column(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(6),
+                child: SizedBox(height: 72, child: preview),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(emoji, style: const TextStyle(fontSize: 14)),
+                  const SizedBox(width: 4),
+                  Text(
+                    label,
+                    style: AppTextStyles.font14WhiteRegular.copyWith(
+                      color: selected ? accent : AppColors.grey,
+                      fontWeight: selected ? FontWeight.w700 : FontWeight.w400,
+                    ),
+                  ),
+                ],
+              ),
+              if (selected) ...[
+                const SizedBox(height: 4),
+                Container(
+                  height: 2,
+                  width: 24,
+                  color: accent,
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ClassicPreview extends StatelessWidget {
+  const _ClassicPreview();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: AppColors.primary,
+      child: Column(
+        children: [
+          Container(height: 14, color: AppColors.secondary,
+            child: Row(children: [
+              const SizedBox(width: 6),
+              Container(width: 30, height: 6, color: AppColors.teal.withValues(alpha: 0.8)),
+            ])),
+          const SizedBox(height: 4),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 6),
+            child: Column(children: [
+              Container(height: 20, color: AppColors.secondary,
+                child: Row(children: [
+                  const SizedBox(width: 6),
+                  Container(width: 20, height: 4, color: AppColors.teal.withValues(alpha: 0.6)),
+                  const SizedBox(width: 4),
+                  Container(width: 40, height: 4, color: Colors.white24),
+                ])),
+              const SizedBox(height: 4),
+              Row(children: [
+                Expanded(child: Container(height: 16, color: AppColors.secondary)),
+                const SizedBox(width: 4),
+                Expanded(child: Container(height: 16, color: AppColors.secondary)),
+              ]),
+            ]),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _NeoPreview extends StatelessWidget {
+  const _NeoPreview();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: NeoColors.bg,
+      child: Column(
+        children: [
+          Container(
+            height: 14,
+            decoration: BoxDecoration(
+              color: NeoColors.surface,
+              border: Border(bottom: BorderSide(color: NeoColors.cyan.withValues(alpha: 0.4))),
+            ),
+            child: Row(children: [
+              const SizedBox(width: 6),
+              Container(width: 30, height: 5,
+                decoration: BoxDecoration(color: NeoColors.cyan.withValues(alpha: 0.9),
+                  boxShadow: [BoxShadow(color: NeoColors.cyan.withValues(alpha: 0.5), blurRadius: 4)])),
+            ]),
+          ),
+          const SizedBox(height: 4),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 6),
+            child: Column(children: [
+              Container(
+                height: 20,
+                decoration: BoxDecoration(
+                  color: NeoColors.surface,
+                  border: Border.all(color: NeoColors.cyan.withValues(alpha: 0.25)),
+                ),
+                child: Row(children: [
+                  const SizedBox(width: 6),
+                  Container(width: 18, height: 4, color: NeoColors.lime.withValues(alpha: 0.8)),
+                  const SizedBox(width: 4),
+                  Container(width: 30, height: 4, color: NeoColors.onSurfaceVariant.withValues(alpha: 0.3)),
+                ])),
+              const SizedBox(height: 4),
+              Row(children: [
+                Expanded(child: Container(height: 16,
+                  decoration: BoxDecoration(
+                    color: NeoColors.surface,
+                    border: Border.all(color: NeoColors.cyan.withValues(alpha: 0.2)),
+                  ))),
+                const SizedBox(width: 4),
+                Expanded(child: Container(height: 16,
+                  decoration: BoxDecoration(
+                    color: NeoColors.surface,
+                    border: Border.all(color: NeoColors.magenta.withValues(alpha: 0.25)),
+                  ))),
+              ]),
+            ]),
+          ),
+        ],
+      ),
     );
   }
 }

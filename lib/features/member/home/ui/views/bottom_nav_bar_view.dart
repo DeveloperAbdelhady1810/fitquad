@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../../core/skin/app_skin_cubit.dart';
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/neo_theme.dart';
 import '../../../gym/ui/gym_selection_screen.dart';
 import '../../../home/manager/member_cubit.dart';
 import '../../../home/manager/member_state.dart';
@@ -14,6 +16,7 @@ import '../../../train/widgets/train_tap.dart';
 import '../../manager/bottom_nav_bar_cubit.dart';
 import '../widgets/bottom_nav_bar_view_body.dart';
 import '../widgets/home_tab.dart';
+import '../widgets/home_tab_neo.dart';
 import '../widgets/week_summary_screen.dart';
 import '../../../announcements/announcement_overlay.dart';
 
@@ -85,35 +88,50 @@ class BottomNavBarViewState extends State<BottomNavBarView> {
       child: SafeArea(
         child: GestureDetector(
           onTap: () => FocusScope.of(context).unfocus(),
-          child: Scaffold(
-            backgroundColor: AppColors.primary,
-            extendBody: false,
-            body: BlocBuilder<BottomNavBarCubit, BottomNavBarState>(
-              builder: (context, navState) {
-                final navCubit = context.read<BottomNavBarCubit>();
-                return BlocBuilder<MemberCubit, MemberState>(
-                  builder: (context, memberState) {
-                    final memberCubit = context.read<MemberCubit>();
-                    final weekPlan = _buildWeekPlan(memberCubit);
-                    final trainWidget = weekPlan != null
-                        ? WeekSummaryScreen(weekPlan: weekPlan)
-                        : const TrainTab();
-                    final bodies = [
-                      HomeTab(),
-                      trainWidget,
-                      AiTab(),
-                      EatTab(),
-                      MarketTab(),
-                    ];
-                    return Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: bodies[navCubit.currentIndex],
+          child: BlocBuilder<AppSkinCubit, AppSkin>(
+            builder: (context, skin) {
+              final isNeo = skin == AppSkin.neo;
+              return Scaffold(
+                backgroundColor: isNeo ? NeoColors.bg : AppColors.primary,
+                extendBody: false,
+                body: BlocBuilder<BottomNavBarCubit, BottomNavBarState>(
+                  builder: (context, navState) {
+                    final navCubit = context.read<BottomNavBarCubit>();
+                    return BlocBuilder<MemberCubit, MemberState>(
+                      builder: (context, memberState) {
+                        final memberCubit = context.read<MemberCubit>();
+                        final weekPlan = _buildWeekPlan(memberCubit);
+                        final trainWidget = weekPlan != null
+                            ? WeekSummaryScreen(weekPlan: weekPlan)
+                            : const TrainTab();
+
+                        Widget homeBody = isNeo ? const HomeTabNeo() : HomeTab();
+
+                        final bodies = [
+                          homeBody,
+                          trainWidget,
+                          AiTab(),
+                          EatTab(),
+                          MarketTab(),
+                        ];
+
+                        return AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 350),
+                          child: isNeo
+                              ? bodies[navCubit.currentIndex]
+                              : Padding(
+                                  key: const ValueKey('classic'),
+                                  padding: const EdgeInsets.all(16),
+                                  child: bodies[navCubit.currentIndex],
+                                ),
+                        );
+                      },
                     );
                   },
-                );
-              },
-            ),
-            bottomNavigationBar: BottomNavBarViewBody(),
+                ),
+                bottomNavigationBar: BottomNavBarViewBody(),
+              );
+            },
           ),
         ),
       ),
