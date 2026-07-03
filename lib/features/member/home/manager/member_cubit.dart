@@ -12,6 +12,10 @@ import 'member_state.dart';
 class MemberCubit extends Cubit<MemberState> {
   MemberCubit() : super(MemberLoading());
 
+  /// Cached member data — survives MemberUpdated/MemberLoading emits.
+  MemberModel? _cachedMember;
+  MemberModel? get currentMember => _cachedMember;
+
   Map<String, dynamic>? workoutPlan;
   Map<String, dynamic>? nutritionPlan;
   String? todayWorkoutStatus; // null | 'done' | 'semi'
@@ -54,25 +58,30 @@ class MemberCubit extends Cubit<MemberState> {
       await SharedPrefHelper.setData(lastSeenKey, streak);
 
       // Sync streak/xp/level into MemberModel if loaded
-      if (state is MemberLoaded) {
-        final current = (state as MemberLoaded).member;
-        emit(MemberLoaded(current.copyWith(
+      final current = _cachedMember ?? (state is MemberLoaded ? (state as MemberLoaded).member : null);
+      if (current != null) {
+        _emitMemberLoaded(current.copyWith(
           streakDays: streak,
           xpPoints: (progressData!['xp_points'] as num?)?.toInt() ?? current.xpPoints,
           level: (progressData!['level'] as num?)?.toInt() ?? current.level,
-        )));
+        ));
       }
     }
 
     final saved = (await SharedPrefHelper.getString(_todayKey)) as String;
     todayWorkoutStatus = saved.isNotEmpty ? saved : null;
-    if (state is MemberLoaded) emit(MemberLoaded((state as MemberLoaded).member));
+    if (_cachedMember != null) emit(MemberLoaded(_cachedMember!));
   }
 
   void clearMilestoneCelebration() {
     showMilestoneCelebration = false;
     celebrationStreak = null;
-    emit(MemberUpdated());
+    // Re-emit MemberLoaded so cached member data is preserved in state
+    if (_cachedMember != null) {
+      emit(MemberLoaded(_cachedMember!));
+    } else {
+      emit(MemberUpdated());
+    }
   }
 
   Future<void> _loadWeekCheckIns() async {
@@ -101,8 +110,8 @@ class MemberCubit extends Cubit<MemberState> {
     try {
       emit(MemberLoading());
       final data = await MemberRepository.getDashboard();
-      final member = MemberModel.fromJson(data);
-      emit(MemberLoaded(member));
+      _cachedMember = MemberModel.fromJson(data);
+      emit(MemberLoaded(_cachedMember!));
     } catch (e) {
       emit(const MemberError('Failed to load member'));
     }
@@ -119,47 +128,48 @@ class MemberCubit extends Cubit<MemberState> {
     }
   }
 
+  void _emitMemberLoaded(MemberModel member) {
+    _cachedMember = member;
+    emit(MemberLoaded(member));
+  }
+
   void increaseWeight() {
-    if (state is MemberLoaded) {
-      final current = (state as MemberLoaded).member;
-      emit(MemberLoaded(current.copyWith(weight: (current.weight ?? 0) + 0.1)));
-    }
+    final current = _cachedMember;
+    if (current == null) return;
+    _emitMemberLoaded(current.copyWith(weight: (current.weight ?? 0) + 0.1));
   }
 
   void decreaseWeight() {
-    if (state is MemberLoaded) {
-      final current = (state as MemberLoaded).member;
-      emit(
-        MemberLoaded(
-          current.copyWith(weight: ((current.weight ?? 0) - 0.1).clamp(0, 500)),
-        ),
-      );
-    }
+    final current = _cachedMember;
+    if (current == null) return;
+    _emitMemberLoaded(
+      current.copyWith(weight: ((current.weight ?? 0) - 0.1).clamp(0, 500)),
+    );
   }
 
   void updateWeight(double weight) {
-    if (state is! MemberLoaded) return;
-    final current = (state as MemberLoaded).member;
+    final current = _cachedMember;
+    if (current == null) return;
     final newWeight = double.parse(weight.clamp(0, 500).toStringAsFixed(1));
-    emit(MemberLoaded(current.copyWith(weight: newWeight)));
+    _emitMemberLoaded(current.copyWith(weight: newWeight));
   }
 
   void updateSleepHrs(double hours) {
-    if (state is! MemberLoaded) return;
-    final current = (state as MemberLoaded).member;
-    emit(MemberLoaded(current.copyWith(sleepHrs: hours)));
+    final current = _cachedMember;
+    if (current == null) return;
+    _emitMemberLoaded(current.copyWith(sleepHrs: hours));
   }
 
   void updateWaterL(double liters) {
-    if (state is! MemberLoaded) return;
-    final current = (state as MemberLoaded).member;
+    final current = _cachedMember;
+    if (current == null) return;
     final newWater = double.parse(liters.clamp(0, 10).toStringAsFixed(1));
-    emit(MemberLoaded(current.copyWith(waterL: newWater)));
+    _emitMemberLoaded(current.copyWith(waterL: newWater));
   }
 
   Future<void> saveDashboardToApi() async {
-    if (state is! MemberLoaded) return;
-    final current = (state as MemberLoaded).member;
+    final current = _cachedMember;
+    if (current == null) return;
     try {
       await MemberRepository.updateDashboard({
         if (current.weight != null) 'current_weight': current.weight,
@@ -181,7 +191,8 @@ class MemberCubit extends Cubit<MemberState> {
 
   Future<void> restoreWorkout() async {
     currentExercise = await SharedPrefHelper.getInt(AppConstants.kWorkoutExerciseKey) ?? 0;
-    emit(MemberUpdated());
+    // HomeTab._initWorkout() calls setState() after this, so no emit needed here.
+    // Emitting MemberUpdated would destroy MemberLoaded state every time the tab is revisited.
   }
 
   String get totalTime {
