@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:gym_app/core/enums/choose_coach.dart';
-import 'package:gym_app/features/member/gym/models/gym_model.dart';
 import 'package:gym_app/features/member/home/ui/widgets/choose_coach_screen.dart';
 import 'package:gym_app/features/member/home/ui/widgets/plan_dilog.dart';
 import 'package:gym_app/features/member/community/community_feed_screen.dart';
@@ -49,7 +48,8 @@ class HomeTab extends StatefulWidget {
 
 class _HomeTabState extends State<HomeTab> {
   PageController? pageController;
-  CrowdingInfo? _crowding;
+  List<Map<String, dynamic>>? _gymMemberships;
+  bool _toastDismissed = false;
 
   @override
   void initState() {
@@ -62,22 +62,25 @@ class _HomeTabState extends State<HomeTab> {
     await cubit.restoreWorkout();
 
     pageController = PageController(
-      initialPage:
-      cubit.currentExercise.clamp(0, cubit.totalExercises - 1),
+      initialPage: cubit.currentExercise.clamp(0, cubit.totalExercises - 1),
     );
 
     if (mounted) setState(() {});
-    _loadCrowding();
+    _loadGymMemberships();
   }
 
-  Future<void> _loadCrowding() async {
+  Future<void> _loadGymMemberships() async {
     try {
-      final state = context.read<MemberCubit>().state;
-      if (state is! MemberLoaded) return;
-      final branchId = state.member.branchId;
-      if (branchId == null) return;
-      final raw = await MemberRepository.getBranchCrowding(branchId);
-      if (mounted) setState(() => _crowding = CrowdingInfo.fromJson(raw));
+      final res = await ApiClient.get('/member/gym-memberships');
+      final list = (res['data'] as List?) ?? [];
+      final active = list
+          .cast<Map<String, dynamic>>()
+          .where((m) {
+            final s = m['status'] as String?;
+            return s == 'active';
+          })
+          .toList();
+      if (mounted) setState(() { _gymMemberships = active; _toastDismissed = false; });
     } catch (_) {}
   }
 
@@ -90,8 +93,15 @@ class _HomeTabState extends State<HomeTab> {
   @override
   Widget build(BuildContext context) {
     final s = S.of(context);
+    final toastGyms = (_gymMemberships ?? []).where((m) {
+      final gym = m['gym'] as Map<String, dynamic>? ?? {};
+      final level = gym['crowd_level'] as String? ?? 'quiet';
+      return level == 'quiet' || level == 'moderate';
+    }).toList();
 
-    return BlocBuilder<MemberCubit, MemberState>(
+    return Stack(
+      children: [
+        BlocBuilder<MemberCubit, MemberState>(
       builder: (context, state) {
         double weight = 0;
         double sleepHrs = 0;
@@ -184,10 +194,6 @@ class _HomeTabState extends State<HomeTab> {
               ),
               vGap(10),
               _buildWorkoutCard(context, state),
-              if (_crowding != null) ...[
-                vGap(10),
-                _CrowdingBanner(info: _crowding!),
-              ],
               vGap(10),
               _GymSubscriptionsWidget(),
               vGap(5),
@@ -262,7 +268,14 @@ class _HomeTabState extends State<HomeTab> {
           ),
         );
       },
-    );
+    ),
+    if (!_toastDismissed && toastGyms.isNotEmpty)
+      _CrowdingToast(
+        gyms: toastGyms,
+        onDismiss: () => setState(() => _toastDismissed = true),
+      ),
+  ],
+  );
   }
 
   Widget _buildWorkoutCard(BuildContext context, MemberState state) {
@@ -946,37 +959,145 @@ class _StatusChip extends StatelessWidget {
   }
 }
 
-class _CrowdingBanner extends StatelessWidget {
-  final CrowdingInfo info;
-  const _CrowdingBanner({required this.info});
+class _CrowdingToast extends StatefulWidget {
+  final List<Map<String, dynamic>> gyms;
+  final VoidCallback onDismiss;
+  const _CrowdingToast({required this.gyms, required this.onDismiss});
+
+  @override
+  State<_CrowdingToast> createState() => _CrowdingToastState();
+}
+
+class _CrowdingToastState extends State<_CrowdingToast>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+  late final Animation<Offset> _slide;
+  late final Animation<double> _fade;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 400));
+    _slide = Tween<Offset>(begin: const Offset(0, -1), end: Offset.zero)
+        .animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic));
+    _fade = Tween<double>(begin: 0, end: 1)
+        .animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeIn));
+    _ctrl.forward();
+    Future.delayed(const Duration(seconds: 5), _dismiss);
+  }
+
+  void _dismiss() {
+    if (!mounted) return;
+    _ctrl.reverse().then((_) { if (mounted) widget.onDismiss(); });
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final isCrowded = info.level == 'crowded';
-    final isModerate = info.level == 'moderate';
-    final color = isCrowded ? AppColors.red : isModerate ? const Color(0xFFFFD700) : AppColors.emerald;
-    final icon = isCrowded ? Icons.warning_amber_rounded : Icons.check_circle_outline;
-    final msg = isCrowded
-        ? '${info.branchName} is busy — ~${info.checkIns} people training now'
-        : isModerate
-            ? '${info.branchName} is moderately busy (~${info.checkIns} people)'
-            : 'Good time to train — only ~${info.checkIns} people at ${info.branchName}';
-
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
-      decoration: AppDecorations.containerDecoration.copyWith(
-        border: Border.all(color: color.withValues(alpha: 0.5)),
-        color: color.withValues(alpha: 0.08),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: color, size: 18.r),
-          hGap(10),
-          Expanded(
-            child: Text(msg,
-                style: AppTextStyles.font14GreyRegular.copyWith(color: color, fontSize: 12.sp)),
+    return Positioned(
+      top: 0,
+      left: 0,
+      right: 0,
+      child: SlideTransition(
+        position: _slide,
+        child: FadeTransition(
+          opacity: _fade,
+          child: Container(
+            margin: EdgeInsets.symmetric(horizontal: 4.w, vertical: 6.h),
+            decoration: BoxDecoration(
+              color: AppColors.secondary,
+              borderRadius: BorderRadius.circular(16.r),
+              border: Border.all(color: AppColors.teal.withValues(alpha: 0.4)),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.teal.withValues(alpha: 0.15),
+                  blurRadius: 16,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(children: [
+                  Container(
+                    padding: EdgeInsets.all(6.r),
+                    decoration: BoxDecoration(
+                      color: AppColors.teal.withValues(alpha: 0.15),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(Icons.fitness_center, color: AppColors.teal, size: 14.r),
+                  ),
+                  hGap(8),
+                  Expanded(
+                    child: Text(
+                      'Great time to train! 💪',
+                      style: AppTextStyles.font14WhiteRegular
+                          .copyWith(fontWeight: FontWeight.w700, fontSize: 13.sp),
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: _dismiss,
+                    child: Icon(Icons.close, color: AppColors.grey, size: 16.r),
+                  ),
+                ]),
+                vGap(8),
+                ...widget.gyms.take(2).map((m) {
+                  final gym = m['gym'] as Map<String, dynamic>? ?? {};
+                  final name = gym['name'] as String? ?? 'Your Gym';
+                  final today = (gym['attendance_today'] as num?)?.toInt() ?? 0;
+                  final capacity = (gym['capacity'] as num?)?.toInt() ?? 100;
+                  final level = gym['crowd_level'] as String? ?? 'quiet';
+                  final color = level == 'moderate'
+                      ? const Color(0xFFFFD700)
+                      : AppColors.emerald;
+                  final pct = capacity > 0 ? (today / capacity).clamp(0.0, 1.0) : 0.0;
+                  return Padding(
+                    padding: EdgeInsets.only(bottom: 6.h),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(children: [
+                          Icon(Icons.location_on, color: color, size: 11.r),
+                          hGap(4),
+                          Expanded(
+                            child: Text(
+                              name,
+                              style: AppTextStyles.font14GreyRegular
+                                  .copyWith(color: Colors.white70, fontSize: 11.sp),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          Text(
+                            '~$today people',
+                            style: AppTextStyles.font14GreyRegular
+                                .copyWith(color: color, fontSize: 10.sp),
+                          ),
+                        ]),
+                        vGap(4),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(4.r),
+                          child: LinearProgressIndicator(
+                            value: pct,
+                            minHeight: 3.h,
+                            backgroundColor: AppColors.primary,
+                            valueColor: AlwaysStoppedAnimation<Color>(color),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+              ],
+            ),
           ),
-        ],
+        ),
       ),
     );
   }
@@ -1125,12 +1246,12 @@ class _PartnerGymsBanner extends StatelessWidget {
         padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 20.h),
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [AppColors.teal.withOpacity(0.3), AppColors.secondary],
+            colors: [AppColors.teal.withValues(alpha: 0.3), AppColors.secondary],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
           borderRadius: BorderRadius.circular(14.r),
-          border: Border.all(color: AppColors.teal.withOpacity(0.35)),
+          border: Border.all(color: AppColors.teal.withValues(alpha: 0.35)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
