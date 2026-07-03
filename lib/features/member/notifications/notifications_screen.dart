@@ -28,7 +28,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   Future<void> _load() async {
     try {
       final res = await ApiClient.get('/member/notifications');
-      final list = (res['data'] as List?) ?? (res['notifications'] as List?) ?? [];
+      final raw = res['data'];
+      final list = raw is List
+          ? raw
+          : raw is Map
+              ? (raw['data'] as List? ?? [])
+              : <dynamic>[];
       if (mounted) {
         setState(() {
           _notifications = list.cast<Map<String, dynamic>>();
