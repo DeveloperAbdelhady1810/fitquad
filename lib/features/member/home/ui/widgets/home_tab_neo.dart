@@ -6,10 +6,14 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:gym_app/core/services/api_client.dart';
 import 'package:gym_app/core/theme/neo_theme.dart';
 import 'package:gym_app/core/widgets/neo_glass_card.dart';
+import 'package:gym_app/features/member/home/manager/bottom_nav_bar_cubit.dart';
 import 'package:gym_app/features/member/home/manager/member_cubit.dart';
 import 'package:gym_app/features/member/home/manager/member_state.dart';
 import 'package:gym_app/features/member/home/ui/views/workout_active_screen_neo.dart';
 import 'package:gym_app/features/member/home/ui/widgets/my_coaches_screen.dart';
+import 'package:gym_app/features/member/home/ui/widgets/sleep_dialog.dart';
+import 'package:gym_app/features/member/home/ui/widgets/water_dialog.dart';
+import 'package:gym_app/features/member/home/ui/widgets/weight_dialog.dart';
 import 'package:gym_app/features/member/notifications/notifications_screen_neo.dart';
 import 'package:gym_app/features/member/partner_gyms/ui/partner_gyms_screen_neo.dart';
 import 'package:gym_app/features/member/profile/ui/widgets/profile_tab.dart';
@@ -308,9 +312,11 @@ class _HomeTabNeoState extends State<HomeTabNeo>
         children: [
           Row(
             children: [
-              Expanded(child: _metricTile('WEIGHT', '${weight.toStringAsFixed(1)} KG', NeoColors.cyan, Icons.monitor_weight_outlined, 1.0)),
+              Expanded(child: _metricTile('WEIGHT', '${weight.toStringAsFixed(1)} KG', NeoColors.cyan, Icons.monitor_weight_outlined, 1.0,
+                  onTap: () => showWeightDialog(context))),
               SizedBox(width: 8.w),
-              Expanded(child: _metricTile('WATER', '${water.toStringAsFixed(1)} L', const Color(0xFF00DCE6), Icons.water_drop_outlined, (water / 3.0).clamp(0.0, 1.0))),
+              Expanded(child: _metricTile('WATER', '${water.toStringAsFixed(1)} L', const Color(0xFF00DCE6), Icons.water_drop_outlined, (water / 3.0).clamp(0.0, 1.0),
+                  onTap: () => showWaterDialog(context))),
             ],
           ),
           SizedBox(height: 8.h),
@@ -318,7 +324,8 @@ class _HomeTabNeoState extends State<HomeTabNeo>
             children: [
               Expanded(
                 flex: 2,
-                child: _metricTile('SLEEP', '${sleep.toStringAsFixed(1)} H', NeoColors.lime, Icons.bedtime_outlined, (sleep / 8.0).clamp(0.0, 1.0)),
+                child: _metricTile('SLEEP', '${sleep.toStringAsFixed(1)} H', NeoColors.lime, Icons.bedtime_outlined, (sleep / 8.0).clamp(0.0, 1.0),
+                    onTap: () => showSleepDialog(context)),
               ),
               SizedBox(width: 8.w),
               Expanded(
@@ -332,37 +339,40 @@ class _HomeTabNeoState extends State<HomeTabNeo>
     );
   }
 
-  Widget _metricTile(String label, String value, Color color, IconData icon, double progress) {
-    return NeoGlassCard(
-      padding: EdgeInsets.all(12.r),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(icon, color: color, size: 14.r),
-              SizedBox(width: 6.w),
-              Text(label, style: NeoTextStyles.labelCaps),
-            ],
-          ),
-          SizedBox(height: 8.h),
-          Text(
-            value,
-            style: GoogleFonts.jetBrainsMono(
-              fontSize: 20.sp,
-              fontWeight: FontWeight.w700,
-              color: color,
-              shadows: [Shadow(color: color.withValues(alpha: 0.5), blurRadius: 6)],
+  Widget _metricTile(String label, String value, Color color, IconData icon, double progress, {VoidCallback? onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: NeoGlassCard(
+        padding: EdgeInsets.all(12.r),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(icon, color: color, size: 14.r),
+                SizedBox(width: 6.w),
+                Text(label, style: NeoTextStyles.labelCaps),
+              ],
             ),
-          ),
-          SizedBox(height: 8.h),
-          LinearProgressIndicator(
-            value: progress,
-            minHeight: 1.h,
-            backgroundColor: NeoColors.surfaceTop,
-            valueColor: AlwaysStoppedAnimation(color),
-          ),
-        ],
+            SizedBox(height: 8.h),
+            Text(
+              value,
+              style: GoogleFonts.jetBrainsMono(
+                fontSize: 20.sp,
+                fontWeight: FontWeight.w700,
+                color: color,
+                shadows: [Shadow(color: color.withValues(alpha: 0.5), blurRadius: 6)],
+              ),
+            ),
+            SizedBox(height: 8.h),
+            LinearProgressIndicator(
+              value: progress,
+              minHeight: 1.h,
+              backgroundColor: NeoColors.surfaceTop,
+              valueColor: AlwaysStoppedAnimation(color),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -370,31 +380,34 @@ class _HomeTabNeoState extends State<HomeTabNeo>
   Widget _nutritionTile(BuildContext context, MemberState state) {
     final plan = context.read<MemberCubit>().nutritionPlan;
     final cals = plan != null ? (plan['daily_calories'] as num?)?.toInt() ?? 0 : 0;
-    return NeoGlassCard(
-      padding: EdgeInsets.all(12.r),
-      borderColor: NeoColors.magenta.withValues(alpha: 0.35),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.restaurant_menu, color: NeoColors.magenta, size: 14.r),
-              SizedBox(width: 6.w),
-              Text('NUTRITION', style: NeoTextStyles.labelCaps),
-            ],
-          ),
-          SizedBox(height: 8.h),
-          Text(
-            cals > 0 ? '$cals KCAL' : 'VIEW PLAN',
-            style: GoogleFonts.jetBrainsMono(
-              fontSize: 16.sp,
-              fontWeight: FontWeight.w700,
-              color: NeoColors.magenta,
+    return GestureDetector(
+      onTap: () => context.read<BottomNavBarCubit>().changeIndex(3),
+      child: NeoGlassCard(
+        padding: EdgeInsets.all(12.r),
+        borderColor: NeoColors.magenta.withValues(alpha: 0.35),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.restaurant_menu, color: NeoColors.magenta, size: 14.r),
+                SizedBox(width: 6.w),
+                Text('NUTRITION', style: NeoTextStyles.labelCaps),
+              ],
             ),
-          ),
-          SizedBox(height: 4.h),
-          Text('DAILY GOAL', style: NeoTextStyles.labelCaps.copyWith(color: NeoColors.outline)),
-        ],
+            SizedBox(height: 8.h),
+            Text(
+              cals > 0 ? '$cals KCAL' : 'VIEW PLAN',
+              style: GoogleFonts.jetBrainsMono(
+                fontSize: 16.sp,
+                fontWeight: FontWeight.w700,
+                color: NeoColors.magenta,
+              ),
+            ),
+            SizedBox(height: 4.h),
+            Text('DAILY GOAL', style: NeoTextStyles.labelCaps.copyWith(color: NeoColors.outline)),
+          ],
+        ),
       ),
     );
   }
