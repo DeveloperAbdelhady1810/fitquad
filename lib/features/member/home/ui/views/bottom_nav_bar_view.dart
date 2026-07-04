@@ -10,9 +10,11 @@ import '../../../home/manager/member_cubit.dart';
 import '../../../home/manager/member_state.dart';
 import '../../../ai/ai_tab.dart';
 import '../../../eat/widgets/eat_tap.dart';
+import '../../../eat/widgets/eat_tab_neo.dart';
 import '../../../home/manager/food_cubit.dart';
 import '../../../shop/ui/widgets/market_tab.dart';
 import '../../../train/widgets/train_tap.dart';
+import '../../../train/widgets/train_tab_neo.dart';
 import '../../manager/bottom_nav_bar_cubit.dart';
 import '../widgets/bottom_nav_bar_view_body.dart';
 import '../widgets/home_tab.dart';
@@ -109,9 +111,9 @@ class BottomNavBarViewState extends State<BottomNavBarView> {
 
                         final bodies = [
                           homeBody,
-                          trainWidget,
+                          isNeo ? const TrainTabNeo() : trainWidget,
                           AiTab(),
-                          EatTab(),
+                          isNeo ? const EatTabNeo() : EatTab(),
                           MarketTab(),
                         ];
 

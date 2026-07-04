@@ -9,11 +9,11 @@ import 'package:gym_app/core/theme/neo_theme.dart';
 import 'package:gym_app/core/widgets/neo_glass_card.dart';
 import 'package:gym_app/features/member/home/manager/member_cubit.dart';
 import 'package:gym_app/features/member/home/manager/member_state.dart';
-import 'package:gym_app/features/member/home/ui/views/workout_active_screen.dart';
+import 'package:gym_app/features/member/home/ui/views/workout_active_screen_neo.dart';
 import 'package:gym_app/features/member/home/ui/widgets/my_coaches_screen.dart';
-import 'package:gym_app/features/member/notifications/notifications_screen.dart';
+import 'package:gym_app/features/member/notifications/notifications_screen_neo.dart';
 import 'package:gym_app/features/member/profile/ui/widgets/profile_tab.dart';
-import 'package:gym_app/features/member/qr/qr_screen.dart';
+import 'package:gym_app/features/member/qr/qr_screen_neo.dart';
 import 'package:intl/intl.dart';
 
 class HomeTabNeo extends StatefulWidget {
@@ -121,13 +121,13 @@ class _HomeTabNeoState extends State<HomeTabNeo>
             ),
           ),
           const Spacer(),
-          _neoIconBtn(Icons.qr_code_2, () => showQrSheet(context)),
+          _neoIconBtn(Icons.qr_code_2, () => showQrSheetNeo(context)),
           SizedBox(width: 8.w),
           _neoIconBtn(Icons.chat_bubble_outline, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MyCoachesScreen()))),
           SizedBox(width: 8.w),
           _neoIconBtn(Icons.person_outline, () => context.push(ProfileScreen.routeName)),
           SizedBox(width: 8.w),
-          _neoIconBtn(Icons.notifications_none, () => context.push(NotificationsScreen.routeName)),
+          _neoIconBtn(Icons.notifications_none, () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreenNeo()))),
         ],
       ),
     );
@@ -258,12 +258,14 @@ class _HomeTabNeoState extends State<HomeTabNeo>
                   child: GestureDetector(
                     onTap: () {
                       if (exercises.isEmpty) return;
-                      context.push(
-                        WorkoutActiveScreen.routeName,
-                        extra: {
-                          'exercises': exercises,
-                          'plan_title': plan?['name'] as String? ?? '',
-                        },
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => WorkoutActiveScreenNeo(
+                            exercises: exercises,
+                            planTitle: plan?['name'] as String? ?? '',
+                          ),
+                        ),
                       );
                     },
                     child: Container(

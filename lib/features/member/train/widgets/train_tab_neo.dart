@@ -2,13 +2,12 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:gym_app/core/helpers/spacing.dart';
 import 'package:gym_app/core/theme/neo_theme.dart';
 import 'package:gym_app/features/member/home/manager/member_cubit.dart';
 import 'package:gym_app/features/member/home/manager/member_state.dart';
-import 'package:gym_app/features/member/home/ui/views/workout_active_screen.dart';
+import 'package:gym_app/features/member/home/ui/views/workout_active_screen_neo.dart';
 
 class TrainTabNeo extends StatefulWidget {
   const TrainTabNeo({super.key});
@@ -268,10 +267,15 @@ class _StartButton extends StatelessWidget {
         }
         final exercises = (todayDay?['exercises'] as List?)?.cast<Map<String, dynamic>>() ?? [];
         if (exercises.isNotEmpty) {
-          context.push(WorkoutActiveScreen.routeName, extra: {
-            'exercises': exercises,
-            'plan_title': plan['title'] as String? ?? 'Workout',
-          });
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => WorkoutActiveScreenNeo(
+                exercises: exercises,
+                planTitle: plan['title'] as String? ?? 'Workout',
+              ),
+            ),
+          );
         }
       },
       child: Container(
