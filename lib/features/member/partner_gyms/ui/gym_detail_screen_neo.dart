@@ -34,15 +34,20 @@ class _GymDetailScreenNeoState extends State<GymDetailScreenNeo> {
   Future<void> _load() async {
     setState(() { _loading = true; _error = null; });
     try {
-      final results = await Future.wait([
-        PartnerGymRepository.getGymDetail(widget.gymId),
-        PartnerGymRepository.getMemberships(),
-      ]);
-      final gymData = results[0] as Map<String, dynamic>;
-      final memberships = results[1] as List<GymMembershipModel>;
-      final gym = PartnerGymModel.fromJson(gymData);
-      final membership = memberships.cast<GymMembershipModel?>().firstWhere(
-          (m) => m?.gym?.id == widget.gymId, orElse: () => null);
+      final raw = await PartnerGymRepository.getGymDetail(widget.gymId);
+      // raw = { gym:{...}, my_membership:{...}?, photos:[...], attendance_today:N, crowd_level:'...' }
+      final rawGym = Map<String, dynamic>.from(raw['gym'] as Map<String, dynamic>? ?? {});
+      // Merge root-level fields the model needs
+      rawGym['photos'] ??= raw['photos'];
+      rawGym['attendance_today'] ??= raw['attendance_today'];
+      rawGym['crowd_level'] ??= raw['crowd_level'];
+      // API calls them 'subscription_plans'; model reads 'plans'
+      rawGym['plans'] ??= rawGym['subscription_plans'];
+      final gym = PartnerGymModel.fromJson(rawGym);
+      final membershipJson = raw['my_membership'] as Map<String, dynamic>?;
+      final membership = membershipJson != null
+          ? GymMembershipModel.fromJson(membershipJson)
+          : null;
       if (mounted) setState(() { _gym = gym; _membership = membership; _loading = false; });
     } catch (e) {
       if (mounted) setState(() { _error = e.toString(); _loading = false; });

@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -84,7 +83,7 @@ class _HomeTabNeoState extends State<HomeTabNeo>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildAppBar(context, name),
-                _buildGreeting(name, streak, xp ?? 0),
+                _buildGreeting(name, streak, xp),
                 SizedBox(height: 16.h),
                 _buildWorkoutCard(context, cubit, state),
                 SizedBox(height: 16.h),
@@ -370,7 +369,7 @@ class _HomeTabNeoState extends State<HomeTabNeo>
 
   Widget _nutritionTile(BuildContext context, MemberState state) {
     final plan = context.read<MemberCubit>().nutritionPlan;
-    final cals = plan != null ? (plan['total_calories'] as num?)?.toInt() ?? 0 : 0;
+    final cals = plan != null ? (plan['daily_calories'] as num?)?.toInt() ?? 0 : 0;
     return NeoGlassCard(
       padding: EdgeInsets.all(12.r),
       borderColor: NeoColors.magenta.withValues(alpha: 0.35),
@@ -402,6 +401,7 @@ class _HomeTabNeoState extends State<HomeTabNeo>
 
   Widget _buildWeeklyChart(MemberCubit cubit) {
     final checkIns = cubit.weekCheckIns;
+    if (checkIns.isEmpty) return const SizedBox.shrink();
     final maxVal = checkIns.reduce((a, b) => a > b ? a : b).clamp(1.0, double.infinity);
     const days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
     final todayIdx = DateTime.now().weekday - 1;

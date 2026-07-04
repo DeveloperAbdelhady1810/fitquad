@@ -102,8 +102,9 @@ class _QrSheetNeoState extends State<_QrSheetNeo>
           if (externalId != null && externalId.isNotEmpty) {
             qrData = externalId;
           } else {
-            final slug = _selectedGym!['slug'] as String? ?? '';
-            qrData = slug.isNotEmpty ? '$slug-$memberId' : memberId;
+            // Use the gym membership record ID, not the member's user ID
+            final membershipId = match['id']?.toString() ?? '';
+            qrData = membershipId.isNotEmpty ? membershipId : memberId;
           }
         } else if (state is MemberLoaded) {
           qrData = state.member.qrCode ?? state.member.id?.toString() ?? 'MEMBER';
