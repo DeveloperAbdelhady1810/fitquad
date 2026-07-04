@@ -8,6 +8,8 @@ import 'package:gym_app/core/theme/neo_theme.dart';
 import 'package:gym_app/features/member/home/manager/member_cubit.dart';
 import 'package:gym_app/features/member/home/manager/member_state.dart';
 import 'package:gym_app/features/member/home/ui/views/workout_active_screen_neo.dart';
+import 'package:gym_app/features/member/home/ui/widgets/choose_coach_screen.dart';
+import 'package:gym_app/features/member/partner_gyms/ui/partner_gyms_screen_neo.dart';
 
 class TrainTabNeo extends StatefulWidget {
   const TrainTabNeo({super.key});
@@ -31,7 +33,7 @@ class _TrainTabNeoState extends State<TrainTabNeo> {
         return Stack(
           children: [
             SingleChildScrollView(
-              padding: EdgeInsets.only(bottom: 100.h),
+              padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 100.h),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -62,6 +64,32 @@ class _TrainTabNeoState extends State<TrainTabNeo> {
                             }
                           }),
                         )),
+                    vGap(16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _NeoBtn(
+                            label: 'FIND A COACH',
+                            icon: Icons.person_search,
+                            color: NeoColors.cyan,
+                            onTap: () => Navigator.push(context, MaterialPageRoute(
+                              builder: (_) => const ChooseCoachScreen(),
+                            )),
+                          ),
+                        ),
+                        SizedBox(width: 10.w),
+                        Expanded(
+                          child: _NeoBtn(
+                            label: 'BROWSE GYMS',
+                            icon: Icons.storefront_outlined,
+                            color: NeoColors.lime,
+                            onTap: () => Navigator.push(context, MaterialPageRoute(
+                              builder: (_) => const PartnerGymsScreenNeo(),
+                            )),
+                          ),
+                        ),
+                      ],
+                    ),
                   ] else
                     _NoPlanCard(),
                 ],
@@ -301,14 +329,67 @@ class _NoPlanCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return _NeoGlassCard(
       padding: EdgeInsets.all(24.r),
-      child: Center(
+      child: Column(
+        children: [
+          Icon(Icons.sports_gymnastics, color: NeoColors.cyan, size: 40.r),
+          vGap(12),
+          Text('NO PLAN ACTIVE', style: NeoTextStyles.headlineSm.copyWith(color: NeoColors.cyan)),
+          vGap(6),
+          Text('Find a coach or browse gyms to get started', style: NeoTextStyles.bodySm, textAlign: TextAlign.center),
+          vGap(20),
+          Row(
+            children: [
+              Expanded(
+                child: _NeoBtn(
+                  label: 'FIND A COACH',
+                  icon: Icons.person_search,
+                  color: NeoColors.cyan,
+                  onTap: () => Navigator.push(context, MaterialPageRoute(
+                    builder: (_) => const ChooseCoachScreen(),
+                  )),
+                ),
+              ),
+              SizedBox(width: 10.w),
+              Expanded(
+                child: _NeoBtn(
+                  label: 'BROWSE GYMS',
+                  icon: Icons.storefront_outlined,
+                  color: NeoColors.lime,
+                  onTap: () => Navigator.push(context, MaterialPageRoute(
+                    builder: (_) => const PartnerGymsScreenNeo(),
+                  )),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _NeoBtn extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final Color color;
+  final VoidCallback onTap;
+  const _NeoBtn({required this.label, required this.icon, required this.color, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.symmetric(vertical: 12.h),
+        decoration: BoxDecoration(
+          border: Border.all(color: color.withValues(alpha: 0.5)),
+          color: color.withValues(alpha: 0.08),
+        ),
         child: Column(
           children: [
-            Icon(Icons.sports_gymnastics, color: NeoColors.cyan, size: 40.r),
-            vGap(12),
-            Text('NO PLAN ACTIVE', style: NeoTextStyles.headlineSm.copyWith(color: NeoColors.cyan)),
-            vGap(6),
-            Text('Contact your coach to get a workout plan', style: NeoTextStyles.bodySm, textAlign: TextAlign.center),
+            Icon(icon, color: color, size: 20.r),
+            SizedBox(height: 4.h),
+            Text(label, style: NeoTextStyles.labelCaps.copyWith(color: color), textAlign: TextAlign.center),
           ],
         ),
       ),

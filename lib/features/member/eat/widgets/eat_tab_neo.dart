@@ -31,6 +31,7 @@ class EatTabNeo extends StatelessWidget {
         const consumed = 0;
 
         return SingleChildScrollView(
+          padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 80.h),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

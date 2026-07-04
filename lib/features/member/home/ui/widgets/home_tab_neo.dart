@@ -12,6 +12,7 @@ import 'package:gym_app/features/member/home/manager/member_state.dart';
 import 'package:gym_app/features/member/home/ui/views/workout_active_screen_neo.dart';
 import 'package:gym_app/features/member/home/ui/widgets/my_coaches_screen.dart';
 import 'package:gym_app/features/member/notifications/notifications_screen_neo.dart';
+import 'package:gym_app/features/member/partner_gyms/ui/partner_gyms_screen_neo.dart';
 import 'package:gym_app/features/member/profile/ui/widgets/profile_tab.dart';
 import 'package:gym_app/features/member/qr/qr_screen_neo.dart';
 import 'package:intl/intl.dart';
@@ -195,17 +196,25 @@ class _HomeTabNeoState extends State<HomeTabNeo>
 
   Widget _buildWorkoutCard(BuildContext context, MemberCubit cubit, MemberState state) {
     final plan = cubit.workoutPlan;
-    final todayOrder = DateTime.now().weekday;
+    final todayOrder = DateTime.now().weekday; // 1=Mon … 7=Sun
     Map<String, dynamic>? todayDay;
     if (plan != null) {
       final days = (plan['days'] as List?)?.cast<Map<String, dynamic>>();
-      todayDay = days?.firstWhere(
-        (d) => (d['day_order'] as int?) == todayOrder,
-        orElse: () => days!.isNotEmpty ? days.first : <String, dynamic>{},
-      );
+      if (days != null && days.isNotEmpty) {
+        todayDay = days.cast<Map<String, dynamic>?>().firstWhere(
+          (d) => (d!['order'] as num?)?.toInt() == todayOrder,
+          orElse: () => null,
+        );
+        todayDay ??= days[(todayOrder - 1) % days.length];
+      }
     }
 
-    final exercises = (todayDay?['exercises'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+    final rawExercises = (todayDay?['exercises'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+    final exercises = rawExercises.isNotEmpty
+        ? rawExercises
+        : ((todayDay?['selectedExercises'] as List?)?.cast<String>() ?? [])
+            .map((n) => <String, dynamic>{'name': n, 'sets': 3, 'reps': 10})
+            .toList();
 
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 16.w),
@@ -231,7 +240,7 @@ class _HomeTabNeoState extends State<HomeTabNeo>
             ),
             SizedBox(height: 10.h),
             Text(
-              (plan?['name'] as String? ?? 'NO PLAN YET').toUpperCase(),
+              (plan?['title'] as String? ?? 'NO PLAN YET').toUpperCase(),
               style: NeoTextStyles.headlineMd.copyWith(color: NeoColors.cyan),
             ),
             SizedBox(height: 4.h),
@@ -263,7 +272,7 @@ class _HomeTabNeoState extends State<HomeTabNeo>
                         MaterialPageRoute(
                           builder: (_) => WorkoutActiveScreenNeo(
                             exercises: exercises,
-                            planTitle: plan?['name'] as String? ?? '',
+                            planTitle: plan?['title'] as String? ?? '',
                           ),
                         ),
                       );
@@ -462,7 +471,16 @@ class _HomeTabNeoState extends State<HomeTabNeo>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('YOUR GYMS', style: NeoTextStyles.labelCaps.copyWith(color: NeoColors.cyan)),
+          Row(
+            children: [
+              Text('YOUR GYMS', style: NeoTextStyles.labelCaps.copyWith(color: NeoColors.cyan)),
+              const Spacer(),
+              GestureDetector(
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PartnerGymsScreenNeo())),
+                child: Text('BROWSE ALL ›', style: NeoTextStyles.labelCaps.copyWith(color: NeoColors.lime)),
+              ),
+            ],
+          ),
           SizedBox(height: 10.h),
           ...memberships.take(2).map((m) {
             final gym = m['gym'] as Map<String, dynamic>? ?? {};

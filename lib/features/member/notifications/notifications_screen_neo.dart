@@ -61,8 +61,8 @@ class _NotificationsScreenNeoState extends State<NotificationsScreenNeo> {
       ),
       body: Stack(
         children: [
-          IgnorePointer(
-            child: Positioned.fill(
+          Positioned.fill(
+            child: IgnorePointer(
               child: Stack(
                 children: [
                   Positioned(
