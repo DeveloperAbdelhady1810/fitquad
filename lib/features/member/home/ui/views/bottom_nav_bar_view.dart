@@ -9,10 +9,12 @@ import '../../../gym/ui/gym_selection_screen.dart';
 import '../../../home/manager/member_cubit.dart';
 import '../../../home/manager/member_state.dart';
 import '../../../ai/ai_tab.dart';
+import '../../../ai/ai_tab_neo.dart';
 import '../../../eat/widgets/eat_tap.dart';
 import '../../../eat/widgets/eat_tab_neo.dart';
 import '../../../home/manager/food_cubit.dart';
 import '../../../shop/ui/widgets/market_tab.dart';
+import '../../../shop/ui/widgets/market_tab_neo.dart';
 import '../../../train/widgets/train_tap.dart';
 import '../../../train/widgets/train_tab_neo.dart';
 import '../../manager/bottom_nav_bar_cubit.dart';
@@ -112,9 +114,9 @@ class BottomNavBarViewState extends State<BottomNavBarView> {
                         final bodies = [
                           homeBody,
                           isNeo ? const TrainTabNeo() : trainWidget,
-                          AiTab(),
+                          isNeo ? const AiTabNeo() : AiTab(),
                           isNeo ? const EatTabNeo() : EatTab(),
-                          MarketTab(),
+                          isNeo ? const MarketTabNeo() : MarketTab(),
                         ];
 
                         return AnimatedSwitcher(
