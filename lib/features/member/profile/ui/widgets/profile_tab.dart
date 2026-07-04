@@ -20,6 +20,9 @@ import 'package:gym_app/features/member/qr/qr_screen.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:gym_app/features/member/invitations/ui/invitations_screen.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:gym_app/core/widgets/neo_glass_card.dart';
+import 'package:gym_app/features/member/home/ui/widgets/my_coaches_screen.dart';
 
 import '../../../../../core/cubit/language/language_cubit.dart';
 import '../../../../../core/cubit/theme/theme_cubit.dart';
@@ -41,11 +44,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _loggingOut      = false;
   List<Map<String, dynamic>> _checkIns = [];
   bool _checkInsLoading = false;
+  List<Map<String, dynamic>> _coaches = [];
+  Map<String, dynamic>? _latestInBody;
 
   @override
   void initState() {
     super.initState();
     _loadCheckIns();
+    _loadInBody();
+    _loadCoaches();
   }
 
   Future<void> _loadCheckIns() async {
@@ -104,6 +111,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (context.read<AppSkinCubit>().state == AppSkin.neo) {
+      return Scaffold(
+        backgroundColor: NeoColors.bg,
+        body: SafeArea(
+          child: BlocBuilder<MemberCubit, MemberState>(
+            builder: (ctx, state) => _buildNeoLayout(ctx, state),
+          ),
+        ),
+      );
+    }
     final s = S.of(context);
     return Scaffold(
       backgroundColor: AppColors.primary,
@@ -633,6 +650,571 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
       ),
     );
+  }
+
+  // ══════════════════════════════ NEO LAYOUT ════════════════════════════════════
+
+  Future<void> _loadInBody() async {
+    try {
+      final res = await ApiClient.get('/member/inbody-records');
+      final raw = res['data'];
+      final list = raw is List
+          ? raw
+          : (raw is Map ? (raw['data'] as List? ?? []) : <dynamic>[]);
+      if (list.isNotEmpty && mounted) {
+        setState(() => _latestInBody = Map<String, dynamic>.from(list.first as Map));
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _loadCoaches() async {
+    try {
+      final res = await ApiClient.get('/member/my-coaches');
+      final raw = res['data'];
+      final list = raw is List
+          ? raw
+          : (raw is Map ? (raw['data'] as List? ?? []) : <dynamic>[]);
+      if (mounted) setState(() => _coaches = list.cast<Map<String, dynamic>>());
+    } catch (_) {}
+  }
+
+  Widget _buildNeoLayout(BuildContext context, MemberState state) {
+    final name      = state is MemberLoaded ? (state.member.name ?? 'ATHLETE') : 'ATHLETE';
+    final weight    = state is MemberLoaded ? (state.member.weight ?? 0.0) : 0.0;
+    final level     = state is MemberLoaded ? state.member.level : 1;
+    final streak    = state is MemberLoaded ? state.member.streakDays : 0;
+    final avatarUrl = state is MemberLoaded ? state.member.avatarUrl : null;
+    final isActive  = state is MemberLoaded && state.member.status?.name == 'active';
+    final initials  = name.trim().split(' ').take(2)
+        .map((p) => p.isNotEmpty ? p[0].toUpperCase() : '').join();
+
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _neoProfileAppBar(context),
+          _neoHero(context, name, initials, avatarUrl, isActive),
+          SizedBox(height: 20.h),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16.w),
+            child: Row(
+              children: [
+                Expanded(child: _neoStatCard('WEIGHT',
+                    weight > 0 ? '${weight.toStringAsFixed(0)}KG' : '--', NeoColors.cyan)),
+                SizedBox(width: 8.w),
+                Expanded(child: _neoStatCard('LEVEL', 'LVL $level', NeoColors.lime)),
+                SizedBox(width: 8.w),
+                Expanded(child: _neoStatCard('STREAK', '${streak}D', NeoColors.magenta)),
+              ],
+            ),
+          ),
+          SizedBox(height: 20.h),
+          _neoInBodySection(context),
+          SizedBox(height: 20.h),
+          if (_coaches.isNotEmpty) ...[
+            _neoCoachSection(context),
+            SizedBox(height: 20.h),
+          ],
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16.w),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _neoSectionLabel('INTERFACE STYLE'),
+                SizedBox(height: 10.h),
+                _SkinSwitcher(),
+              ],
+            ),
+          ),
+          SizedBox(height: 20.h),
+          _neoAccountSettings(context, state),
+          SizedBox(height: 20.h),
+          if (state is MemberLoaded && state.member.loyaltyPoints > 0) ...[
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16.w),
+              child: _LoyaltyCard(points: state.member.loyaltyPoints),
+            ),
+            SizedBox(height: 16.h),
+          ],
+          if (state is MemberLoaded) ...[
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16.w),
+              child: _ReferralCard(
+                code: state.member.referralCode,
+                memberName: state.member.name ?? 'You',
+                discountCredits: state.member.referralDiscountCredits,
+              ),
+            ),
+            SizedBox(height: 20.h),
+          ],
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16.w),
+            child: GestureDetector(
+              onTap: _loggingOut ? null : _logout,
+              child: Container(
+                width: double.infinity,
+                padding: EdgeInsets.symmetric(vertical: 14.h),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF440000),
+                  border: Border.all(color: const Color(0xFFFF4444).withValues(alpha: 0.6)),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    if (_loggingOut)
+                      SizedBox(
+                        width: 16.r, height: 16.r,
+                        child: const CircularProgressIndicator(
+                            strokeWidth: 2, color: Color(0xFFFF4444)),
+                      )
+                    else
+                      Icon(Icons.logout, color: const Color(0xFFFF4444), size: 16.r),
+                    SizedBox(width: 8.w),
+                    Text(
+                      _loggingOut ? 'SIGNING OUT...' : 'SIGN OUT',
+                      style: NeoTextStyles.labelCaps.copyWith(color: const Color(0xFFFF4444)),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          SizedBox(height: 32.h),
+        ],
+      ),
+    );
+  }
+
+  Widget _neoProfileAppBar(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.fromLTRB(4.w, 4.h, 16.w, 8.h),
+      decoration: BoxDecoration(
+        color: const Color(0x66131315),
+        border: Border(bottom: BorderSide(color: NeoColors.cyan.withValues(alpha: 0.15))),
+      ),
+      child: Row(
+        children: [
+          IconButton(
+            onPressed: () => context.pop(),
+            icon: Icon(Icons.arrow_back_ios, color: NeoColors.onSurfaceVariant, size: 18.r),
+          ),
+          Text(
+            'PROFILE',
+            style: NeoTextStyles.headlineSm.copyWith(
+              color: NeoColors.cyan,
+              shadows: [Shadow(color: NeoColors.cyan.withValues(alpha: 0.6), blurRadius: 8)],
+            ),
+          ),
+          const Spacer(),
+          IconButton(
+            onPressed: () => context.push(MyCoachesScreen.routeName),
+            icon: Icon(Icons.notifications_none, color: NeoColors.onSurfaceVariant, size: 22.r),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _neoHero(BuildContext context, String name, String initials,
+      String? avatarUrl, bool isActive) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 24.h),
+      child: Column(
+        children: [
+          Center(
+            child: GestureDetector(
+              onTap: _uploadingAvatar ? null : _pickAvatar,
+              child: Stack(
+                children: [
+                  Container(
+                    width: 100.r, height: 100.r,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: NeoColors.cyan, width: 2),
+                      boxShadow: [
+                        BoxShadow(
+                          color: NeoColors.cyan.withValues(alpha: 0.3), blurRadius: 20),
+                      ],
+                    ),
+                    child: ClipOval(
+                      child: avatarUrl != null
+                          ? Image.network(
+                              avatarUrl, fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => _neoAvatarInitials(initials))
+                          : _uploadingAvatar
+                              ? Container(
+                                  color: NeoColors.surface,
+                                  child: Center(
+                                    child: CircularProgressIndicator(
+                                        color: NeoColors.cyan, strokeWidth: 2),
+                                  ),
+                                )
+                              : _neoAvatarInitials(initials),
+                    ),
+                  ),
+                  Positioned(
+                    bottom: 2, right: 2,
+                    child: Container(
+                      padding: EdgeInsets.all(5.r),
+                      decoration: BoxDecoration(
+                        color: NeoColors.cyan,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: NeoColors.bg, width: 2),
+                      ),
+                      child: Icon(Icons.edit, color: NeoColors.bg, size: 12.r),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          SizedBox(height: 12.h),
+          Text(
+            name.toUpperCase(),
+            style: GoogleFonts.anton(fontSize: 28.sp, color: NeoColors.onSurface),
+          ),
+          SizedBox(height: 8.h),
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 5.h),
+            decoration: BoxDecoration(
+              color: NeoColors.lime.withValues(alpha: 0.08),
+              border: Border.all(color: NeoColors.lime.withValues(alpha: 0.5)),
+              boxShadow: [
+                BoxShadow(color: NeoColors.lime.withValues(alpha: 0.12), blurRadius: 10),
+              ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.workspace_premium, color: NeoColors.lime, size: 13.r),
+                SizedBox(width: 4.w),
+                Text(
+                  isActive ? 'ACTIVE MEMBER' : 'MEMBER',
+                  style: NeoTextStyles.labelCaps.copyWith(color: NeoColors.lime),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _neoAvatarInitials(String initials) {
+    return Container(
+      color: NeoColors.surface,
+      child: Center(
+        child: Text(
+          initials,
+          style: GoogleFonts.anton(fontSize: 30.sp, color: NeoColors.cyan),
+        ),
+      ),
+    );
+  }
+
+  Widget _neoStatCard(String label, String value, Color color) {
+    return NeoGlassCard(
+      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 14.h),
+      child: Column(
+        children: [
+          Text(label, style: NeoTextStyles.labelCaps.copyWith(fontSize: 9.sp)),
+          SizedBox(height: 6.h),
+          Text(
+            value,
+            style: GoogleFonts.jetBrainsMono(
+              fontSize: 15.sp, fontWeight: FontWeight.w700, color: color,
+              shadows: [Shadow(color: color.withValues(alpha: 0.5), blurRadius: 6)],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _neoInBodySection(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16.w),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              _neoSectionLabel('BODY SCAN'),
+              const Spacer(),
+              GestureDetector(
+                onTap: () => context.push(InBodyScreen.routeName),
+                child: Text(
+                  'VIEW ALL ›',
+                  style: NeoTextStyles.labelCaps.copyWith(color: NeoColors.lime),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 10.h),
+          if (_latestInBody != null)
+            Row(
+              children: [
+                Expanded(
+                  child: _neoInBodyCard(
+                    'BODY FAT',
+                    '${(_latestInBody!['body_fat_percentage'] as num?)?.toStringAsFixed(1) ?? '--'}%',
+                    NeoColors.cyan,
+                    (_latestInBody!['body_fat_percentage'] as num?)?.toDouble() ?? 0,
+                    40,
+                  ),
+                ),
+                SizedBox(width: 8.w),
+                Expanded(
+                  child: _neoInBodyCard(
+                    'MUSCLE MASS',
+                    '${(_latestInBody!['muscle_mass'] as num?)?.toStringAsFixed(1) ?? '--'}KG',
+                    NeoColors.lime,
+                    (_latestInBody!['muscle_mass'] as num?)?.toDouble() ?? 0,
+                    80,
+                  ),
+                ),
+              ],
+            )
+          else
+            GestureDetector(
+              onTap: () => context.push(InBodyScreen.routeName),
+              child: NeoGlassCard(
+                padding: EdgeInsets.all(16.r),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.monitor_weight_outlined, color: NeoColors.cyan, size: 18.r),
+                    SizedBox(width: 10.w),
+                    Text('ADD INBODY SCAN',
+                        style: NeoTextStyles.headlineSm.copyWith(color: NeoColors.cyan)),
+                    SizedBox(width: 8.w),
+                    Icon(Icons.arrow_forward, color: NeoColors.cyan, size: 14.r),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _neoInBodyCard(String label, String value, Color color,
+      double current, double max) {
+    return NeoGlassCard(
+      padding: EdgeInsets.all(14.r),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: NeoTextStyles.labelCaps),
+          SizedBox(height: 8.h),
+          Text(
+            value,
+            style: GoogleFonts.jetBrainsMono(
+              fontSize: 20.sp, fontWeight: FontWeight.w700, color: color,
+              shadows: [Shadow(color: color.withValues(alpha: 0.5), blurRadius: 6)],
+            ),
+          ),
+          SizedBox(height: 8.h),
+          LinearProgressIndicator(
+            value: max > 0 ? (current / max).clamp(0.0, 1.0) : 0,
+            minHeight: 1.h,
+            backgroundColor: NeoColors.surfaceTop,
+            valueColor: AlwaysStoppedAnimation(color),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _neoCoachSection(BuildContext context) {
+    if (_coaches.isEmpty) return const SizedBox.shrink();
+    final coach      = _coaches.first;
+    final coachName  = coach['name'] as String? ?? 'Coach';
+    final spec       = coach['specialization'] as String? ?? '';
+    final cInitials  = coachName.trim().split(' ').take(2)
+        .map((p) => p.isNotEmpty ? p[0].toUpperCase() : '').join();
+
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16.w),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _neoSectionLabel('PRIMARY COACH'),
+          SizedBox(height: 10.h),
+          NeoGlassCard(
+            padding: EdgeInsets.all(14.r),
+            child: Row(
+              children: [
+                Container(
+                  width: 48.r, height: 48.r,
+                  decoration: BoxDecoration(
+                    color: NeoColors.cyan.withValues(alpha: 0.10),
+                    border: Border.all(color: NeoColors.cyan.withValues(alpha: 0.3)),
+                  ),
+                  child: Center(
+                    child: Text(cInitials,
+                        style: NeoTextStyles.headlineSm.copyWith(color: NeoColors.cyan)),
+                  ),
+                ),
+                SizedBox(width: 12.w),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(coachName.toUpperCase(),
+                          style: NeoTextStyles.headlineSm.copyWith(color: NeoColors.onSurface)),
+                      if (spec.isNotEmpty)
+                        Text(spec,
+                            style: NeoTextStyles.bodySm
+                                .copyWith(color: NeoColors.onSurfaceVariant)),
+                    ],
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () => context.push(MyCoachesScreen.routeName),
+                  child: Container(
+                    padding: EdgeInsets.all(8.r),
+                    decoration: BoxDecoration(
+                      color: NeoColors.cyan.withValues(alpha: 0.10),
+                      border: Border.all(color: NeoColors.cyan.withValues(alpha: 0.3)),
+                    ),
+                    child: Icon(Icons.chat_outlined, color: NeoColors.cyan, size: 18.r),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _neoAccountSettings(BuildContext context, MemberState state) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16.w),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _neoSectionLabel('ACCOUNT'),
+          SizedBox(height: 10.h),
+          NeoGlassCard(
+            padding: EdgeInsets.zero,
+            child: Column(
+              children: [
+                _neoTile(Icons.person_outline, 'EDIT PROFILE',
+                    () => _showPersonalDetails(context, state)),
+                _neoDivider(),
+                _neoTile(Icons.account_balance_wallet_outlined, 'MEMBERSHIP',
+                    () => _showMembershipInfo(context, state)),
+                _neoDivider(),
+                _neoTile(Icons.history, 'VISIT HISTORY',
+                    () => _showVisitHistory(context)),
+                _neoDivider(),
+                _neoTile(Icons.monitor_weight_outlined, 'INBODY RESULTS',
+                    () => context.push(InBodyScreen.routeName), accent: NeoColors.lime),
+                _neoDivider(),
+                _neoTile(Icons.notifications_outlined, 'NOTIFICATIONS',
+                    () => Navigator.push(context, MaterialPageRoute(
+                        builder: (_) => const NotificationPreferencesScreen()))),
+                _neoDivider(),
+                _neoLanguageTile(context),
+                _neoDivider(),
+                _neoTile(Icons.security_outlined, 'SECURITY',
+                    () => _showChangePassword(context)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _neoTile(IconData icon, String label, VoidCallback onTap, {Color? accent}) {
+    final color = accent ?? NeoColors.cyan;
+    return GestureDetector(
+      onTap: onTap,
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 13.h),
+        child: Row(
+          children: [
+            Icon(icon, color: color, size: 18.r),
+            SizedBox(width: 12.w),
+            Expanded(
+              child: Text(
+                label,
+                style: NeoTextStyles.labelCaps
+                    .copyWith(color: NeoColors.onSurface, letterSpacing: 1),
+              ),
+            ),
+            Icon(Icons.chevron_right, color: NeoColors.outline, size: 16.r),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _neoDivider() =>
+      Container(height: 1, color: NeoColors.cyan.withValues(alpha: 0.08));
+
+  Widget _neoLanguageTile(BuildContext context) {
+    return BlocBuilder<LanguageCubit, LanguageState>(
+      builder: (context, _) {
+        final isEn = !(context.read<LanguageCubit>().isArabic ?? false);
+        return Padding(
+          padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
+          child: Row(
+            children: [
+              Icon(Icons.language, color: NeoColors.cyan, size: 18.r),
+              SizedBox(width: 12.w),
+              Expanded(
+                child: Text(
+                  'LANGUAGE',
+                  style: NeoTextStyles.labelCaps
+                      .copyWith(color: NeoColors.onSurface, letterSpacing: 1),
+                ),
+              ),
+              Container(
+                decoration: BoxDecoration(
+                  color: NeoColors.surfaceTop,
+                  border: Border.all(color: NeoColors.outline.withValues(alpha: 0.4)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _neoLangChip('EN', isEn,
+                        () => context.read<LanguageCubit>().toggleLanguage()),
+                    _neoLangChip('AR', !isEn,
+                        () => context.read<LanguageCubit>().toggleLanguage()),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _neoLangChip(String label, bool active, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: active ? null : onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
+        color: active ? NeoColors.cyan : Colors.transparent,
+        child: Text(
+          label,
+          style: NeoTextStyles.labelCaps.copyWith(
+            color: active ? NeoColors.bg : NeoColors.onSurfaceVariant,
+            fontSize: 10.sp,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _neoSectionLabel(String label) {
+    return Text(label, style: NeoTextStyles.labelCaps.copyWith(color: NeoColors.cyan));
   }
 }
 
