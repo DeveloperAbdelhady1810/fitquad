@@ -8,7 +8,7 @@ import 'package:gym_app/core/theme/neo_theme.dart';
 import 'package:gym_app/features/member/home/manager/member_cubit.dart';
 import 'package:gym_app/features/member/home/manager/member_state.dart';
 import 'package:gym_app/features/member/home/ui/views/workout_active_screen_neo.dart';
-import 'package:gym_app/features/member/home/ui/widgets/choose_coach_screen.dart';
+import 'package:gym_app/features/member/home/ui/widgets/choose_coach_screen_neo.dart';
 import 'package:gym_app/features/member/partner_gyms/ui/partner_gyms_screen_neo.dart';
 
 class TrainTabNeo extends StatefulWidget {
@@ -73,7 +73,7 @@ class _TrainTabNeoState extends State<TrainTabNeo> {
                             icon: Icons.person_search,
                             color: NeoColors.cyan,
                             onTap: () => Navigator.push(context, MaterialPageRoute(
-                              builder: (_) => const ChooseCoachScreen(),
+                              builder: (_) => const ChooseCoachScreenNeo(),
                             )),
                           ),
                         ),
@@ -345,7 +345,7 @@ class _NoPlanCard extends StatelessWidget {
                   icon: Icons.person_search,
                   color: NeoColors.cyan,
                   onTap: () => Navigator.push(context, MaterialPageRoute(
-                    builder: (_) => const ChooseCoachScreen(),
+                    builder: (_) => const ChooseCoachScreenNeo(),
                   )),
                 ),
               ),

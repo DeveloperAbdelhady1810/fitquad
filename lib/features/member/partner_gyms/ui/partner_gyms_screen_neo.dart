@@ -6,7 +6,7 @@ import 'package:gym_app/core/helpers/spacing.dart';
 import 'package:gym_app/core/theme/neo_theme.dart';
 import '../data/partner_gym_repository.dart';
 import '../models/partner_gym_model.dart';
-import 'gym_detail_screen.dart';
+import 'gym_detail_screen_neo.dart';
 
 class PartnerGymsScreenNeo extends StatefulWidget {
   static const routeName = '/partner-gyms-neo';
@@ -132,7 +132,7 @@ class _PartnerGymsScreenNeoState extends State<PartnerGymsScreenNeo> {
                                 gym: _filtered[i],
                                 onTap: () async {
                                   await Navigator.push(context,
-                                      MaterialPageRoute(builder: (_) => GymDetailScreen(gymId: _filtered[i].id)));
+                                      MaterialPageRoute(builder: (_) => GymDetailScreenNeo(gymId: _filtered[i].id)));
                                   _load();
                                 },
                               ),
