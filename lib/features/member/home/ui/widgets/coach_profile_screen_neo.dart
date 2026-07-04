@@ -147,7 +147,7 @@ class _CoachProfileScreenNeoState extends State<CoachProfileScreenNeo> {
                     vGap(16),
                   ],
                   Row(children: [
-                    _StatTile(label: 'PRICE', value: '${coach.price.toStringAsFixed(0)}', unit: 'EGP', color: NeoColors.lime),
+                    _StatTile(label: 'PRICE', value: coach.price.toStringAsFixed(0), unit: 'EGP', color: NeoColors.lime),
                     hGap(8),
                     _StatTile(label: 'DELIVERY', value: coach.turnaround, unit: '', color: NeoColors.cyan),
                     hGap(8),
