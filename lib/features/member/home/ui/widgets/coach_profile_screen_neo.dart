@@ -1,4 +1,6 @@
+import 'dart:io' show Platform;
 import 'dart:ui';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
@@ -22,6 +24,10 @@ class _CoachProfileScreenNeoState extends State<CoachProfileScreenNeo> {
 
   Future<void> _hire() async {
     if (_hiring) return;
+    if (!kIsWeb && Platform.isIOS) {
+      _showIosPaymentNotice();
+      return;
+    }
     setState(() => _hiring = true);
     try {
       final result = await PaymentRepository.initiateCoachPayment(coachId: widget.coach.id);
@@ -41,6 +47,29 @@ class _CoachProfileScreenNeoState extends State<CoachProfileScreenNeo> {
     } finally {
       if (mounted) setState(() => _hiring = false);
     }
+  }
+
+  void _showIosPaymentNotice() {
+    showDialog<void>(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: NeoColors.surface,
+        shape: const RoundedRectangleBorder(),
+        title: Text('COACH SUBSCRIPTION',
+            style: NeoTextStyles.headlineSm.copyWith(color: NeoColors.cyan)),
+        content: Text(
+          'Coach subscriptions are not available for in-app purchase on iOS. '
+          'Please visit fitquad.com in your browser to subscribe to a coach plan.',
+          style: NeoTextStyles.bodySm.copyWith(color: NeoColors.onSurfaceVariant),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('OK', style: NeoTextStyles.labelCaps.copyWith(color: NeoColors.cyan)),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showHireSheet() {

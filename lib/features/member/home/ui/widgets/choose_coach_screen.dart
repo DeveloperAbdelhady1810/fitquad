@@ -1,3 +1,5 @@
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
@@ -525,6 +527,26 @@ class _CoachCard extends StatelessWidget {
   Future<void> _initiatePayment(
       BuildContext scaffoldCtx, CoachModel coach) async {
     Navigator.of(scaffoldCtx).pop();
+    if (!kIsWeb && Platform.isIOS) {
+      if (!scaffoldCtx.mounted) return;
+      showDialog<void>(
+        context: scaffoldCtx,
+        builder: (_) => AlertDialog(
+          title: const Text('Coach Subscription'),
+          content: const Text(
+            'Coach subscriptions are not available for in-app purchase on iOS. '
+            'Please visit fitquad.com in your browser to subscribe to a coach plan.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(scaffoldCtx),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
     if (!scaffoldCtx.mounted) return;
     ScaffoldMessenger.of(scaffoldCtx).showSnackBar(
       const SnackBar(
