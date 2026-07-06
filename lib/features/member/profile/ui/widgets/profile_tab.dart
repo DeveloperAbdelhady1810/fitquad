@@ -109,6 +109,45 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (mounted) context.go(LoginView.routeName);
   }
 
+  Future<void> _deleteAccount() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.secondary,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+        title: Text('Delete Account', style: AppTextStyles.font16WhiteBold),
+        content: Text(
+          'This will permanently delete your account and all your data. This action cannot be undone.',
+          style: AppTextStyles.font14GreyRegular,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text('Cancel', style: TextStyle(color: AppColors.grey)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text('DELETE',
+                style: TextStyle(color: AppColors.red, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    try {
+      await ApiClient.delete('/auth/account');
+      if (mounted) context.go(LoginView.routeName);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(e.toString().replaceFirst('Exception: ', '')),
+          backgroundColor: AppColors.red,
+          behavior: SnackBarBehavior.floating,
+        ));
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (context.read<AppSkinCubit>().state == AppSkin.neo) {
@@ -312,6 +351,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                         const Divider(),
                         _ThemeTile(),
+                        const Divider(),
+                        _Tile(
+                          icon: Icons.delete_forever_outlined,
+                          iconColor: AppColors.red,
+                          title: 'Delete Account',
+                          subtitle: 'Permanently remove your account and data',
+                          onTap: _deleteAccount,
+                        ),
                       ],
                     ),
                   ),
@@ -1121,6 +1168,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 _neoDivider(),
                 _neoTile(Icons.security_outlined, 'SECURITY',
                     () => _showChangePassword(context)),
+                _neoDivider(),
+                _neoTile(Icons.delete_forever_outlined, 'DELETE ACCOUNT',
+                    _deleteAccount, accent: const Color(0xFFFF4444)),
               ],
             ),
           ),

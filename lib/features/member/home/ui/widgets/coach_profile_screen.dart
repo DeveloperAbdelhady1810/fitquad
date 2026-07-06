@@ -1,3 +1,5 @@
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
@@ -322,7 +324,30 @@ class _HireBarState extends State<_HireBar> {
   bool _loading = false;
 
 
+  void _showIosPaymentNotice(BuildContext ctx) {
+    showDialog<void>(
+      context: ctx,
+      builder: (_) => AlertDialog(
+        title: const Text('Coach Subscription'),
+        content: const Text(
+          'Coach subscriptions are not available for in-app purchase on iOS. '
+          'Please visit fitquad.com in your browser to subscribe to a coach plan.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _hire() async {
+    if (!kIsWeb && Platform.isIOS) {
+      _showIosPaymentNotice(context);
+      return;
+    }
     setState(() => _loading = true);
     try {
       final result = await PaymentRepository.initiateCoachPayment(
