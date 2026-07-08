@@ -12,6 +12,7 @@ import 'package:gym_app/features/member/gamification/streak_card.dart';
 import 'package:gym_app/features/member/notifications/notifications_screen.dart';
 import 'package:gym_app/features/member/qr/qr_screen.dart';
 import 'package:gym_app/features/member/home/manager/bottom_nav_bar_cubit.dart';
+import 'package:gym_app/features/member/home/manager/food_cubit.dart';
 import 'package:gym_app/features/member/train/widgets/design_manually_screen.dart';
 import 'package:intl/intl.dart';
 import 'package:printing/printing.dart';
@@ -341,6 +342,9 @@ class _HomeTabState extends State<HomeTab> {
   Widget _buildNutritionRow(BuildContext context, dynamic s) {
     final cubit = context.read<MemberCubit>();
     final plan = cubit.nutritionPlan;
+    final foodState = context.watch<FoodCubit>().state;
+    final caloriesConsumed = foodState is FoodLoaded ? foodState.caloriesToday : 0.0;
+    final proteinConsumed  = foodState is FoodLoaded ? foodState.proteinToday : 0.0;
 
     double caloriesTarget = 2400;
     double proteinTarget = 180;
@@ -348,9 +352,9 @@ class _HomeTabState extends State<HomeTab> {
     if (plan != null) {
       try {
         caloriesTarget =
-            (plan['calorie_target'] as num?)?.toDouble() ?? caloriesTarget;
+            (plan['daily_calories'] as num?)?.toDouble() ?? caloriesTarget;
         proteinTarget =
-            (plan['protein_target'] as num?)?.toDouble() ?? proteinTarget;
+            (plan['protein_g'] as num?)?.toDouble() ?? proteinTarget;
       } catch (_) {}
     }
 
@@ -359,7 +363,7 @@ class _HomeTabState extends State<HomeTab> {
         Expanded(
           child: NutritionProgressContainer(
             title: s.calories,
-            value: 0,
+            value: caloriesConsumed,
             target: caloriesTarget,
             icon: Icon(
               Icons.local_fire_department_outlined,
@@ -370,7 +374,7 @@ class _HomeTabState extends State<HomeTab> {
         Expanded(
           child: NutritionProgressContainer(
             title: s.protein,
-            value: 0.0,
+            value: proteinConsumed,
             target: proteinTarget,
             icon: Icon(
               Icons.circle_outlined,
