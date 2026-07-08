@@ -5,6 +5,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:gym_app/core/helpers/spacing.dart';
 import 'package:gym_app/core/theme/neo_theme.dart';
+import 'package:gym_app/features/member/ai/ui/ai_plan_prompt_sheet.dart';
 import 'package:gym_app/features/member/home/manager/member_cubit.dart';
 import 'package:gym_app/features/member/home/manager/member_state.dart';
 import 'package:gym_app/features/member/home/ui/views/workout_active_screen_neo.dart';
@@ -64,7 +65,14 @@ class _TrainTabNeoState extends State<TrainTabNeo> {
                             }
                           }),
                         )),
-                    vGap(16),
+                    vGap(10),
+                    _NeoBtn(
+                      label: 'ASK AI COACH',
+                      icon: Icons.smart_toy_outlined,
+                      color: NeoColors.magenta,
+                      onTap: () => showAiPlanGeneratorSheet(context, type: 'workout'),
+                    ),
+                    vGap(10),
                     Row(
                       children: [
                         Expanded(
@@ -335,8 +343,15 @@ class _NoPlanCard extends StatelessWidget {
           vGap(12),
           Text('NO PLAN ACTIVE', style: NeoTextStyles.headlineSm.copyWith(color: NeoColors.cyan)),
           vGap(6),
-          Text('Find a coach or browse gyms to get started', style: NeoTextStyles.bodySm, textAlign: TextAlign.center),
+          Text('Ask AI, find a coach, or browse gyms to get started', style: NeoTextStyles.bodySm, textAlign: TextAlign.center),
           vGap(20),
+          _NeoBtn(
+            label: 'ASK AI COACH',
+            icon: Icons.smart_toy_outlined,
+            color: NeoColors.magenta,
+            onTap: () => showAiPlanGeneratorSheet(context, type: 'workout'),
+          ),
+          vGap(10),
           Row(
             children: [
               Expanded(
