@@ -39,6 +39,7 @@ class AiMemberContext {
       if (m.name  != null) buf.writeln('Name:          ${m.name}');
       buf.writeln('Fitness goal:  ${_goalLabel(m.type)}');
       if (m.weight != null) buf.writeln('Body weight:   ${m.weight!.toStringAsFixed(1)} kg');
+      if (m.heightCm != null) buf.writeln('Height:        ${m.heightCm!.toStringAsFixed(0)} cm');
       if (m.age    != null) buf.writeln('Age:           ${m.age!.toInt()} yrs');
       buf.writeln('Level:         ${m.level}  |  Streak: ${m.streakDays} days  |  XP: ${m.xpPoints}');
       if (m.sleepHrs != null && m.sleepHrs! > 0) {

@@ -30,7 +30,6 @@ dependencies:
   fl_chart: ^1.1.1
   font_awesome_flutter: ^10.12.0
   health: ^12.2.0
-  dart_openai: ^6.1.1
   http: ^1.6.0
   easy_stepper: ^1.0.1
   sleek_circular_slider: ^2.1.0
@@ -39,7 +38,6 @@ dependencies:
   sign_in_with_apple: ^6.1.2
   google_sign_in: ^6.2.2
   auto_size_text: ^3.0.0
-  google_generative_ai: ^0.4.6
   qr_flutter: ^4.1.0
   webview_flutter: ^4.10.0
   confetti: ^0.7.0

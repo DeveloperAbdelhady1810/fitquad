@@ -6,7 +6,7 @@ import 'package:gym_app/core/helpers/app_decoration.dart';
 import 'package:gym_app/core/helpers/spacing.dart';
 import 'package:gym_app/core/theme/app_colors.dart';
 import 'package:gym_app/core/theme/app_text_styles.dart';
-import 'package:gym_app/core/services/gemini_service.dart';
+import 'package:gym_app/core/services/ai_consent.dart';
 import 'package:gym_app/features/member/data/repositories/member_repository.dart';
 import 'package:gym_app/features/member/inbody/manager/inbody_cubit.dart';
 import 'package:gym_app/features/member/inbody/models/inbody_model.dart';
@@ -390,6 +390,9 @@ class _InBodyCard extends StatelessWidget {
 
   Future<void> _sendToAiWithInBody(
       BuildContext context, InBodyModel r, String question) async {
+    if (!await AiConsent.ensure(context)) return;
+    if (!context.mounted) return;
+
     // Show loading
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -411,7 +414,10 @@ class _InBodyCard extends StatelessWidget {
     }
 
     try {
-      final reply = await GeminiService.sendMessageWithInBody(question, r);
+      final reply = await MemberRepository.getInBodyInsight(
+        question,
+        inBodyRecordId: int.tryParse(r.id ?? ''),
+      );
       if (context.mounted) {
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
         _showAiResponseDialog(context, reply);

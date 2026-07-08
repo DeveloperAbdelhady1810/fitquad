@@ -6,6 +6,7 @@ class MemberModel {
   final String? id;
   final String? name;
   final double? weight;
+  final double? heightCm;
   final double? sleepHrs;
   final double? waterL;
   final List<String>? sessionIds;
@@ -29,6 +30,7 @@ class MemberModel {
     this.id,
     this.name,
     this.weight,
+    this.heightCm,
     this.sleepHrs,
     this.waterL,
     this.sessionIds,
@@ -63,6 +65,7 @@ class MemberModel {
           ? user['name'] as String
           : (member['name'] as String?),
       weight: (member['current_weight'] as num?)?.toDouble(),
+      heightCm: (member['height'] as num?)?.toDouble(),
       sleepHrs: (member['sleep_hours'] as num?)?.toDouble(),
       waterL: (member['water_liters'] as num?)?.toDouble(),
       type: _goalToType(member['goal'] as String?),
@@ -108,6 +111,7 @@ class MemberModel {
     String? id,
     String? name,
     double? weight,
+    double? heightCm,
     double? sleepHrs,
     double? waterL,
     List<String>? sessionIds,
@@ -131,6 +135,7 @@ class MemberModel {
       id: id ?? this.id,
       name: name ?? this.name,
       weight: weight ?? this.weight,
+      heightCm: heightCm ?? this.heightCm,
       sleepHrs: sleepHrs ?? this.sleepHrs,
       waterL: waterL ?? this.waterL,
       sessionIds: sessionIds ?? this.sessionIds,

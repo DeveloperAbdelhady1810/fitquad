@@ -5,13 +5,13 @@ import 'package:go_router/go_router.dart';
 import 'package:gym_app/core/helpers/spacing.dart';
 import 'package:gym_app/core/theme/app_colors.dart';
 import 'package:gym_app/core/theme/app_text_styles.dart';
+import 'package:gym_app/features/member/ai/ui/ai_plan_prompt_sheet.dart';
 import 'package:gym_app/features/member/home/ui/widgets/choose_coach_screen.dart';
 import 'package:gym_app/features/member/train/widgets/design_manually_screen.dart';
 import 'package:gym_app/features/member/train/widgets/workout_history_screen.dart';
 
 import '../../../../core/enums/choose_coach.dart';
 import '../../../../generated/l10n.dart';
-import '../../home/manager/bottom_nav_bar_cubit.dart';
 import '../../home/manager/member_cubit.dart';
 import '../../home/manager/member_state.dart';
 
@@ -135,7 +135,7 @@ class TrainTab extends StatelessWidget {
             subtitle: s.instant_personalized_plan,
             badge: s.instant,
             badgeColor: const Color(0xFF26A69A),
-            onTap: () => context.read<BottomNavBarCubit>().changeIndex(2),
+            onTap: () => showAiPlanGeneratorSheet(context, type: 'workout'),
           ),
           vGap(12),
           _TrainCard(
