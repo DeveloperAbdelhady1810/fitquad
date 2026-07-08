@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:gym_app/core/enums/login.dart';
+import 'package:gym_app/core/skin/app_skin_cubit.dart';
 import 'package:gym_app/core/theme/app_colors.dart';
+import 'package:gym_app/core/theme/neo_theme.dart';
+import 'package:gym_app/core/widgets/neo_text_field.dart';
 import 'package:gym_app/features/admin/ui/views/admin_view.dart';
 import 'package:gym_app/features/auth/data/auth_repository.dart';
 import 'package:gym_app/features/auth/ui/views/login_view.dart';
@@ -74,15 +78,27 @@ class _MemberTabBarViewState extends State<MemberTabBarView> {
   @override
   Widget build(BuildContext context) {
     final s = S.of(context);
+    final isNeo = context.watch<AppSkinCubit>().state == AppSkin.neo;
+    final labelStyle = isNeo
+        ? NeoTextStyles.labelCaps.copyWith(color: NeoColors.onSurface, fontSize: 12)
+        : AppTextStyles.font16WhiteBold;
+    final accentColor = isNeo ? NeoColors.cyan : AppColors.teal;
+
     return SingleChildScrollView(
       child: Column(
         children: [
           Align(
             alignment: AlignmentDirectional.bottomStart,
-            child: Text(s.email_or_phone, style: AppTextStyles.font16WhiteBold),
+            child: Text(s.email_or_phone, style: labelStyle),
           ),
           vGap(10),
-          CustomTextFormField(
+          isNeo
+              ? NeoTextField(
+                  controller: _emailController,
+                  hintText: 'hello@example.com',
+                  textInputType: TextInputType.emailAddress,
+                )
+              : CustomTextFormField(
             controller: _emailController,
             hintText: 'hello@example.com',
             textInputType: TextInputType.emailAddress,
@@ -90,23 +106,35 @@ class _MemberTabBarViewState extends State<MemberTabBarView> {
           vGap(15),
           Align(
             alignment: AlignmentDirectional.bottomStart,
-            child: Text(s.password, style: AppTextStyles.font16WhiteBold),
+            child: Text(s.password, style: labelStyle),
           ),
           vGap(10),
-          CustomTextFormField(
+          isNeo
+              ? NeoTextField(
+                  controller: _passwordController,
+                  textInputType: TextInputType.visiblePassword,
+                  hintText: '••••••••',
+                )
+              : CustomTextFormField(
             controller: _passwordController,
             textInputType: TextInputType.visiblePassword,
             hintText: '••••••••',
           ),
-      
+
           if (widget.isSignUp) ...[
             vGap(15),
             Align(
               alignment: AlignmentDirectional.bottomStart,
-              child: Text(s.phone_optional, style: AppTextStyles.font16WhiteBold),
+              child: Text(s.phone_optional, style: labelStyle),
             ),
             vGap(10),
-            CustomTextFormField(
+            isNeo
+                ? NeoTextField(
+                    controller: _phoneController,
+                    textInputType: TextInputType.phone,
+                    hintText: '+1 (555) 000-0000',
+                  )
+                : CustomTextFormField(
               controller: _phoneController,
               textInputType: TextInputType.phone,
               hintText: '+1 (555) 000-0000',
@@ -114,48 +142,56 @@ class _MemberTabBarViewState extends State<MemberTabBarView> {
             vGap(15),
             Align(
               alignment: AlignmentDirectional.bottomStart,
-              child: Text('Invite code (optional)',
-                  style: AppTextStyles.font16WhiteBold),
+              child: Text('Invite code (optional)', style: labelStyle),
             ),
             vGap(4),
             Align(
               alignment: AlignmentDirectional.bottomStart,
               child: Text(
                 'Have a friend\'s invite code? Enter it here.',
-                style: AppTextStyles.font14GreyRegular
+                style: (isNeo ? NeoTextStyles.bodySm : AppTextStyles.font14GreyRegular)
                     .copyWith(fontSize: 12),
               ),
             ),
             vGap(10),
-            CustomTextFormField(
+            isNeo
+                ? NeoTextField(
+                    controller: _inviteCodeController,
+                    textInputType: TextInputType.text,
+                    hintText: 'e.g. A3B7F2D1',
+                  )
+                : CustomTextFormField(
               controller: _inviteCodeController,
               textInputType: TextInputType.text,
               hintText: 'e.g. A3B7F2D1',
             ),
           ],
-      
+
           if (_errorMessage != null) ...[
             vGap(10),
-            Text(_errorMessage!, style: const TextStyle(color: Colors.red, fontSize: 13)),
+            Text(_errorMessage!, style: TextStyle(color: isNeo ? NeoColors.magenta : Colors.red, fontSize: 13)),
           ],
-      
+
           vGap(20),
           _isLoading
-              ? const CircularProgressIndicator()
+              ? CircularProgressIndicator(color: isNeo ? NeoColors.cyan : null)
               : CustomButton(
                   text: widget.isSignUp ? s.sign_up : s.login,
                   onPressed: () => _onSubmit(context),
                   iconData: Icons.arrow_forward,
-                  color: _buttonColor(),
+                  color: isNeo ? NeoColors.cyan : _buttonColor(),
+                  textStyle: isNeo
+                      ? NeoTextStyles.labelCaps.copyWith(color: NeoColors.bg, fontSize: 13)
+                      : null,
                 ),
-      
+
           vGap(15),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
                 widget.isSignUp ? s.already_have_account : s.no_account,
-                style: AppTextStyles.font14GreyRegular,
+                style: isNeo ? NeoTextStyles.bodySm : AppTextStyles.font14GreyRegular,
               ),
               TextButton(
                 onPressed: () => widget.isSignUp
@@ -163,7 +199,9 @@ class _MemberTabBarViewState extends State<MemberTabBarView> {
                     : context.go(SignUpView.routeName),
                 child: Text(
                   widget.isSignUp ? s.login : s.sign_up,
-                  style: AppTextStyles.font14GreyRegular,
+                  style: isNeo
+                      ? NeoTextStyles.bodySm.copyWith(color: accentColor, fontWeight: FontWeight.bold)
+                      : AppTextStyles.font14GreyRegular,
                 ),
               ),
             ],
@@ -171,12 +209,12 @@ class _MemberTabBarViewState extends State<MemberTabBarView> {
           if (widget.role == LoginRole.member) ...[
             vGap(4),
             TextButton.icon(
-              onPressed: () => _showMembershipIdDialog(context),
-              icon: Icon(Icons.qr_code_scanner, size: 16, color: AppColors.teal),
+              onPressed: () => _showMembershipIdDialog(context, isNeo),
+              icon: Icon(Icons.qr_code_scanner, size: 16, color: accentColor),
               label: Text(
                 'Already have a gym membership ID?',
-                style: AppTextStyles.font14GreyRegular
-                    .copyWith(color: AppColors.teal, fontSize: 12),
+                style: (isNeo ? NeoTextStyles.bodySm : AppTextStyles.font14GreyRegular)
+                    .copyWith(color: accentColor, fontSize: 12),
               ),
             ),
           ],
@@ -185,24 +223,30 @@ class _MemberTabBarViewState extends State<MemberTabBarView> {
     );
   }
 
-  Future<void> _showMembershipIdDialog(BuildContext context) async {
+  Future<void> _showMembershipIdDialog(BuildContext context, bool isNeo) async {
     final ctrl = TextEditingController();
     bool loading = false;
     String? error;
+    final accent = isNeo ? NeoColors.cyan : const Color(0xFF00a689);
+    final bg = isNeo ? NeoColors.surface : const Color(0xFF0F172A);
 
     await showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setLocal) => AlertDialog(
-          backgroundColor: const Color(0xFF0F172A),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          backgroundColor: bg,
+          shape: isNeo
+              ? RoundedRectangleBorder(side: BorderSide(color: accent.withValues(alpha: 0.4)))
+              : RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: Row(
             children: [
-              const Icon(Icons.qr_code_scanner, color: Color(0xFF00a689), size: 22),
+              Icon(Icons.qr_code_scanner, color: accent, size: 22),
               const SizedBox(width: 10),
-              const Expanded(
+              Expanded(
                 child: Text('Gym Membership ID',
-                    style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                    style: isNeo
+                        ? NeoTextStyles.headlineSm
+                        : const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
               ),
             ],
           ),
@@ -210,12 +254,21 @@ class _MemberTabBarViewState extends State<MemberTabBarView> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Enter the membership ID provided by your gym. This links your account to your existing membership.',
-                style: TextStyle(color: Color(0xFFe8c1bb), fontSize: 13),
+                style: isNeo
+                    ? NeoTextStyles.bodySm
+                    : const TextStyle(color: Color(0xFFe8c1bb), fontSize: 13),
               ),
               const SizedBox(height: 16),
-              TextField(
+              isNeo
+                  ? NeoTextField(
+                      controller: ctrl,
+                      textInputType: TextInputType.text,
+                      textCapitalization: TextCapitalization.characters,
+                      hintText: 'e.g. FQ-2024-001234',
+                    )
+                  : TextField(
                 controller: ctrl,
                 style: const TextStyle(color: Colors.white),
                 textCapitalization: TextCapitalization.characters,
@@ -236,7 +289,7 @@ class _MemberTabBarViewState extends State<MemberTabBarView> {
               ),
               if (error != null) ...[
                 const SizedBox(height: 8),
-                Text(error!, style: const TextStyle(color: Colors.red, fontSize: 12)),
+                Text(error!, style: TextStyle(color: isNeo ? NeoColors.magenta : Colors.red, fontSize: 12)),
               ],
             ],
           ),
@@ -246,7 +299,10 @@ class _MemberTabBarViewState extends State<MemberTabBarView> {
               child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
             ),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF00a689)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: accent,
+                shape: isNeo ? const RoundedRectangleBorder() : null,
+              ),
               onPressed: loading
                   ? null
                   : () async {
@@ -258,9 +314,9 @@ class _MemberTabBarViewState extends State<MemberTabBarView> {
                         if (ctx.mounted) Navigator.pop(ctx);
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Membership linked successfully!'),
-                              backgroundColor: Color(0xFF00a689),
+                            SnackBar(
+                              content: const Text('Membership linked successfully!'),
+                              backgroundColor: accent,
                             ),
                           );
                         }

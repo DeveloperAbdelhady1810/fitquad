@@ -1,16 +1,21 @@
 import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:gym_app/core/enums/login.dart';
 
 import 'package:gym_app/core/helpers/app_decoration.dart';
 import 'package:gym_app/core/helpers/spacing.dart';
+import 'package:gym_app/core/skin/app_skin_cubit.dart';
 import 'package:gym_app/core/theme/app_colors.dart';
 import 'package:gym_app/core/theme/app_text_styles.dart';
+import 'package:gym_app/core/theme/neo_theme.dart';
 import 'package:gym_app/core/widgets/custom_tab_bar.dart';
+import 'package:gym_app/core/widgets/neo_role_tab_bar.dart';
 
 import '../../../../generated/l10n.dart';
 import '../../../member/home/ui/views/bottom_nav_bar_view.dart';
@@ -60,6 +65,7 @@ class _LoginViewBodyState extends State<LoginViewBody> {
   @override
   Widget build(BuildContext context) {
     final s = S.of(context);
+    final isNeo = context.watch<AppSkinCubit>().state == AppSkin.neo;
     return DefaultTabController(
       length: 3,
       child: Padding(
@@ -71,16 +77,22 @@ class _LoginViewBodyState extends State<LoginViewBody> {
               Center(
                 child: Container(
                   padding: EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(14.r),
-                    gradient: LinearGradient(
-                      colors: [AppColors.emerald, AppColors.blue],
-                    ),
-                  ),
+                  decoration: isNeo
+                      ? BoxDecoration(
+                          color: NeoColors.surface,
+                          border: Border.all(color: NeoColors.cyan.withValues(alpha: 0.4)),
+                          boxShadow: [neoCyanGlow()],
+                        )
+                      : BoxDecoration(
+                          borderRadius: BorderRadius.circular(14.r),
+                          gradient: LinearGradient(
+                            colors: [AppColors.emerald, AppColors.blue],
+                          ),
+                        ),
                   child: SvgPicture.asset(
                     'assets/images/dumbbell.svg',
                     colorFilter: ColorFilter.mode(
-                      AppColors.white,
+                      isNeo ? NeoColors.cyan : AppColors.white,
                       BlendMode.srcIn,
                     ),
                     width: 50,
@@ -88,21 +100,52 @@ class _LoginViewBodyState extends State<LoginViewBody> {
                 ),
               ),
               vGap(15),
-              Text(s.app_name, style: AppTextStyles.font24GreyBold),
+              Text(
+                s.app_name,
+                style: isNeo
+                    ? GoogleFonts.anton(fontSize: 26, color: NeoColors.onSurface, letterSpacing: 1.2)
+                    : AppTextStyles.font24GreyBold,
+              ),
               vGap(10),
-              Text(s.app_tagline, style: AppTextStyles.font20GreyRegular),
+              Text(
+                s.app_tagline,
+                style: isNeo
+                    ? GoogleFonts.jetBrainsMono(fontSize: 12, color: NeoColors.cyan, letterSpacing: 1.5)
+                    : AppTextStyles.font20GreyRegular,
+              ),
               vGap(15),
               Container(
                 padding: EdgeInsets.all(16),
-                decoration: AppDecorations.containerDecoration,
+                decoration: isNeo
+                    ? BoxDecoration(
+                        color: NeoColors.surface,
+                        border: Border.all(color: NeoColors.cyan.withValues(alpha: 0.2)),
+                      )
+                    : AppDecorations.containerDecoration,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Text(s.welcome_back, style: AppTextStyles.font16WhiteRegular),
+                    Text(
+                      s.welcome_back,
+                      style: isNeo
+                          ? NeoTextStyles.headlineSm
+                          : AppTextStyles.font16WhiteRegular,
+                    ),
                     vGap(5),
-                    Text(s.select_role, style: AppTextStyles.font14GreyRegular),
+                    Text(
+                      s.select_role,
+                      style: isNeo ? NeoTextStyles.bodySm : AppTextStyles.font14GreyRegular,
+                    ),
                     vGap(10),
-                    CustomTabBar(
+                    isNeo
+                        ? NeoRoleTabBar(
+                            tabs: [
+                              _buildTab(text: s.member, icon: Icons.person_outline),
+                              _buildTab(text: s.coach, icon: Icons.sports_gymnastics),
+                              _buildTab(text: s.admin, icon: Icons.admin_panel_settings),
+                            ],
+                          )
+                        : CustomTabBar(
                       tabs: [
                         _buildTab(text: s.member, icon: Icons.person_outline),
                         _buildTab(text: s.coach, icon: Icons.sports_gymnastics),
@@ -127,15 +170,15 @@ class _LoginViewBodyState extends State<LoginViewBody> {
               // ── Social login (members only) ──────────────────────
               Row(
                 children: [
-                  Expanded(child: Divider(color: AppColors.grey.withValues(alpha: 0.3))),
+                  Expanded(child: Divider(color: (isNeo ? NeoColors.outline : AppColors.grey).withValues(alpha: 0.3))),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     child: Text(
                       'or continue as member',
-                      style: AppTextStyles.font14GreyRegular,
+                      style: isNeo ? NeoTextStyles.labelCaps : AppTextStyles.font14GreyRegular,
                     ),
                   ),
-                  Expanded(child: Divider(color: AppColors.grey.withValues(alpha: 0.3))),
+                  Expanded(child: Divider(color: (isNeo ? NeoColors.outline : AppColors.grey).withValues(alpha: 0.3))),
                 ],
               ),
               vGap(12),
@@ -213,26 +256,34 @@ class _SocialButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isNeo = context.watch<AppSkinCubit>().state == AppSkin.neo;
     return GestureDetector(
       onTap: onTap,
       child: Container(
         width: double.infinity,
         padding: EdgeInsets.symmetric(vertical: 14.h, horizontal: 16.w),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.05),
-          borderRadius: BorderRadius.circular(12.r),
-          border: Border.all(color: AppColors.grey.withValues(alpha: 0.25)),
-        ),
+        decoration: isNeo
+            ? BoxDecoration(
+                color: NeoColors.surface,
+                border: Border.all(color: NeoColors.cyan.withValues(alpha: 0.25)),
+              )
+            : BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.05),
+                borderRadius: BorderRadius.circular(12.r),
+                border: Border.all(color: AppColors.grey.withValues(alpha: 0.25)),
+              ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             iconPath != null
                 ? SvgPicture.asset(iconPath!, width: 20.w, height: 20.h)
-                : Icon(fallbackIcon, color: Colors.white, size: 22.sp),
+                : Icon(fallbackIcon, color: isNeo ? NeoColors.cyan : Colors.white, size: 22.sp),
             SizedBox(width: 10.w),
             Text(
               label,
-              style: AppTextStyles.font16WhiteRegular.copyWith(fontSize: 14.sp),
+              style: isNeo
+                  ? NeoTextStyles.bodySm.copyWith(color: NeoColors.onSurface, fontSize: 14.sp)
+                  : AppTextStyles.font16WhiteRegular.copyWith(fontSize: 14.sp),
             ),
           ],
         ),

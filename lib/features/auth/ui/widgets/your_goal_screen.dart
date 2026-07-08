@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gym_app/core/helpers/spacing.dart';
+import 'package:gym_app/core/skin/app_skin_cubit.dart';
 import 'package:gym_app/core/theme/app_text_styles.dart';
+import 'package:gym_app/core/theme/neo_theme.dart';
 
 import '../../../../core/enums/availability.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -17,6 +19,8 @@ class StepGoal extends StatelessWidget {
     return BlocBuilder<OnboardingCubit, OnboardingState>(
       builder: (context, state) {
         final s = S.of(context);
+        final isNeo = context.watch<AppSkinCubit>().state == AppSkin.neo;
+        final accent = isNeo ? NeoColors.cyan : AppColors.teal;
         final selectedGoals = state is OnboardingChanged ? state.goals : const <GoalType>{};
 
         return Padding(
@@ -26,18 +30,18 @@ class StepGoal extends StatelessWidget {
             children: [
               Center(
                 child: CircleAvatar(
-                  backgroundColor: AppColors.emerald.withValues(alpha: 0.3),
+                  backgroundColor: accent.withValues(alpha: 0.3),
                   radius: 25.r,
-                  child: Icon(Icons.change_circle_outlined, color: AppColors.emerald, size: 25.sp),
+                  child: Icon(Icons.change_circle_outlined, color: accent, size: 25.sp),
                 ),
               ),
               vGap(10),
-              Center(child: Text(s.main_goal_question, style: AppTextStyles.font16WhiteBold)),
+              Center(child: Text(s.main_goal_question, style: isNeo ? NeoTextStyles.headlineSm : AppTextStyles.font16WhiteBold)),
               vGap(6),
               Center(
                 child: Text(
                   s.main_goal_description,
-                  style: AppTextStyles.font14GreyRegular,
+                  style: isNeo ? NeoTextStyles.bodySm : AppTextStyles.font14GreyRegular,
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -45,8 +49,8 @@ class StepGoal extends StatelessWidget {
               Center(
                 child: Text(
                   'You can select multiple goals',
-                  style: AppTextStyles.font14GreyRegular.copyWith(
-                    color: AppColors.teal,
+                  style: (isNeo ? NeoTextStyles.bodySm : AppTextStyles.font14GreyRegular).copyWith(
+                    color: accent,
                     fontSize: 12.sp,
                   ),
                 ),
@@ -60,14 +64,14 @@ class StepGoal extends StatelessWidget {
                     duration: const Duration(milliseconds: 180),
                     margin: EdgeInsets.symmetric(vertical: 5.h),
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(14.r),
+                      borderRadius: isNeo ? BorderRadius.zero : BorderRadius.circular(14.r),
                       color: isSelected
-                          ? AppColors.teal.withValues(alpha: 0.12)
-                          : AppColors.secondary,
+                          ? accent.withValues(alpha: 0.12)
+                          : (isNeo ? NeoColors.surface : AppColors.secondary),
                       border: Border.all(
                         color: isSelected
-                            ? AppColors.teal
-                            : Colors.grey.withValues(alpha: 0.3),
+                            ? accent
+                            : (isNeo ? NeoColors.outlineVariant : Colors.grey.withValues(alpha: 0.3)),
                         width: isSelected ? 1.5 : 1,
                       ),
                     ),
@@ -81,15 +85,15 @@ class StepGoal extends StatelessWidget {
                           height: 22.r,
                           decoration: BoxDecoration(
                             shape: BoxShape.rectangle,
-                            borderRadius: BorderRadius.circular(6.r),
-                            color: isSelected ? AppColors.teal : Colors.transparent,
+                            borderRadius: isNeo ? BorderRadius.zero : BorderRadius.circular(6.r),
+                            color: isSelected ? accent : Colors.transparent,
                             border: Border.all(
-                              color: isSelected ? AppColors.teal : AppColors.grey,
+                              color: isSelected ? accent : (isNeo ? NeoColors.outline : AppColors.grey),
                               width: 2,
                             ),
                           ),
                           child: isSelected
-                              ? Icon(Icons.check, color: Colors.white, size: 14.r)
+                              ? Icon(Icons.check, color: isNeo ? NeoColors.bg : Colors.white, size: 14.r)
                               : null,
                         ),
                         hGap(14),
@@ -99,7 +103,12 @@ class StepGoal extends StatelessWidget {
                             children: [
                               Text(
                                 goal.label(context),
-                                style: AppTextStyles.font16WhiteRegular.copyWith(
+                                style: isNeo
+                                    ? NeoTextStyles.bodyLg.copyWith(
+                                        color: NeoColors.onSurface,
+                                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.normal,
+                                      )
+                                    : AppTextStyles.font16WhiteRegular.copyWith(
                                   color: isSelected ? AppColors.white : AppColors.white,
                                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                                 ),
@@ -107,7 +116,7 @@ class StepGoal extends StatelessWidget {
                               vGap(2),
                               Text(
                                 goal.subTitle(context),
-                                style: AppTextStyles.font14GreyRegular,
+                                style: isNeo ? NeoTextStyles.bodySm : AppTextStyles.font14GreyRegular,
                               ),
                             ],
                           ),

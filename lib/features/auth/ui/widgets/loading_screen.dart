@@ -1,9 +1,12 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:gym_app/core/helpers/spacing.dart';
+import 'package:gym_app/core/skin/app_skin_cubit.dart';
 import 'package:gym_app/core/theme/app_colors.dart';
 import 'package:gym_app/core/theme/app_text_styles.dart';
+import 'package:gym_app/core/theme/neo_theme.dart';
 import 'package:gym_app/features/member/home/ui/views/bottom_nav_bar_view.dart';
 
 import '../../../../generated/l10n.dart';
@@ -32,25 +35,26 @@ class _LoadingScreenState extends State<LoadingScreen> {
   @override
   Widget build(BuildContext context) {
     final s=S.of(context);
+    final isNeo = context.watch<AppSkinCubit>().state == AppSkin.neo;
     return Scaffold(
-      backgroundColor: AppColors.primary,
+      backgroundColor: isNeo ? NeoColors.bg : AppColors.primary,
       body: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             CircularProgressIndicator(
-              color: AppColors.emerald,
+              color: isNeo ? NeoColors.cyan : AppColors.emerald,
               strokeWidth: 3,
             ),
             const SizedBox(height: 20),
             Text(
               s.generating_your_plan,
-              style: AppTextStyles.font16WhiteBold,
+              style: isNeo ? NeoTextStyles.headlineSm : AppTextStyles.font16WhiteBold,
             ),
             vGap(5),
             Text(
               s.analyzing_your_metrics,
-              style: AppTextStyles.font16GreyRegular,
+              style: isNeo ? NeoTextStyles.bodySm : AppTextStyles.font16GreyRegular,
             ),
 
           ],

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:gym_app/core/skin/app_skin_cubit.dart';
+import 'package:gym_app/core/theme/neo_theme.dart';
 
 import '../../../../core/enums/availability.dart';
 import '../../../../core/helpers/spacing.dart';
@@ -19,6 +21,8 @@ class StepDuration extends StatelessWidget {
         final selected =
         state is OnboardingChanged ? state.duration : null;
         final s = S.of(context);
+        final isNeo = context.watch<AppSkinCubit>().state == AppSkin.neo;
+        final accent = isNeo ? NeoColors.magenta : AppColors.purple;
 
         List<String> strings= [
           s.express,
@@ -31,14 +35,14 @@ class StepDuration extends StatelessWidget {
           child: Column(
             children:[
               CircleAvatar(
-                backgroundColor: AppColors.purple.withValues(alpha: 0.3),
+                backgroundColor: accent.withValues(alpha: 0.3),
                 radius: 25.r,
-                child: Icon(Icons.timelapse, color: AppColors.purple, size: 25.sp),
+                child: Icon(Icons.timelapse, color: accent, size: 25.sp),
               ),
               vGap(10),
-              Text(s.session_duration, style: AppTextStyles.font16WhiteBold),
+              Text(s.session_duration, style: isNeo ? NeoTextStyles.headlineSm : AppTextStyles.font16WhiteBold),
               vGap(5),
-              Text(s.session_duration_question, style: AppTextStyles.font14GreyRegular),
+              Text(s.session_duration_question, style: isNeo ? NeoTextStyles.bodySm : AppTextStyles.font14GreyRegular),
               vGap(15),
               GridView.builder(
                 shrinkWrap: true,
@@ -63,12 +67,12 @@ class StepDuration extends StatelessWidget {
                       margin: EdgeInsets.all(15),
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(16),
-                        color: AppColors.secondary,
+                        borderRadius: isNeo ? BorderRadius.zero : BorderRadius.circular(16),
+                        color: isNeo ? NeoColors.surface : AppColors.secondary,
                         border: Border.all(
                           color: isSelected
-                              ? AppColors.purple
-                              : Colors.grey.shade400,
+                              ? accent
+                              : (isNeo ? NeoColors.outlineVariant : Colors.grey.shade400),
                           width: 2,
                         ),
 
@@ -78,12 +82,12 @@ class StepDuration extends StatelessWidget {
                         title:Text(
                             d.title,
                             textAlign: TextAlign.center,
-                            style: AppTextStyles.font16WhiteBold
+                            style: isNeo ? NeoTextStyles.headlineSm : AppTextStyles.font16WhiteBold
                         ) ,
                         subtitle:Text(
                             strings[index],
                             textAlign: TextAlign.center,
-                            style: AppTextStyles.font14GreyRegular
+                            style: isNeo ? NeoTextStyles.bodySm : AppTextStyles.font14GreyRegular
                         ) ,
                       ),
 

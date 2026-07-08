@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:gym_app/core/services/api_client.dart';
+import 'package:gym_app/core/skin/app_skin_cubit.dart';
 import 'package:gym_app/core/theme/app_colors.dart';
+import 'package:gym_app/core/theme/neo_theme.dart';
 import 'package:gym_app/features/admin/ui/views/admin_view.dart';
 import 'package:gym_app/features/auth/data/auth_repository.dart';
 import 'package:gym_app/features/auth/ui/views/login_view.dart';
@@ -167,22 +171,24 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
+    final isNeo = context.watch<AppSkinCubit>().state == AppSkin.neo;
     final size = MediaQuery.of(context).size;
+    final glowColor = isNeo ? NeoColors.cyan : AppColors.purple;
 
     return Scaffold(
-      backgroundColor: AppColors.primary,
+      backgroundColor: isNeo ? NeoColors.bg : AppColors.primary,
       body: Stack(
         children: [
           // Background geometric decoration
           Positioned(
             top: -size.width * 0.35,
             right: -size.width * 0.35,
-            child: _GlowCircle(size: size.width * 0.9, color: AppColors.purple),
+            child: _GlowCircle(size: size.width * 0.9, color: glowColor),
           ),
           Positioned(
             bottom: -size.width * 0.4,
             left: -size.width * 0.4,
-            child: _GlowCircle(size: size.width * 0.85, color: AppColors.purple),
+            child: _GlowCircle(size: size.width * 0.85, color: isNeo ? NeoColors.magenta : AppColors.purple),
           ),
 
           // Main content
@@ -201,7 +207,7 @@ class _SplashScreenState extends State<SplashScreen>
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.purple.withValues(
+                            color: glowColor.withValues(
                               alpha: 0.35 * _pulse.value,
                             ),
                             blurRadius: 60 * _pulse.value,
@@ -220,14 +226,17 @@ class _SplashScreenState extends State<SplashScreen>
                         width: 120,
                         height: 120,
                         decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: const LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [Color(0xFF1E0A35), Color(0xFF0F172A)],
-                          ),
+                          shape: isNeo ? BoxShape.rectangle : BoxShape.circle,
+                          gradient: isNeo
+                              ? null
+                              : const LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [Color(0xFF1E0A35), Color(0xFF0F172A)],
+                                ),
+                          color: isNeo ? NeoColors.surface : null,
                           border: Border.all(
-                            color: AppColors.purple.withValues(alpha: 0.6),
+                            color: glowColor.withValues(alpha: 0.6),
                             width: 1.5,
                           ),
                         ),
@@ -235,8 +244,8 @@ class _SplashScreenState extends State<SplashScreen>
                           padding: const EdgeInsets.all(28),
                           child: SvgPicture.asset(
                             'assets/images/dumbbell.svg',
-                            colorFilter: const ColorFilter.mode(
-                              Colors.white,
+                            colorFilter: ColorFilter.mode(
+                              isNeo ? NeoColors.cyan : Colors.white,
                               BlendMode.srcIn,
                             ),
                           ),
@@ -253,22 +262,34 @@ class _SplashScreenState extends State<SplashScreen>
                   position: _textSlide,
                   child: FadeTransition(
                     opacity: _textOpacity,
-                    child: ShaderMask(
-                      shaderCallback: (bounds) => const LinearGradient(
-                        colors: [Colors.white, Color(0xFFD0AAFF)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ).createShader(bounds),
-                      child: const Text(
-                        'FitQuad',
-                        style: TextStyle(
-                          fontSize: 42,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.white,
-                          letterSpacing: 1.5,
-                        ),
-                      ),
-                    ),
+                    child: isNeo
+                        ? Text(
+                            'FITQUAD',
+                            style: GoogleFonts.anton(
+                              fontSize: 42,
+                              color: NeoColors.onSurface,
+                              letterSpacing: 2,
+                              shadows: [
+                                Shadow(color: NeoColors.cyan.withValues(alpha: 0.6), blurRadius: 16),
+                              ],
+                            ),
+                          )
+                        : ShaderMask(
+                            shaderCallback: (bounds) => const LinearGradient(
+                              colors: [Colors.white, Color(0xFFD0AAFF)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ).createShader(bounds),
+                            child: const Text(
+                              'FitQuad',
+                              style: TextStyle(
+                                fontSize: 42,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
+                                letterSpacing: 1.5,
+                              ),
+                            ),
+                          ),
                   ),
                 ),
 
@@ -277,7 +298,16 @@ class _SplashScreenState extends State<SplashScreen>
                 // Tagline
                 FadeTransition(
                   opacity: _taglineOpacity,
-                  child: const Text(
+                  child: isNeo
+                      ? Text(
+                          'TRAIN SMART. LIVE STRONG.',
+                          style: GoogleFonts.jetBrainsMono(
+                            fontSize: 12,
+                            color: NeoColors.cyan,
+                            letterSpacing: 3,
+                          ),
+                        )
+                      : const Text(
                     'Train Smart. Live Strong.',
                     style: TextStyle(
                       fontSize: 14,
@@ -323,7 +353,7 @@ class _SplashScreenState extends State<SplashScreen>
                                   end: Alignment(pos + 0.5, 0),
                                   colors: [
                                     Colors.transparent,
-                                    AppColors.purple.withValues(alpha: 0.9),
+                                    glowColor.withValues(alpha: 0.9),
                                     Colors.transparent,
                                   ],
                                 ).createShader(rect);
@@ -347,14 +377,20 @@ class _SplashScreenState extends State<SplashScreen>
             right: 0,
             child: FadeTransition(
               opacity: _taglineOpacity,
-              child: const Text(
+              child: Text(
                 'Powered by FitQuad™',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 11,
-                  color: Color(0xFF475569),
-                  letterSpacing: 1.2,
-                ),
+                style: isNeo
+                    ? GoogleFonts.jetBrainsMono(
+                        fontSize: 10,
+                        color: NeoColors.outline,
+                        letterSpacing: 1.2,
+                      )
+                    : const TextStyle(
+                        fontSize: 11,
+                        color: Color(0xFF475569),
+                        letterSpacing: 1.2,
+                      ),
               ),
             ),
           ),

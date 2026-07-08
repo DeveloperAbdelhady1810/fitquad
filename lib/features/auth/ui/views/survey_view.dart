@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:gym_app/core/helpers/spacing.dart';
+import 'package:gym_app/core/skin/app_skin_cubit.dart';
 import 'package:gym_app/core/theme/app_colors.dart';
 import 'package:gym_app/core/theme/app_text_styles.dart';
+import 'package:gym_app/core/theme/neo_theme.dart';
 import 'package:gym_app/core/widgets/custom_button.dart';
 import 'package:gym_app/features/auth/ui/widgets/loading_screen.dart';
 
@@ -29,18 +31,23 @@ class _OnboardingViewState extends State<OnboardingView> {
   @override
   Widget build(BuildContext context) {
     final s = S.of(context);
+    final isNeo = context.watch<AppSkinCubit>().state == AppSkin.neo;
     return BlocProvider(
       create: (_) => OnboardingCubit(),
       child: SafeArea(
         child: Scaffold(
-          backgroundColor: AppColors.primary,
+          backgroundColor: isNeo ? NeoColors.bg : AppColors.primary,
           body: Padding(
             padding: const EdgeInsets.all(8.0),
             child: Column(
               children: [
-                Text('${currentStep + 1}/4' , style: AppTextStyles.font14GreyRegular,),
+                Text(
+                  '${currentStep + 1}/4',
+                  style: isNeo ? NeoTextStyles.labelCaps.copyWith(color: NeoColors.cyan) : AppTextStyles.font14GreyRegular,
+                ),
                 LinearProgressIndicator(
-                    color: AppColors.emerald,
+                    color: isNeo ? NeoColors.cyan : AppColors.emerald,
+                    backgroundColor: isNeo ? NeoColors.surfaceHigh : null,
                     value: (currentStep + 1) / 4),
                 Expanded(
                   child: PageView(
@@ -57,14 +64,15 @@ class _OnboardingViewState extends State<OnboardingView> {
                     ],
                   ),
                 ),
-              const Divider(),
+              Divider(color: isNeo ? NeoColors.outlineVariant : null),
                 Row(
                   children: [
                     if (currentStep > 0)
                       Expanded(
                         child: CustomButton(
 
-                          color: AppColors.black.withValues(alpha: 0.5),
+                          color: isNeo ? NeoColors.surfaceHigh : AppColors.black.withValues(alpha: 0.5),
+                          textStyle: isNeo ? NeoTextStyles.labelCaps.copyWith(color: NeoColors.onSurface) : null,
                           iconData: Icons.arrow_back_ios_new,
                           text: s.back,
                           iconBeforeText: true,
@@ -91,6 +99,8 @@ class _OnboardingViewState extends State<OnboardingView> {
                           return CustomButton(
                             iconData: Icons.arrow_forward_ios_outlined,
                             text: currentStep == 3 ? s.generate_plan : s.continu,
+                            color: isNeo ? NeoColors.cyan : AppColors.emerald,
+                            textStyle: isNeo ? NeoTextStyles.labelCaps.copyWith(color: NeoColors.bg) : null,
                             onPressed: goalsEmpty
                                 ? null
                                 : () async {
