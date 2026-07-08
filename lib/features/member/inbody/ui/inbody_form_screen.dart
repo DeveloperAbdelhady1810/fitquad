@@ -7,7 +7,8 @@ import 'package:gym_app/core/helpers/app_decoration.dart';
 import 'package:gym_app/core/helpers/spacing.dart';
 import 'package:gym_app/core/theme/app_colors.dart';
 import 'package:gym_app/core/theme/app_text_styles.dart';
-import 'package:gym_app/core/services/gemini_service.dart';
+import 'package:gym_app/core/services/ai_consent.dart';
+import 'package:gym_app/features/member/data/repositories/member_repository.dart';
 import 'package:gym_app/features/member/inbody/manager/inbody_cubit.dart';
 import 'package:gym_app/features/member/inbody/models/inbody_model.dart';
 import 'package:intl/intl.dart';
@@ -132,6 +133,12 @@ class _InBodyFormScreenState extends State<InBodyFormScreen> {
 
     if (!mounted) return;
 
+    if (!await AiConsent.ensure(context)) {
+      if (mounted) context.pop();
+      return;
+    }
+    if (!mounted) return;
+
     // Show success and immediately fetch AI insight in background
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -145,9 +152,8 @@ class _InBodyFormScreenState extends State<InBodyFormScreen> {
     );
 
     try {
-      final insight = await GeminiService.sendMessageWithInBody(
+      final insight = await MemberRepository.getInBodyInsight(
         'Give me a brief 2-sentence analysis of my InBody results and one specific recommendation.',
-        model,
       );
       if (mounted) _showAiInsightDialog(insight);
     } catch (_) {

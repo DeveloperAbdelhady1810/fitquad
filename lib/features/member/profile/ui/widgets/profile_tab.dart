@@ -415,6 +415,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final member   = state is MemberLoaded ? state.member : null;
     final nameCtrl = TextEditingController(text: member?.name ?? '');
     final wtCtrl   = TextEditingController(text: member?.weight?.toStringAsFixed(1) ?? '');
+    final htCtrl   = TextEditingController(text: member?.heightCm?.toStringAsFixed(0) ?? '');
     String selectedGoal = member?.type?.name ?? 'fit';
     bool saving = false;
 
@@ -439,6 +440,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
               _SheetField(
                   label: 'Weight (kg)',
                   ctrl: wtCtrl,
+                  keyboardType: TextInputType.number),
+              vGap(12),
+              _SheetField(
+                  label: 'Height (cm)',
+                  ctrl: htCtrl,
                   keyboardType: TextInputType.number),
               vGap(12),
               Text('Goal', style: AppTextStyles.font14GreyRegular),
@@ -482,6 +488,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         'goal': selectedGoal,
                         if (wtCtrl.text.isNotEmpty)
                           'current_weight': double.tryParse(wtCtrl.text) ?? 0,
+                        if (htCtrl.text.isNotEmpty)
+                          'height': double.tryParse(htCtrl.text) ?? 0,
                       });
                       if (mounted) {
                         Navigator.pop(ctx);

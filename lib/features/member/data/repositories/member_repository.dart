@@ -226,6 +226,47 @@ class MemberRepository {
     return res['data'] as List<dynamic>;
   }
 
+  /// AI interpretation of an InBody scan, generated entirely server-side —
+  /// the client never sends a Gemini API key (Apple Guideline 5.1.1(i)/5.1.2(i)).
+  static Future<String> getInBodyInsight(String question, {int? inBodyRecordId}) async {
+    final res = await ApiClient.post('/member/ai/inbody-insight', {
+      'question': question,
+      if (inBodyRecordId != null) 'inbody_record_id': inBodyRecordId,
+    });
+    return res['data']['insight'] as String;
+  }
+
+  /// Generates a workout/nutrition plan preview (not saved yet). [type] is
+  /// 'workout' or 'nutrition'.
+  static Future<Map<String, dynamic>> generateAiPlan({
+    required String type,
+    String? prompt,
+    bool attachInBody = false,
+  }) async {
+    final res = await ApiClient.post('/member/ai/generate-plan', {
+      'type': type,
+      if (prompt != null && prompt.trim().isNotEmpty) 'prompt': prompt.trim(),
+      'attach_inbody': attachInBody,
+    });
+    return res['data'] as Map<String, dynamic>;
+  }
+
+  /// Saves & applies a previously generated AI plan — same effect as a
+  /// member applying a coach-sent plan.
+  static Future<void> applyAiPlan({
+    required String type,
+    required String title,
+    String? description,
+    required Map<String, dynamic> payload,
+  }) async {
+    await ApiClient.post('/member/ai/apply-generated-plan', {
+      'type': type,
+      'title': title,
+      if (description != null) 'description': description,
+      'payload': payload,
+    });
+  }
+
   // ── Gamification / Progress ──────────────────────────────────
   static Future<Map<String, dynamic>> getProgress() async {
     final res = await ApiClient.get('/member/progress');

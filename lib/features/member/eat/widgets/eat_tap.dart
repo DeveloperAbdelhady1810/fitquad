@@ -6,7 +6,7 @@ import 'package:gym_app/core/helpers/spacing.dart';
 import 'package:gym_app/core/theme/app_colors.dart';
 import 'package:gym_app/core/theme/app_text_styles.dart';
 import 'package:gym_app/core/widgets/custom_list_tile.dart';
-import 'package:gym_app/features/member/home/manager/bottom_nav_bar_cubit.dart';
+import 'package:gym_app/features/member/ai/ui/ai_plan_prompt_sheet.dart';
 import 'package:gym_app/features/member/home/manager/member_cubit.dart';
 import 'package:gym_app/features/member/home/manager/member_state.dart';
 import 'package:gym_app/features/member/home/ui/widgets/member_chat_screen.dart';
@@ -180,7 +180,7 @@ class _OptionsList extends StatelessWidget {
           subTitle: s.generate_a_meal_plan_instantly,
           icon: Icons.smart_toy_outlined,
           color: Colors.green,
-          onTap: () => context.read<BottomNavBarCubit>().changeIndex(2),
+          onTap: () => showAiPlanGeneratorSheet(context, type: 'nutrition'),
         ),
         vGap(10),
         if (hasCoach) ...[

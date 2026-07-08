@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gym_app/core/cubit/health/health_cubit.dart';
+import 'package:gym_app/core/services/ai_consent.dart';
 import 'package:gym_app/core/services/health_service.dart';
 import 'package:gym_app/core/theme/app_colors.dart';
 
@@ -68,8 +69,10 @@ class _AiTabState extends State<AiTab> {
     );
   }
 
-  void _send(String text) {
+  Future<void> _send(String text) async {
     if (text.trim().isEmpty) return;
+    if (!await AiConsent.ensure(context)) return;
+    if (!mounted) return;
     _controller.clear();
     _cubit.sendMessage(text);
     _scrollToBottom();
