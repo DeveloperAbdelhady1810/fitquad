@@ -73,9 +73,13 @@ Future<void> showFoodDialog(BuildContext context) async {
                 );
                 }
 
+                final cubit = context.read<FoodCubit>();
                 return Column(
                 children: state.loggedFoods
-                    .map((food) => EatenTodayCard(foodModel: food,))
+                    .map((food) => EatenTodayCard(
+                          foodModel: food,
+                          onLogAgain: () => cubit.logFood(food.id),
+                        ))
                     .toList(),
                 );
                 },

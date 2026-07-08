@@ -5,7 +5,8 @@ import 'package:gym_app/features/member/data/models/meal_model.dart';
 
 class EatenTodayCard extends StatelessWidget {
   final FoodModel foodModel;
-  const EatenTodayCard({super.key, required this.foodModel});
+  final VoidCallback? onLogAgain;
+  const EatenTodayCard({super.key, required this.foodModel, this.onLogAgain});
 
   @override
   Widget build(BuildContext context) {
@@ -76,6 +77,15 @@ class EatenTodayCard extends StatelessWidget {
               ),
             ),
           ),
+
+          if (onLogAgain != null) ...[
+            const SizedBox(width: 8),
+            IconButton(
+              tooltip: 'Log again',
+              onPressed: onLogAgain,
+              icon: const Icon(Icons.add_circle_outline, color: Colors.white, size: 22),
+            ),
+          ],
         ],
       ),
     );

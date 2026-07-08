@@ -16,6 +16,7 @@ class FoodCubit extends Cubit<FoodState> {
   double _proteinToday = 0;
   double _carbsToday = 0;
   double _fatToday = 0;
+  Map<String, double> _caloriesByMealType = {};
 
   Future<void> loadFoods() async {
     try {
@@ -83,6 +84,18 @@ class FoodCubit extends Cubit<FoodState> {
       _proteinToday  = (totals['protein']  as num?)?.toDouble() ?? 0;
       _carbsToday    = (totals['carbs']    as num?)?.toDouble() ?? 0;
       _fatToday      = (totals['fat']      as num?)?.toDouble() ?? 0;
+
+      final byMeal = <String, double>{};
+      for (final l in logs) {
+        final log = l as Map<String, dynamic>;
+        final mealType = log['meal_type'] as String?;
+        if (mealType == null) continue;
+        final foodItem = log['food_item'] as Map<String, dynamic>?;
+        final quantity = (log['quantity'] as num?)?.toDouble() ?? 0;
+        final calories = (foodItem?['calories'] as num?)?.toDouble() ?? 0;
+        byMeal[mealType] = (byMeal[mealType] ?? 0) + (calories * quantity / 100);
+      }
+      _caloriesByMealType = byMeal;
     } catch (_) {
       // Keep whatever totals we had; don't block food list loading on this.
     }
@@ -96,6 +109,7 @@ class FoodCubit extends Cubit<FoodState> {
       proteinToday: _proteinToday,
       carbsToday: _carbsToday,
       fatToday: _fatToday,
+      caloriesByMealType: _caloriesByMealType,
     );
   }
 

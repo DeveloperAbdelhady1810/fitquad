@@ -51,6 +51,7 @@ class _EatTabNeoState extends State<EatTabNeo> {
             (plan['meals'] as List?)?.cast<Map<String, dynamic>>() ?? [];
         final foodState = context.watch<FoodCubit>().state;
         final consumed = foodState is FoodLoaded ? foodState.caloriesToday.round() : 0;
+        final mealCalories = foodState is FoodLoaded ? foodState.caloriesByMealType : <String, double>{};
 
         return SingleChildScrollView(
           padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 80.h),
@@ -87,25 +88,25 @@ class _EatTabNeoState extends State<EatTabNeo> {
                 _MealCard(
                   icon: Icons.wb_sunny_outlined,
                   name: 'BREAKFAST',
-                  kcal: 0,
+                  kcal: mealCalories['breakfast']?.round() ?? 0,
                   color: NeoColors.lime,
                 ),
                 _MealCard(
                   icon: Icons.lunch_dining,
                   name: 'LUNCH',
-                  kcal: 0,
+                  kcal: mealCalories['lunch']?.round() ?? 0,
                   color: NeoColors.cyan,
                 ),
                 _MealCard(
                   icon: Icons.dinner_dining,
                   name: 'DINNER',
-                  kcal: 0,
+                  kcal: mealCalories['dinner']?.round() ?? 0,
                   color: NeoColors.magenta,
                 ),
                 _MealCard(
                   icon: Icons.apple,
                   name: 'SNACKS',
-                  kcal: 0,
+                  kcal: mealCalories['snacks']?.round() ?? 0,
                   color: NeoColors.lime,
                 ),
               ] else
@@ -113,7 +114,9 @@ class _EatTabNeoState extends State<EatTabNeo> {
                   (m) => _MealCard(
                     icon: Icons.restaurant,
                     name: (m['name'] as String? ?? 'MEAL').toUpperCase(),
-                    kcal: (m['calories'] as num?)?.toInt() ?? 0,
+                    kcal: mealCalories[m['time_of_day'] as String? ?? '']
+                            ?.round() ??
+                        0,
                     color: NeoColors.cyan,
                   ),
                 ),

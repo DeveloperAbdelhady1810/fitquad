@@ -14,6 +14,8 @@ class FoodLoaded extends FoodState {
   final double proteinToday;
   final double carbsToday;
   final double fatToday;
+  /// Calories logged today per meal_type (breakfast/lunch/dinner/snacks/dessert).
+  final Map<String, double> caloriesByMealType;
 
   FoodLoaded({
     required this.foods,
@@ -22,5 +24,6 @@ class FoodLoaded extends FoodState {
     this.proteinToday = 0,
     this.carbsToday = 0,
     this.fatToday = 0,
+    this.caloriesByMealType = const {},
   });
 }
