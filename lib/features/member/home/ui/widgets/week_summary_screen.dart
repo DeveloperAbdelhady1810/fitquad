@@ -4,6 +4,7 @@ import 'package:gym_app/core/helpers/app_decoration.dart';
 import 'package:gym_app/core/helpers/spacing.dart';
 import 'package:gym_app/core/theme/app_colors.dart';
 import 'package:gym_app/core/theme/app_text_styles.dart';
+import 'package:gym_app/features/member/ai/ui/ai_plan_prompt_sheet.dart';
 
 import '../../../../../generated/l10n.dart';
 
@@ -69,6 +70,13 @@ class _WeekSummaryScreenState extends State<WeekSummaryScreen> {
             ),
           ],
         ),
+        actions: [
+          IconButton(
+            tooltip: s.ask_ai_coach,
+            icon: Icon(Icons.smart_toy_outlined, color: AppColors.teal),
+            onPressed: () => showAiPlanGeneratorSheet(context, type: 'workout'),
+          ),
+        ],
       ),
       body: Column(
         children: [
