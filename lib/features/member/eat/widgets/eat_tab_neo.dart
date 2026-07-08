@@ -8,6 +8,7 @@ import 'package:gym_app/core/helpers/spacing.dart';
 import 'package:gym_app/core/theme/neo_theme.dart';
 import 'package:gym_app/features/member/ai/ui/ai_plan_prompt_sheet.dart';
 import 'package:gym_app/features/member/eat/widgets/design_nutritio_manualy_screen.dart';
+import 'package:gym_app/features/member/home/manager/food_cubit.dart';
 import 'package:gym_app/features/member/home/manager/member_cubit.dart';
 import 'package:gym_app/features/member/home/manager/member_state.dart';
 import 'package:gym_app/features/member/home/ui/widgets/choose_coach_screen_neo.dart';
@@ -48,7 +49,8 @@ class _EatTabNeoState extends State<EatTabNeo> {
         final fat = (plan['fat_g'] as num?)?.toInt() ?? 0;
         final meals =
             (plan['meals'] as List?)?.cast<Map<String, dynamic>>() ?? [];
-        const consumed = 0;
+        final foodState = context.watch<FoodCubit>().state;
+        final consumed = foodState is FoodLoaded ? foodState.caloriesToday.round() : 0;
 
         return SingleChildScrollView(
           padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 80.h),
