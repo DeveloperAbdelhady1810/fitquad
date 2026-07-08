@@ -6,6 +6,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:gym_app/core/cubit/health/health_cubit.dart';
 import 'package:gym_app/core/helpers/spacing.dart';
+import 'package:gym_app/core/services/ai_consent.dart';
 import 'package:gym_app/core/theme/neo_theme.dart';
 import 'package:gym_app/features/member/ai/manager/ai_cubit.dart';
 import 'package:gym_app/features/member/ai/models/ai_member_context.dart';
@@ -75,8 +76,10 @@ class _AiTabNeoState extends State<AiTabNeo> with TickerProviderStateMixin {
     );
   }
 
-  void _send(String text) {
+  Future<void> _send(String text) async {
     if (text.trim().isEmpty) return;
+    if (!await AiConsent.ensure(context)) return;
+    if (!mounted) return;
     _inputCtrl.clear();
     _cubit.sendMessage(text);
     _scrollToBottom();

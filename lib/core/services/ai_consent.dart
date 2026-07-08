@@ -16,7 +16,10 @@ class AiConsent {
   static const _consentKey = 'ai_consent_v1';
 
   /// Whether the member has already granted consent.
-  static Future<bool> hasConsented() => SharedPrefHelper.getBool(_consentKey);
+  static Future<bool> hasConsented() async {
+    final value = await SharedPrefHelper.getBool(_consentKey);
+    return value as bool;
+  }
 
   static Future<void> setConsent(bool value) =>
       SharedPrefHelper.setData(_consentKey, value);
