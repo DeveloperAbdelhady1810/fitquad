@@ -64,7 +64,7 @@ class WeightTabBarView extends StatelessWidget {
                         padding: EdgeInsets.all(10),
                         decoration:
                         AppDecorations.containerDecoration,
-                        child: Text('+ 0.1' , style: AppTextStyles.font16WhiteBold,),
+                        child: Text('- 0.1' , style: AppTextStyles.font16WhiteBold,),
                       ),
                     ),
                   ),
@@ -76,7 +76,7 @@ class WeightTabBarView extends StatelessWidget {
                         padding: EdgeInsets.all(10),
                         decoration:
                         AppDecorations.containerDecoration,
-                        child: Text('- 0.1' , style: AppTextStyles.font16WhiteBold,),
+                        child: Text('+ 0.1' , style: AppTextStyles.font16WhiteBold,),
 
                       ),
                     ),

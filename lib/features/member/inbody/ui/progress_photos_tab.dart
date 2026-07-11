@@ -239,7 +239,7 @@ class _ProgressPhotosTabState extends State<ProgressPhotosTab> {
               final photo = _photos[i] as Map<String, dynamic>;
               final id = photo['id'] as int? ?? 0;
               final url = photo['photo_url'] as String? ?? '';
-              final weight = (photo['weight_at_time'] as num?)?.toDouble();
+              final weight = (double.tryParse(photo['weight_at_time'].toString())??0 as num?)?.toDouble();
               final notes = photo['notes'] as String?;
               final takenAt = photo['taken_at'] as String?;
               final dateStr = takenAt != null
